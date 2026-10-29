@@ -64,3 +64,11 @@ Ein echter Installations- und Update-Test auf Umbrel sowie der Gerätetest auf A
 - `docs/`: Betrieb, Architektur und Versionsnotizen
 
 Der Quellcode enthält keine echten Nutzerdaten oder Zugangsdaten. Datenbanksicherungen sind zusätzlich zum Git-Repository notwendig. Für spätere native Apps ist das gleiche Backend vorgesehen; eine Capacitor-Integration wurde noch nicht hinzugefügt.
+
+## Aktuelle Web-App 0.2.0
+
+Die aktive Webentwicklung liegt in [`web/`](web/README.md): echte Crew-Konten über ChatGPT, zentrale D1-Datenhaltung, Aufgaben mit Zuständigkeiten und Fälligkeiten, Punkte, Wünsche und Logbuch.
+
+Webadresse: https://putzonaut-test.denny-subke.chatgpt.site
+
+Die Website bleibt privat. Eine Crew-Einladung ersetzt die zusätzliche Freigabe der Website nicht. Domain und eigener Server folgen später. Die Docker-/PostgreSQL-Grundlage im Repository-Hauptverzeichnis bleibt für diesen späteren Umzug erhalten; sie ist noch nicht auf den Datenstand der Web-App migriert.
