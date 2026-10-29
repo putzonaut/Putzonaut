@@ -9,7 +9,7 @@ export function crewChange(route:string, method:string, body:unknown, h:Househol
  const members=activeMembers(h);
  const target=()=>{const m=members.find(m=>m.id===route.split('/')[2]);if(!m)throw new AppError(404,'Dieses Crewmitglied ist nicht mehr dabei.');return m;};
  const event=(title:string):HistoryEvent=>({id:crypto.randomUUID(),kind:'crew',title,userId:actor.id,name:actor.name,createdAt:now.toISOString()});
- const archive=(m:Member)=>{m.removedAt=now.toISOString();m.accountId=null;for(const task of h.tasks)if(task.assignedTo===m.id)task.assignedTo=null;};
+ const archive=(m:Member)=>{m.removedAt=now.toISOString();m.accountId=null;for(const task of h.tasks){if(task.assignedTo===m.id)task.assignedTo=null;task.rotationIds=task.rotationIds?.filter(id=>id!==m.id);if(task.completion?.status==='pending'&&task.completion.userId===m.id)task.completion=null;}h.pendingCompletions=h.pendingCompletions?.filter(c=>c.userId!==m.id);};
  const checkChildren=(m:Member)=>{if(members.some(child=>child.kind==='child'&&child.guardianId===m.id))throw new AppError(409,'Übertrage zuerst die Begleitung der Kinderprofile an ein anderes Mitglied mit eigenem Konto.');};
  if(route==='/children'&&method==='POST'){
   if(members.length>=12)throw new AppError(409,'Eure Crew hat bereits zwölf aktive Mitglieder.');

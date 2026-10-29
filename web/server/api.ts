@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { missionChange } from './missions.ts';
 import { crewChange } from './crew.ts';
 import { TASK_TEMPLATES } from '../shared/setup.ts';
 import { Repository } from './repository.ts';
-import { activeMembers, profile, admin, AppError, digest, householdSchema, member, nameSchema, newHousehold, newMember, occurrenceKey, OUTFITS, randomToken, rewardSchema, taskSchema, view } from './domain.ts';
+import { activeMembers, canUndo, profile, admin, AppError, digest, householdSchema, member, nameSchema, newHousehold, newMember, OUTFITS, randomToken, rewardSchema, view } from './domain.ts';
 import type { HistoryEvent, Household, Member } from './domain.ts';
 
 export type Identity={userId:string;fullName?:string|null};
@@ -18,7 +19,7 @@ async function readBody(request:Request){
 export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{now?:()=>Date;development?:boolean}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
-  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.3.0'});}
+  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.4.0'});}
   if(!identity)return json({error:'Bitte melde dich mit deinem ChatGPT-Konto an.'},401);
   if(!['GET','HEAD'].includes(method)){
    const allowed=options.development?url.origin:origin;
@@ -43,9 +44,9 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id};
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
   if(route==='/state'&&method==='GET')return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));
-  if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50),nextOffset:events.length>50?offset+50:null});}
+  if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){
-   admin(actor);const snapshot={format:'putzonaut-export',version:2,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,rewards:h.rewards,redemptions:h.redemptions};
+   admin(actor);const snapshot={format:'putzonaut-export',version:3,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],rewards:h.rewards,redemptions:h.redemptions};
    return new Response(JSON.stringify(snapshot,null,2),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="putzonaut-${now.toISOString().slice(0,10)}.json"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(route==='/invitations'&&method==='GET'){admin(actor);return json({items:h.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString()).map(({hash:_,...i})=>i)});}
@@ -59,24 +60,13 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
    const key=z.object({requestKey:z.string().uuid()}).parse(body).requestKey;const existing=await repo.existingRequest(actor.id,key);
    if(existing){if(existing.rewardId!==id)throw new AppError(409,'Diese Einlösung gehört zu einer anderen Belohnung.');return json(existing.redemption);}
   }
-  const result=await repo.mutate<unknown>(accountId,now,house=>{
+  const result=await repo.mutate<unknown>(accountId,now,async house=>{
    const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const mission=await missionChange(route,method,body,house,user,member(house,accountId),now,repo);if(mission)return mission;
    const crew=crewChange(route,method,body,house,user,now);if(crew)return crew;
    const find=<T extends {id:string}>(items:T[])=>{const item=items.find(i=>i.id===id);if(!item)throw new AppError(404,'Dieser Eintrag wurde nicht gefunden.');return item;};
    const event=(kind:string,title:string,extra:Partial<HistoryEvent>={}):HistoryEvent=>({id:crypto.randomUUID(),kind,title,userId:user.id,name:user.name,createdAt:now.toISOString(),...(user.id!==viewer.id?{recordedBy:viewer.id,recordedByName:viewer.name}:{}),...extra});
-   const validateTask=(values:z.infer<typeof taskSchema>)=>{if(values.assignedTo&&!activeMembers(house).some(m=>m.id===values.assignedTo))throw new AppError(400,'Das gewählte Crewmitglied gibt es nicht.');if(values.dueDate){const d=new Date(`${values.dueDate}T12:00:00Z`);if(!Number.isFinite(d.getTime())||d.toISOString().slice(0,10)!==values.dueDate)throw new AppError(400,'Bitte wähle ein gültiges Datum.');}return values;};
    if(route==='/profile'&&method==='PATCH'){user.name=z.object({name:nameSchema}).parse(body).name;return {result:{ok:true}};}
-   if(route==='/tasks'&&method==='POST'){requireAdmin();if(house.tasks.length>=200)throw new AppError(409,'Bitte archiviere zuerst eine alte Mission.');const task={...validateTask(taskSchema.parse(body)),id:crypto.randomUUID(),completion:null};house.tasks.push(task);return {result:{id:task.id}};}
-   if(/^\/tasks\/[^/]+$/.test(route)&&method==='PATCH'){requireAdmin();Object.assign(find(house.tasks),validateTask(taskSchema.parse(body)));return {result:{ok:true}};}
-   if(/^\/tasks\/[^/]+$/.test(route)&&method==='DELETE'){requireAdmin();find(house.tasks);house.tasks=house.tasks.filter(t=>t.id!==id);return {result:{ok:true}};}
-   if(/^\/tasks\/[^/]+\/complete$/.test(route)&&method==='POST'){
-    const values=z.object({occurrenceKey:z.string().max(20)}).parse(body);const task=find(house.tasks);const key=occurrenceKey(task.cadence,now);
-    if(task.assignedTo&&task.assignedTo!==user.id&&user.role!=='admin')throw new AppError(403,'Diese Mission ist einem anderen Crewmitglied zugeteilt.');
-    if(key!==values.occurrenceKey)throw new AppError(409,'Eine neue Aufgabenrunde hat begonnen. Bitte lade die Missionen neu.');
-    if(task.completion?.occurrenceKey===key)throw new AppError(409,'Diese Mission wurde schon erledigt. Die Punkte sind bereits gutgeschrieben.');
-    task.completion={occurrenceKey:key,userId:user.id,user_name:user.name,created_at:now.toISOString(),xp:task.xp,stars:task.stars};user.xp+=task.xp;user.stars+=task.stars;user.weekCount++;user.completedCount++;
-    return {result:{title:task.title,xp:task.xp,stars:task.stars},event:event('completion',task.title,{xp:task.xp,stars:task.stars})};
-   }
    if(route==='/rewards'&&method==='POST'){requireAdmin();if(house.rewards.length>=100)throw new AppError(409,'Bitte archiviere zuerst einen alten Wunsch.');const reward={...rewardSchema.parse(body),id:crypto.randomUUID()};house.rewards.push(reward);return {result:{id:reward.id}};}
    if(/^\/rewards\/[^/]+$/.test(route)&&method==='PATCH'){requireAdmin();Object.assign(find(house.rewards),rewardSchema.parse(body));return {result:{ok:true}};}
    if(/^\/rewards\/[^/]+$/.test(route)&&method==='DELETE'){requireAdmin();find(house.rewards);house.rewards=house.rewards.filter(r=>r.id!==id);return {result:{ok:true}};}

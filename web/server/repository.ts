@@ -8,17 +8,18 @@ export class Repository{
  constructor(db:Database){this.db=db;}
  async forAccount(accountId:string){return this.db.prepare('SELECT h.id,h.document,h.revision FROM households h JOIN memberships m ON m.household_id=h.id WHERE m.account_id=?').bind(accountId).first<Row>();}
  async byId(id:string){return this.db.prepare('SELECT id,document,revision FROM households WHERE id=?').bind(id).first<Row>();}
- async history(householdId:string,offset=0,limit=50){const r=await this.db.prepare('SELECT payload FROM events WHERE household_id=? ORDER BY created_at DESC,id DESC LIMIT ? OFFSET ?').bind(householdId,limit,offset).all<{payload:string}>();return r.results.map(r=>JSON.parse(r.payload) as HistoryEvent);}
+ async history(householdId:string,offset=0,limit=50){const r=await this.db.prepare("SELECT e.payload, r.id AS reversal FROM events e LEFT JOIN events r ON r.member_id=e.member_id AND r.request_key='undo:'||e.id WHERE e.household_id=? ORDER BY e.created_at DESC,e.id DESC LIMIT ? OFFSET ?").bind(householdId,limit,offset).all<{payload:string;reversal:string|null}>();return r.results.map(r=>({...JSON.parse(r.payload),reversed:!!r.reversal}) as HistoryEvent);}
+ async eventById(householdId:string,id:string){const row=await this.db.prepare('SELECT payload FROM events WHERE household_id=? AND id=?').bind(householdId,id).first<{payload:string}>();return row?JSON.parse(row.payload) as HistoryEvent:null;}
  async existingRequest(memberId:string,key:string){const row=await this.db.prepare('SELECT payload FROM events WHERE member_id=? AND request_key=?').bind(memberId,key).first<{payload:string}>();return row?JSON.parse(row.payload) as HistoryEvent:null;}
  async create(h:Household){const m=h.members[0];const accountId=m.accountId;if(!accountId)throw new AppError(400,'Eine Crew braucht ein Mitglied mit eigenem Konto.');try{await this.db.batch([this.db.prepare('INSERT INTO households(id,document,revision,updated_at) VALUES(?,?,1,?)').bind(h.id,JSON.stringify(h),h.createdAt),this.db.prepare('INSERT INTO memberships(account_id,household_id,member_id) VALUES(?,?,?)').bind(m.accountId,h.id,m.id)]);}catch(e){if(await this.forAccount(accountId))throw new AppError(409,'Du hast bereits eine Crew. Bitte lade die Seite neu.');throw e;}}
- async mutate<T>(accountId:string,now:Date,fn:(h:Household)=>{result:T;event?:HistoryEvent;removeAccounts?:string[]}, expected?:{householdId:string;memberId:string}){
+ async mutate<T>(accountId:string,now:Date,fn:(h:Household)=>{result:T;event?:HistoryEvent;removeAccounts?:string[]}|Promise<{result:T;event?:HistoryEvent;removeAccounts?:string[]}>, expected?:{householdId:string;memberId:string}){
   const mutationId=crypto.randomUUID();
   for(let attempt=0;attempt<8;attempt++){
    const row=await this.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');
    const h=JSON.parse(row.document) as Household;const actor=member(h,accountId);
    expected??={householdId:h.id,memberId:actor.id};
    if(h.id!==expected.householdId||actor.id!==expected.memberId)throw new AppError(409,'Deine Crew-Mitgliedschaft hat sich geändert. Bitte lade die Seite neu.');
-   normalize(h,now);const change=fn(h);h.lastMutation=mutationId;
+   normalize(h,now);const change=await fn(h);h.lastMutation=mutationId;
    const document=JSON.stringify(h);if(new TextEncoder().encode(document).length>900_000)throw new AppError(409,'Die Crew enthält sehr viele Einträge. Bitte archiviere ältere Aufgaben.');
    const update=this.db.prepare('UPDATE households SET document=?,revision=revision+1,updated_at=? WHERE id=? AND revision=?').bind(document,now.toISOString(),row.id,row.revision);
    const statements=[update];

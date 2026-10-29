@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.3.0
+# Putzonaut · Web-App 0.4.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -23,12 +23,25 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 
 ## Weitere Funktionen
 
-- Einmalige, tägliche und wöchentliche Missionen, Zuständigkeiten und optionale Fälligkeiten.
+- Einmalige, tägliche, wöchentliche und monatliche Missionen; ausgewählte Wochentage und Abstände von 1 bis 12 Wochen.
+- Heute, überfällige Missionen, nächste Termine, erledigte Runden und Pausen; Filter für die aktuelle eigene Zuständigkeit und Räume.
+- Wöchentlicher Zuständigkeitswechsel, Aufgabenpausen, optionale Freigabe für Kinder und nachvollziehbare Rücknahmen.
 - XP, Level, Sterne, dauerhaft freigeschaltete Outfits und gemeinsame Wochenziele.
 - Eigene Wünsche, bestätigtes Einlösen und Markieren erfüllter Belohnungen.
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
 - Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
-- JSON-Export des aktuellen Crewstands (Format 2) mit Profilen, Punkten, Aufgaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
+- JSON-Export des aktuellen Crewstands (Format 3) mit Profilen, Punkten, Aufgaben, offenen Freigaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
+
+## Planung und Punkte in Version 0.4
+
+- Kalender und Wochenwechsel richten sich nach **Europe/Berlin**. Tägliche Runden beginnen um Mitternacht. „Jede Woche“ ist eine Runde von Montag bis Sonntag. Ausgewählte Wochentage und Wochenabstände sind ab ihrem Termin fällig; Monatsangaben wie der 31. fallen in kürzeren Monaten auf den letzten Tag. Das Startdatum begrenzt neue Serien, bei Wochenrunden auf die Startwoche.
+- Pro Aufgabe ist jeweils die jüngste Runde offen. Eine verpasste wiederkehrende Runde bleibt bis zur nächsten Runde überfällig; es entsteht keine unbegrenzte Nachholliste. Einmalige Aufgaben bleiben bis zum Abschluss offen. Bestehende tägliche und wöchentliche Abschlüsse und Punkte bleiben kompatibel; alte optionale Datumsangaben wiederkehrender Aufgaben werden durch deren regulären Rhythmus ersetzt.
+- Bei Rotation zählt die Reihenfolge der gewählten Mitglieder. Beginn ist die Woche, in der eine neue Reihenfolge gespeichert wird; danach wechselt die Zuständigkeit jeden Montag, unabhängig davon, ob eine Mission erledigt wurde. Entfernte Profile scheiden aus der Reihenfolge aus. Der Captain kann weiterhin einspringen. „Meine Aufgaben“ zeigt die aktuelle Einteilung, einschließlich der Vorschau für diese Aufgaben.
+- Pausen gelten pro Aufgabe, ab einem Datum bis **einschließlich** Enddatum oder bis zur manuellen Fortsetzung. Währenddessen sind Abschlüsse gesperrt. Nach einer Pause startet die nächste reguläre Runde; frühere Runden werden übersprungen. Einmalige Aufgaben bleiben erhalten. Bereits verdiente Punkte werden durch Pausen nicht entfernt.
+- Die optionale Kinderfreigabe wird pro Aufgabe aktiviert. Eine Meldung reserviert die Runde, vergibt aber keine Punkte. Begleitperson oder Captain bestätigt oder gibt sie wieder frei; das Kind kann eine offene Meldung zurückziehen. Dazu muss die erwachsene Person in ihr eigenes Profil wechseln. Es handelt sich weiterhin um ein begleitetes Profil auf dem Konto des Erwachsenen. Freigaben zählen zum Wochenziel der **Freigabewoche**. Offene Meldungen älterer Runden bleiben einzeln bearbeitbar; beim Entfernen eines Kinderprofils werden seine offenen Meldungen verworfen.
+- Seit Version 0.4 protokollierte Abschlüsse lassen sich im **Profil → Logbuch** zurücknehmen: eigene Abschlüsse, als Begleitperson die des Kindes, als Captain alle. Freigegebene Kinderabschlüsse können nicht aus der Kinderansicht zurückgenommen werden. XP, Sterne und Zähler werden einmalig korrigiert. Eine Rücknahme einer früheren Woche ändert das aktuelle Wochenziel nicht und öffnet keine spätere bereits erledigte Runde erneut.
+- Bereits eingelöste Wünsche und freigeschaltete Ausrüstung bleiben erhalten. Nach einer Rücknahme kann ein Sternestand deshalb negativ werden; neue Sterne gleichen ihn aus. Weitere Einlösungen benötigen wieder genügend Guthaben. Alte Logbucheinträge vor 0.4 ohne eindeutige Aufgabenreferenz bleiben lesbar, sind aber nicht rücknehmbar.
+- Neue Datenfelder benötigen keine SQL-Migration. Freigaben, Punkte und Logbucheinträge werden zusammen gespeichert; doppelte Rücknahmen sind über einen eindeutigen Ereignisschlüssel abgesichert.
 
 ## Entwicklungsstand und öffentliche Nutzung
 
@@ -53,6 +66,6 @@ npm test
 npm run build
 ```
 
-24 Integrationstests laufen gegen Miniflare D1. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit Version 0.2.
+42 automatisierte Prüfungen: 34 Integrationstests gegen Miniflare D1 und 8 Kalendertests. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel.
 
 Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung; Komponentenansichten lassen sich zusätzlich mit ausdrücklich gekennzeichneten, temporären Beispieldaten prüfen. Solche Prüfseiten werden nicht veröffentlicht. Vollständige Anmeldung auf der veröffentlichten Website und reale Android-/iPhone-Geräte bleiben gesonderte Praxistests.

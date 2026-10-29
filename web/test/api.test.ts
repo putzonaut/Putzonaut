@@ -132,3 +132,67 @@ test('concurrent child creation and guardian departure cannot leave an orphaned 
  const s=await state(owner);for(const m of s.members.filter((m:any)=>m.kind==='child'))assert.ok(s.members.some((g:any)=>g.id===m.guardianId&&g.kind==='account'));
  if(creation.status===200){assert.equal(departure.status,409);assert.ok(s.members.some((m:any)=>m.id===id));}else{assert.ok([403,404].includes(creation.status));assert.equal(departure.status,200);}
 });
+
+test('planned tasks reject early completions, invalid schedules and paused writes',async()=>{
+ const u=await setup(false);const t=await addTask(u,{cadence:'weekdays',schedule:{startDate:'2026-10-29',weekdays:[5]}});assert.equal(t.status,'upcoming');assert.equal((await complete(u,t)).status,409);
+ const tomorrow=new Date('2026-10-30T12:00:00Z'),ready=(await state(u,tomorrow)).tasks[0];assert.equal((await complete(u,ready,tomorrow)).status,200);
+ for(const patch of [{cadence:'weekdays',schedule:{weekdays:[]}},{cadence:'interval',schedule:{intervalWeeks:0,startDate:'2026-10-29'}},{cadence:'monthly',schedule:{monthDay:32}},{schedule:{startDate:'2026-02-30'}}])assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...t,...patch})).status,400);
+ const paused=await addTask(u);assert.equal((await call(u,`/tasks/${paused.id}/pause`,'POST',{from:'2026-10-29',until:'2026-11-04'})).status,200);assert.equal((await complete(u,paused)).status,409);assert.equal((await state(u)).tasks.find((x:any)=>x.id===paused.id).status,'paused');
+ assert.equal((await call(u,`/tasks/${paused.id}/pause`,'POST',{from:'2026-10-28',until:null})).status,400);
+ assert.equal((await call(u,`/tasks/${paused.id}/resume`,'POST',{})).status,200);assert.equal((await complete(u,(await state(u)).tasks.find((x:any)=>x.id===paused.id))).status,200);
+});
+test('weekly rotation controls the permitted member and departure releases their slot',async()=>{
+ const u=await setup(false),a=await join(u,'A'),b=await join(u,'B');const aId=(await state(a)).user.id,bId=(await state(b)).user.id;
+ const t=await addTask(u,{rotationIds:[aId,bId]});assert.equal(t.effectiveAssignedTo,aId);assert.equal((await complete(b,t)).status,403);assert.equal((await complete(a,t)).status,200);
+ const next=new Date('2026-11-02T12:00:00Z'),round=(await state(b,next)).tasks[0];assert.equal(round.effectiveAssignedTo,bId);assert.equal((await complete(a,round,next)).status,403);assert.equal((await complete(b,round,next)).status,200);
+ assert.equal((await call(u,`/members/${bId}`,'DELETE',{},next)).status,200);assert.deepEqual((await state(a,next)).tasks[0].rotationIds,[aId]);
+});
+test('child approval grants points exactly once, rejects unrelated reviewers and cannot be self-approved',async()=>{
+ const u=await setup(false),a=await join(u),unrelated=await join(u),kid=await child(a);const t=await addTask(u,{approvalForChildren:true,assignedTo:kid});
+ const r=await call(a,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey},now,selected(kid));assert.equal(r.body.pending,true);
+ let s=(await call(a,'/state','GET',undefined,now,selected(kid))).body;assert.equal(s.user.stars,0);assert.equal(s.household.weekCount,0);assert.equal(s.tasks[0].status,'pending');const id=s.pendingCompletions[0].id;
+ assert.equal((await call(a,`/completions/${id}/approve`,'POST',{},now,selected(kid))).status,403);assert.equal((await call(unrelated,`/completions/${id}/approve`,'POST',{})).status,403);
+ assert.equal((await state(unrelated)).pendingCompletions.length,0);const other=await setup(false);assert.equal((await call(other,`/completions/${id}/approve`,'POST',{})).status,409);
+ const results=await Promise.all([call(u,`/completions/${id}/approve`,'POST',{}),call(a,`/completions/${id}/approve`,'POST',{})]);assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
+ s=(await call(a,'/state','GET',undefined,now,selected(kid))).body;assert.equal(s.user.stars,t.stars);assert.equal(s.household.weekCount,1);assert.equal(s.pendingCompletions.length,0);
+ const e=(await call(a,'/history')).body.items.find((e:any)=>e.kind==='completion');assert.equal((await call(a,`/completions/${e.id}/undo`,'POST',{},now,selected(kid))).status,403);assert.equal((await call(a,`/completions/${e.id}/undo`,'POST',{})).status,200);assert.equal((await call(a,'/state','GET',undefined,now,selected(kid))).body.user.stars,0);
+});
+test('pending reports can be withdrawn or rejected; approval of an older round preserves the new round',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{approvalForChildren:true});const report=async(date=now)=>{const s=(await call(u,'/state','GET',undefined,date,selected(kid))).body;assert.equal((await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:s.tasks[0].occurrenceKey},date,selected(kid))).status,200);return (await call(u,'/state','GET',undefined,date,selected(kid))).body.pendingCompletions.at(-1).id;};
+ let id=await report();assert.equal((await call(u,`/completions/${id}/withdraw`,'POST',{},now,selected(kid))).status,200);assert.equal((await state(u)).tasks[0].completion,null);
+ id=await report();assert.equal((await call(u,`/completions/${id}/reject`,'POST',{})).status,200);assert.equal((await state(u)).household.weekCount,0);
+ const old=await report(),later=new Date('2026-11-02T12:00:00Z'),fresh=await report(later);assert.equal((await call(u,`/completions/${old}/approve`,'POST',{},later)).status,200);
+ let s=await state(u,later);assert.equal(s.tasks[0].completion.id,fresh);assert.equal(s.tasks[0].status,'pending');assert.equal(s.household.weekCount,1);
+ assert.equal((await call(u,`/completions/${fresh}/approve`,'POST',{},later)).status,200);s=(await call(u,'/state','GET',undefined,later,selected(kid))).body;assert.equal(s.user.xp,2*t.xp);assert.equal(s.household.weekCount,2);
+});
+test('child removal cancels pending reports without granting points or leaving a locked mission',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{approvalForChildren:true});await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey},now,selected(kid));const id=(await state(u)).pendingCompletions[0].id;
+ assert.equal((await call(u,`/members/${kid}`,'DELETE',{})).status,200);const s=await state(u);assert.equal(s.pendingCompletions.length,0);assert.equal(s.tasks[0].completion,null);assert.equal(s.household.weekCount,0);assert.equal((await call(u,`/completions/${id}/approve`,'POST',{})).status,409);
+});
+test('concurrent correction returns progress once, is isolated and permits a fresh completion',async()=>{
+ const u=await setup(false),a=await join(u),other=await setup(false),t=await addTask(u);await complete(u,t);const e=(await call(u,'/history')).body.items.find((e:any)=>e.kind==='completion');
+ assert.equal((await call(a,`/completions/${e.id}/undo`,'POST',{})).status,403);assert.equal((await call(other,`/completions/${e.id}/undo`,'POST',{})).status,404);
+ const results=await Promise.all(Array.from({length:5},()=>call(u,`/completions/${e.id}/undo`,'POST',{})));assert.ok(results.every(r=>r.status===200));
+ let s=await state(u);assert.equal(s.user.xp,0);assert.equal(s.user.stars,0);assert.equal(s.completedCount,0);assert.equal(s.household.weekCount,0);assert.equal(s.tasks[0].completion,null);
+ const log=(await call(u,'/history')).body.items;assert.equal(log.filter((e:any)=>e.kind==='correction').length,1);assert.equal(log.find((x:any)=>x.id===e.id).reversed,true);assert.equal(s.recent.length,0);
+ assert.equal((await complete(u,s.tasks[0])).status,200);assert.equal((await call(u,`/completions/${e.id}/undo`,'POST',{})).status,200);s=await state(u);assert.equal(s.user.xp,t.xp);assert.ok(s.tasks[0].completion);
+});
+test('undo of an old week never clears a newer completion or reduces the current weekly count',async()=>{
+ const u=await setup(false),t=await addTask(u);await complete(u,t);const e=(await call(u,'/history')).body.items[0];const later=new Date('2026-11-02T12:00:00Z');await complete(u,(await state(u,later)).tasks[0],later);
+ assert.equal((await call(u,`/completions/${e.id}/undo`,'POST',{},later)).status,200);const s=await state(u,later);assert.equal(s.user.xp,t.xp);assert.equal(s.completedCount,1);assert.equal(s.household.weekCount,1);assert.equal(s.tasks[0].status,'done');
+});
+test('correction and redemption stay consistent; spent stars can become debt without duplicating charges',async()=>{
+ const u=await setup(false),t=await addTask(u);await complete(u,t);const e=(await call(u,'/history')).body.items[0],reward=(await call(u,'/rewards','POST',{title:'Eis',cost:120,icon:'ice'})).body;
+ const results=await Promise.all([call(u,`/completions/${e.id}/undo`,'POST',{}),call(u,`/rewards/${reward.id}/redeem`,'POST',{requestKey:crypto.randomUUID()})]);assert.equal(results[0].status,200);assert.ok([200,409].includes(results[1].status));
+ let s=await state(u);assert.equal(s.user.stars,results[1].status===200?-120:0);assert.equal(s.redemptions.length,results[1].status===200?1:0);assert.equal((await call(u,`/rewards/${reward.id}/redeem`,'POST',{requestKey:crypto.randomUUID()})).status,409);
+ await complete(u,s.tasks[0]);const latest=(await call(u,'/history')).body.items.find((x:any)=>x.kind==='completion'&&!x.reversed);if(s.user.stars===0)await call(u,`/rewards/${reward.id}/redeem`,'POST',{requestKey:crypto.randomUUID()});
+ assert.equal((await call(u,`/completions/${latest.id}/undo`,'POST',{})).status,200);s=await state(u);assert.equal(s.user.stars,-120);assert.equal(s.redemptions.length,1);
+});
+test('schedule edits retain an already earned round and cannot award duplicate points',async()=>{
+ const u=await setup(false),t=await addTask(u);await complete(u,t);assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...t,cadence:'weekly'})).status,200);const s=await state(u);assert.equal(s.tasks[0].status,'done');assert.equal((await complete(u,s.tasks[0])).status,409);assert.equal(s.user.xp,t.xp);
+});
+test('expired pauses do not accumulate missed rounds when replaced or manually resumed',async()=>{
+ const u=await setup(false),t=await addTask(u,{cadence:'monthly',schedule:{startDate:'2026-10-01',monthDay:30}});await call(u,`/tasks/${t.id}/pause`,'POST',{from:'2026-10-29',until:'2026-11-03'});
+ const later=new Date('2026-11-04T12:00:00Z');let s=await state(u,later);assert.equal(s.tasks[0].status,'upcoming');assert.equal(s.tasks[0].nextDueDate,'2026-11-30');
+ await call(u,`/tasks/${t.id}/resume`,'POST',{},later);s=await state(u,later);assert.equal(s.tasks[0].status,'upcoming');assert.equal(s.tasks[0].nextDueDate,'2026-11-30');assert.equal((await complete(u,s.tasks[0],later)).status,409);
+});

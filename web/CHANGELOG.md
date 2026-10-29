@@ -1,5 +1,17 @@
 # Änderungen
 
+## Web-App 0.4.0 · 29. Oktober 2026
+
+- Kalenderplanung für bestimmte Wochentage, Abstände von 1 bis 12 Wochen und monatliche Termine einschließlich kurzer Monate.
+- Automatisch wechselnde Zuständigkeiten mit frei gewählter Reihenfolge und Montag als Wechseltermin.
+- Heute, überfällige Aufgaben, nächste Termine, erledigte Runden, Pausen und Filter für die eigene Einteilung.
+- Aufgabenpausen mit Enddatum oder manueller Fortsetzung, ohne angesammelte Nachholrunden.
+- Optionale Freigabe für Kinderabschlüsse; bestätigen, wieder öffnen oder Meldung zurückziehen.
+- Rücknahme neuer Abschlüsse im Logbuch mit einmaliger Punktekorrektur; Schutz neuerer Runden und bestehender Einlösungen.
+- Klare Anzeige negativer Sternestände nach Korrekturen bereits ausgegebener Sterne.
+- Exportformat 3 mit offenen Freigaben; bestehende Dokumente bleiben kompatibel.
+- 42 erfolgreiche automatisierte Prüfungen sowie Browserprüfung der Planungskomponenten bei schmaler Darstellung.
+
 ## Web-App 0.3.0 · 29. Oktober 2026
 
 - Dreistufiger Einstieg für Familien, Paare, WGs und Einzelhaushalte; Aufgaben einzeln auswählbar.
