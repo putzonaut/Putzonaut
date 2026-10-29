@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.4.0
+# Putzonaut · Web-App 0.5.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -30,9 +30,20 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 - Eigene Wünsche, bestätigtes Einlösen und Markieren erfüllter Belohnungen.
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
 - Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
-- JSON-Export des aktuellen Crewstands (Format 3) mit Profilen, Punkten, Aufgaben, offenen Freigaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
+- JSON-Export des aktuellen Crewstands (Format 4) mit Profilen, Punkten, Aufgaben, offenen Freigaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
 
-## Planung und Punkte in Version 0.4
+## Raumstation und Motivation in Version 0.5
+
+- Die gemeinsame Raumstation erhält für jede erreichte Zielwoche einen Ausbau: Pflanzenecke, Roboterhelfer, Aussichtskuppel. Eine Woche zählt genau einmal. Änderungen am gemeinsamen Wochenziel gelten ab dem nächsten Montag; der aktuelle Zielwert bleibt bestehen. Rücknahmen korrigieren auch frühere Zielwochen und damit die Station. Frühere Wochen vor Einführung der Station werden nicht rekonstruiert.
+- Der Captain verbindet ein bis fünf verfügbare Aufgaben zu einer Wochenquest. Sobald alle einmal in dieser Woche bestätigt wurden, erhält jedes beteiligte Profil genau **20 Bonussterne**, ohne zusätzliche XP oder Missionszählung. Wiederholte Abschlüsse erzeugen keinen weiteren Bonus für dasselbe Profil in derselben Woche. Bestätigungszeitpunkt und Europe/Berlin bestimmen die Woche; eine verspätete Kinderfreigabe zählt in der Freigabewoche.
+- Bereits bestätigte, eindeutig zuordenbare Abschlüsse derselben Woche zählen beim Anlegen mit. Nach der ersten Bonusvergabe bleibt die Questauswahl für diese Woche fest. Beim optionalen Neustart am Montag entfallen archivierte, die ganze Woche pausierte oder bereits in früheren Wochen erledigte Runden ohne neue Fälligkeit. Teilweise pausierte Aufgaben bleiben wählbar, wenn eine Runde in der Woche möglich ist.
+- Eine Rücknahme berechnet die Quest neu: Wird sie unvollständig, werden ihre Bonussterne bei allen Beteiligten zurückgebucht. Bleibt sie durch andere Abschlüsse vollständig, verliert nur ein nicht mehr beteiligtes Profil seinen Bonus. Erneutes Erfüllen stellt den Bonus wieder her, ohne ihn zu vervielfachen. Bereits eingelöste Wünsche bleiben erhalten; ein negatives Sterneguthaben wird mit späteren Sternen ausgeglichen.
+- Jedes Profil kann einen bestehenden Wunsch als Sparziel anheften. Angezeigt wird das aktuelle Sterneguthaben, kein getrenntes Sparkonto. Änderungen am Wunsch aktualisieren das Ziel; Einlösen oder Archivieren entfernt die Verknüpfung. Familien, Paare, WGs und Einzelhaushalte erhalten jeweils passende, vor dem Anlegen editierbare Wunschvorschläge.
+- Fünf Pflanzenmissionen schalten den grünen Gartenpilot-Anzug frei; 25 bestätigte Missionen den violetten Nebelläufer. Dazu kommen auswählbare Titel und Abzeichen. Gesamtabschlüsse berücksichtigen bestehende Leistungen; Küchen- und Pflanzenzähler starten mit Version 0.5. Einmal erreichte kosmetische Freischaltungen bleiben auch bei späteren Rücknahmen erhalten.
+- Ein persönliches Wochenziel von 1 bis 30 Missionen unterstützt das eigene Tempo, unabhängig vom Crew-Ziel und ohne Extra-Punkte. Beim Erstellen oder Bearbeiten einer Aufgabe schlägt die App XP und Sterne aus Dauer und Aufwand vor. Der Captain übernimmt den Vorschlag ausdrücklich oder setzt eigene Werte.
+- Exportformat 4 enthält zusätzlich Wochenfortschritt, Quests, Freischaltungen und Sparziele. Es ersetzt weiterhin kein vollständiges Backup.
+
+## Planung und Punkte seit Version 0.4
 
 - Kalender und Wochenwechsel richten sich nach **Europe/Berlin**. Tägliche Runden beginnen um Mitternacht. „Jede Woche“ ist eine Runde von Montag bis Sonntag. Ausgewählte Wochentage und Wochenabstände sind ab ihrem Termin fällig; Monatsangaben wie der 31. fallen in kürzeren Monaten auf den letzten Tag. Das Startdatum begrenzt neue Serien, bei Wochenrunden auf die Startwoche.
 - Pro Aufgabe ist jeweils die jüngste Runde offen. Eine verpasste wiederkehrende Runde bleibt bis zur nächsten Runde überfällig; es entsteht keine unbegrenzte Nachholliste. Einmalige Aufgaben bleiben bis zum Abschluss offen. Bestehende tägliche und wöchentliche Abschlüsse und Punkte bleiben kompatibel; alte optionale Datumsangaben wiederkehrender Aufgaben werden durch deren regulären Rhythmus ersetzt.
@@ -66,6 +77,6 @@ npm test
 npm run build
 ```
 
-42 automatisierte Prüfungen: 34 Integrationstests gegen Miniflare D1 und 8 Kalendertests. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel.
+61 automatisierte Prüfungen: 51 Integrationstests gegen Miniflare D1, 8 Kalendertests und 2 Prüfungen für Punktevorschläge und Wunschideen. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen Stationsausbau, Questboni bei gleichzeitigen Aktionen, nachträgliche Korrekturen und Wochenwechsel, Sparziele, Freischaltungen, persönliche Ziele, frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel.
 
 Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung; Komponentenansichten lassen sich zusätzlich mit ausdrücklich gekennzeichneten, temporären Beispieldaten prüfen. Solche Prüfseiten werden nicht veröffentlicht. Vollständige Anmeldung auf der veröffentlichten Website und reale Android-/iPhone-Geräte bleiben gesonderte Praxistests.

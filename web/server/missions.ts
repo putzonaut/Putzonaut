@@ -51,7 +51,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   if(t.completion?.occurrenceKey===p.occurrenceKey)throw new AppError(409,'Diese Runde wurde bereits gemeldet oder erledigt.');
   const pending=user.kind==='child'&&!!t.approvalForChildren;
   if(pending&&(h.pendingCompletions?.length??0)>=200)throw new AppError(409,'Bitte lasst zuerst offene Missionen bestätigen.');
-  const e=event(pending?'submitted':'completion',t.title,{xp:t.xp,stars:t.stars,taskId:t.id,occurrenceKey:p.occurrenceKey,approvalRequired:pending});
+  const e=event(pending?'submitted':'completion',t.title,{xp:t.xp,stars:t.stars,taskId:t.id,occurrenceKey:p.occurrenceKey,approvalRequired:pending,room:t.room,icon:t.icon});
   t.completion={id:e.id,status:pending?'pending':'approved',occurrenceKey:p.occurrenceKey,userId:user.id,user_name:user.name,created_at:now.toISOString(),xp:t.xp,stars:t.stars};
   if(pending){(h.pendingCompletions??=[]).push(e as PendingCompletion);}else{user.xp+=t.xp;user.stars+=t.stars;user.weekCount++;user.completedCount++;}
   return {result:{title:t.title,xp:pending?0:t.xp,stars:pending?0:t.stars,pending},event:e};
@@ -64,7 +64,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   h.pendingCompletions=h.pendingCompletions!.filter(c=>c.id!==id);const t=h.tasks.find(t=>t.id===claim.taskId);
   if(action==='approve'){
    child.xp+=claim.xp;child.stars+=claim.stars;child.weekCount++;child.completedCount++;
-   const e=event('completion',claim.title,{userId:child.id,name:child.name,xp:claim.xp,stars:claim.stars,taskId:claim.taskId,occurrenceKey:claim.occurrenceKey,approvalRequired:true,recordedBy:user.id,recordedByName:user.name});
+   const e=event('completion',claim.title,{userId:child.id,name:child.name,xp:claim.xp,stars:claim.stars,taskId:claim.taskId,occurrenceKey:claim.occurrenceKey,approvalRequired:true,room:claim.room??t?.room,icon:claim.icon??t?.icon,recordedBy:user.id,recordedByName:user.name});
    if(t?.completion?.id===id)t.completion={...t.completion,id:e.id,status:'approved',created_at:now.toISOString()};
    return {result:{ok:true},event:e};
   }
@@ -79,7 +79,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   beneficiary.xp=Math.max(0,beneficiary.xp-(original.xp??0));beneficiary.stars-=original.stars??0;beneficiary.completedCount=Math.max(0,beneficiary.completedCount-1);
   if(weekKey(new Date(original.createdAt))===weekKey(now))beneficiary.weekCount=Math.max(0,beneficiary.weekCount-1);
   const t=h.tasks.find(t=>t.id===original.taskId);if(t?.completion?.id===id)t.completion=null;
-  return {result:{ok:true},event:event('correction',original.title,{userId:beneficiary.id,name:beneficiary.name,xp:-(original.xp??0),stars:-(original.stars??0),requestKey:'undo:'+id,recordedBy:viewer.id,recordedByName:viewer.name})};
+  return {result:{ok:true},event:event('correction',original.title,{userId:beneficiary.id,name:beneficiary.name,xp:-(original.xp??0),stars:-(original.stars??0),requestKey:'undo:'+id,reverses:id,originalCreatedAt:original.createdAt,progressTracked:original.progressTracked,room:original.room,icon:original.icon,recordedBy:viewer.id,recordedByName:viewer.name})};
  }
  throw new AppError(404,'Diese Missionsaktion gibt es nicht.');
 }

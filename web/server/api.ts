@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import {gameChange} from './game.ts';
+import {weekKey} from '../shared/planning.ts';
 import { missionChange } from './missions.ts';
 import { crewChange } from './crew.ts';
 import { TASK_TEMPLATES } from '../shared/setup.ts';
@@ -19,7 +21,7 @@ async function readBody(request:Request){
 export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{now?:()=>Date;development?:boolean}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
-  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.4.0'});}
+  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.5.0'});}
   if(!identity)return json({error:'Bitte melde dich mit deinem ChatGPT-Konto an.'},401);
   if(!['GET','HEAD'].includes(method)){
    const allowed=options.development?url.origin:origin;
@@ -43,10 +45,10 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id};
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
-  if(route==='/state'&&method==='GET')return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));
+  if(route==='/state'&&method==='GET'){if(!h.game?.weeks[weekKey(now)]){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
   if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){
-   admin(actor);const snapshot={format:'putzonaut-export',version:3,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],rewards:h.rewards,redemptions:h.redemptions};
+   admin(actor);const snapshot={format:'putzonaut-export',version:4,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,rewards:h.rewards,redemptions:h.redemptions};
    return new Response(JSON.stringify(snapshot,null,2),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="putzonaut-${now.toISOString().slice(0,10)}.json"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(route==='/invitations'&&method==='GET'){admin(actor);return json({items:h.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString()).map(({hash:_,...i})=>i)});}
@@ -62,6 +64,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const result=await repo.mutate<unknown>(accountId,now,async house=>{
    const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const game=gameChange(route,method,body,house,user,now);if(game)return game;
    const mission=await missionChange(route,method,body,house,user,member(house,accountId),now,repo);if(mission)return mission;
    const crew=crewChange(route,method,body,house,user,now);if(crew)return crew;
    const find=<T extends {id:string}>(items:T[])=>{const item=items.find(i=>i.id===id);if(!item)throw new AppError(404,'Dieser Eintrag wurde nicht gefunden.');return item;};
@@ -69,17 +72,17 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
    if(route==='/profile'&&method==='PATCH'){user.name=z.object({name:nameSchema}).parse(body).name;return {result:{ok:true}};}
    if(route==='/rewards'&&method==='POST'){requireAdmin();if(house.rewards.length>=100)throw new AppError(409,'Bitte archiviere zuerst einen alten Wunsch.');const reward={...rewardSchema.parse(body),id:crypto.randomUUID()};house.rewards.push(reward);return {result:{id:reward.id}};}
    if(/^\/rewards\/[^/]+$/.test(route)&&method==='PATCH'){requireAdmin();Object.assign(find(house.rewards),rewardSchema.parse(body));return {result:{ok:true}};}
-   if(/^\/rewards\/[^/]+$/.test(route)&&method==='DELETE'){requireAdmin();find(house.rewards);house.rewards=house.rewards.filter(r=>r.id!==id);return {result:{ok:true}};}
+   if(/^\/rewards\/[^/]+$/.test(route)&&method==='DELETE'){requireAdmin();find(house.rewards);house.rewards=house.rewards.filter(r=>r.id!==id);house.members.forEach(m=>{if(m.savingRewardId===id)m.savingRewardId=null;});return {result:{ok:true}};}
    if(/^\/rewards\/[^/]+\/redeem$/.test(route)&&method==='POST'){
     const key=z.object({requestKey:z.string().uuid()}).parse(body).requestKey;const previous=house.redemptions.find(r=>r.user_id===user.id&&r.request_key===key);
     if(previous){if(previous.reward_id!==id)throw new AppError(409,'Diese Einlösung gehört zu einem anderen Wunsch.');return {result:previous};}
-    const reward=find(house.rewards);if(user.stars<reward.cost)throw new AppError(409,'Für diesen Wunsch fehlen dir noch Sterne.');user.stars-=reward.cost;
+    const reward=find(house.rewards);if(user.stars<reward.cost)throw new AppError(409,'Für diesen Wunsch fehlen dir noch Sterne.');user.stars-=reward.cost;if(user.savingRewardId===id)user.savingRewardId=null;
     const redemption={id:crypto.randomUUID(),user_id:user.id,reward_id:reward.id,request_key:key,title:reward.title,cost:reward.cost,user_name:user.name,created_at:now.toISOString(),fulfilled_at:null};house.redemptions.unshift(redemption);
     return {result:redemption,event:event('redemption',reward.title,{stars:-reward.cost,rewardId:reward.id,requestKey:key,redemption})};
    }
    if(/^\/redemptions\/[^/]+\/fulfill$/.test(route)&&method==='POST'){requireAdmin();const r=find(house.redemptions);r.fulfilled_at??=now.toISOString();return {result:{ok:true}};}
    if(/^\/outfits\/[^/]+\/equip$/.test(route)&&method==='POST'){
-    const outfit=find(OUTFITS);if(!user.unlocked.includes(outfit.id)){if(Math.floor(user.xp/500)+1<outfit.level)throw new AppError(409,`Diesen Anzug gibt es ab Level ${outfit.level}.`);if(user.stars<outfit.cost)throw new AppError(409,'Dir fehlen noch Sterne für diesen Anzug.');user.stars-=outfit.cost;user.unlocked.push(outfit.id);}user.outfit=outfit.id;return {result:{ok:true}};
+    const outfit=find(OUTFITS);if(outfit.achievement&&!user.achievements?.includes(outfit.achievement))throw new AppError(403,'Erreiche zuerst den Meilenstein für diesen Anzug.');if(!user.unlocked.includes(outfit.id)){if(Math.floor(user.xp/500)+1<outfit.level)throw new AppError(409,`Diesen Anzug gibt es ab Level ${outfit.level}.`);if(user.stars<outfit.cost)throw new AppError(409,'Dir fehlen noch Sterne für diesen Anzug.');user.stars-=outfit.cost;user.unlocked.push(outfit.id);}user.outfit=outfit.id;return {result:{ok:true}};
    }
    if(route==='/household'&&method==='PATCH'){requireAdmin();Object.assign(house,householdSchema.parse(body));return {result:{ok:true}};}
    if(/^\/invitations\/[^/]+$/.test(route)&&method==='DELETE'){requireAdmin();find(house.invites);house.invites=house.invites.filter(i=>i.id!==id);return {result:{ok:true}};}

@@ -1,3 +1,15 @@
+# Changelog
+
+## 0.5.0
+
+- Wachsende gemeinsame Raumstation mit drei illustrierten Ausbauten und dauerhaft gespeicherten Zielwochen.
+- Wochenquests mit automatisch wiederholbarer Aufgabenauswahl und einmalig 20 Bonussternen pro beteiligtem Profil.
+- Transaktionale Bonusvergabe bei parallelen Abschlüssen; korrekte Rücknahmen, Nachmeldungen und Wochenwechsel.
+- Persönliche Sparziele und editierbare Wunschvorschläge für Familien, Paare, WGs und Einzelhaushalte.
+- Zwei neue Astronautenanzüge, sechs Erfolge sowie auswählbare Titel und Abzeichen.
+- Individuelle Wochenziele und übernehmbare Punktevorschläge aus Dauer und Aufwand.
+- Exportformat 4, kompatible Weiterführung bestehender Daten, 61 automatisierte Tests.
+
 # Änderungen
 
 ## Web-App 0.4.0 · 29. Oktober 2026

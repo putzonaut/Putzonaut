@@ -65,9 +65,9 @@ Ein echter Installations- und Update-Test auf Umbrel sowie der Gerätetest auf A
 
 Der Quellcode enthält keine echten Nutzerdaten oder Zugangsdaten. Datenbanksicherungen sind zusätzlich zum Git-Repository notwendig. Für spätere native Apps ist das gleiche Backend vorgesehen; eine Capacitor-Integration wurde noch nicht hinzugefügt.
 
-## Aktuelle Web-App 0.4.0
+## Aktuelle Web-App 0.5.0
 
-Die aktive Webentwicklung liegt in [`web/`](web/README.md): geführter Einstieg für Familien, Paare, WGs und Einzelhaushalte, begleitete Kinderprofile, vollständige Crew-Verwaltung sowie flexible Aufgabenplanung, wechselnde Zuständigkeiten, Aufgabenpausen, Kinderfreigaben und korrigierbare Abschlüsse. Version 0.4 umfasst 42 automatisierte Prüfungen. Punkte, Wünsche und Logbuch bleiben integriert. Die private Entwicklungsveröffentlichung nutzt weiterhin ChatGPT zur Anmeldung; unabhängige Konten und der öffentliche Start folgen später.
+Die aktive Webentwicklung liegt in [`web/`](web/README.md): geführter Einstieg für Familien, Paare, WGs und Einzelhaushalte, begleitete Kinderprofile, vollständige Crew-Verwaltung sowie flexible Aufgabenplanung, wechselnde Zuständigkeiten, Aufgabenpausen, Kinderfreigaben und korrigierbare Abschlüsse. Version 0.5 ergänzt eine ausbaubare Raumstation, Wochenquests mit einmaligen Bonussternen, persönliche Spar- und Wochenziele, zwei neue Anzüge sowie Titel, Abzeichen und Punktevorschläge aus Dauer und Aufwand. 61 automatisierte Prüfungen sichern unter anderem parallele Bonusvergaben, Rücknahmen und Wochenwechsel ab. Punkte, Wünsche und Logbuch bleiben integriert. Die private Entwicklungsveröffentlichung nutzt weiterhin ChatGPT zur Anmeldung; unabhängige Konten und der öffentliche Start folgen später.
 
 Webadresse: https://putzonaut-test.denny-subke.chatgpt.site
 

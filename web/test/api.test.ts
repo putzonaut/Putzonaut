@@ -196,3 +196,105 @@ test('expired pauses do not accumulate missed rounds when replaced or manually r
  const later=new Date('2026-11-04T12:00:00Z');let s=await state(u,later);assert.equal(s.tasks[0].status,'upcoming');assert.equal(s.tasks[0].nextDueDate,'2026-11-30');
  await call(u,`/tasks/${t.id}/resume`,'POST',{},later);s=await state(u,later);assert.equal(s.tasks[0].status,'upcoming');assert.equal(s.tasks[0].nextDueDate,'2026-11-30');assert.equal((await complete(u,s.tasks[0],later)).status,409);
 });
+
+async function startQuest(u:string,tasks:any[],date=now,repeat=true){const s=await state(u,date);return call(u,'/quests','POST',{title:'Küche klar!',taskIds:tasks.map(t=>t.id),weekKey:s.game.station.current.key,repeat},date);}
+async function rewardFor(u:string,cost=150){return (await call(u,'/rewards','POST',{title:'Wunschessen',cost,icon:'meal'})).body;}
+
+test('station migration is durable and read-idempotent without changing existing balances',async()=>{
+ const u=await setup(false);const before=(await repo.forAccount(u))!;const legacy=JSON.parse(before.document);delete legacy.game;legacy.members[0].weekCount=24;legacy.members[0].completedCount=24;legacy.members[0].stars=500;legacy.members[0].xp=960;
+ await repo.db.prepare('UPDATE households SET document=? WHERE id=?').bind(JSON.stringify(legacy),before.id).run();const s=await state(u);assert.equal(s.game.station.wins,1);assert.equal(s.user.stars,500);assert.equal(s.user.xp,960);
+ const after=(await repo.forAccount(u))!;assert.ok(JSON.parse(after.document).game);await state(u);assert.equal((await repo.forAccount(u))!.revision,after.revision);assert.equal(JSON.stringify(s).includes(u),false);
+});
+test('station earns one upgrade per successful week, freezes targets and corrects historical wins',async()=>{
+ const u=await setup(false),t=await addTask(u);assert.equal((await call(u,'/household','PATCH',{name:'Sternencrew',goalTitle:'Filmabend',weekGoal:1})).status,200);
+ let s=await state(u);assert.equal(s.household.weekGoal,24);assert.equal(s.household.nextWeekGoal,1);await complete(u,s.tasks[0]);assert.equal((await state(u)).game.station.wins,0);
+ const dates=['2026-11-02','2026-11-09','2026-11-16'].map(day=>new Date(day+'T12:00:00Z'));let first='';
+ for(let i=0;i<dates.length;i++){s=await state(u,dates[i]);assert.equal(s.household.weekGoal,1);assert.equal((await complete(u,s.tasks[0],dates[i])).status,200);s=await state(u,dates[i]);assert.equal(s.game.station.wins,i+1);assert.equal(s.game.station.stage,i+1);if(i===0)first=s.tasks[0].completion.id;}
+ const later=dates[2];assert.equal((await call(u,`/completions/${first}/undo`,'POST',{},later)).status,200);s=await state(u,later);assert.equal(s.game.station.wins,2);assert.equal(s.household.weekCount,1);assert.equal(s.tasks[0].status,'done');
+ assert.equal((await call(u,`/completions/${first}/undo`,'POST',{},later)).status,200);assert.equal((await state(u,later)).game.station.wins,2);
+});
+test('weekly quests validate role, household, date, unique tasks and this-week availability',async()=>{
+ const u=await setup(false),a=await join(u),kid=await child(u),other=await setup(false);const t=await addTask(u),foreign=await addTask(other),future=await addTask(u,{cadence:'once',dueDate:'2027-03-01'});const body={title:'Quest',weekKey:weekKey(now),taskIds:[t.id]};
+ assert.equal((await call(a,'/quests','POST',body)).status,403);assert.equal((await call(u,'/quests','POST',body,now,selected(kid))).status,403);
+ for(const taskIds of [[],[t.id,t.id],[foreign.id],[future.id]])assert.ok([400,404].includes((await call(u,'/quests','POST',{...body,taskIds})).status));
+ assert.equal((await call(u,'/quests','POST',{...body,weekKey:'2026-10-19'})).status,409);
+ await call(u,`/tasks/${t.id}/pause`,'POST',{from:'2026-10-29',until:null});assert.equal((await startQuest(u,[t])).status,400);
+});
+test('parallel contributions award one quest bonus per contributor and never extra XP or goal counts',async()=>{
+ const u=await setup(false),a=await join(u),t1=await addTask(u),t2=await addTask(u,{title:'Andere Mission'});assert.equal((await startQuest(u,[t1,t2])).status,200);
+ const r=await Promise.all([complete(u,t1),complete(a,t2)]);assert.ok(r.every(x=>x.status===200));let s=await state(u),sa=await state(a);
+ assert.equal(s.user.stars,t1.stars+20);assert.equal(sa.user.stars,t2.stars+20);assert.equal(s.user.xp,t1.xp);assert.equal(s.household.weekCount,2);assert.equal(s.game.quest.doneIds.length,2);assert.equal(s.game.quest.everRewarded,true);
+ const bonuses=(await call(u,'/history')).body.items.flatMap((e:any)=>e.bonusChanges??[]);assert.equal(bonuses.length,2);assert.equal(bonuses.reduce((n:number,b:any)=>n+b.stars,0),40);
+ assert.equal((await startQuest(u,[t1])).status,409);const later=new Date('2026-10-30T12:00:00Z');await complete(u,(await state(u,later)).tasks.find((t:any)=>t.id===t1.id),later);assert.equal((await state(u,later)).user.stars,t1.stars*2+20);
+});
+test('pending children contribute only after approval; their bonus and station contribution are reversible',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{approvalForChildren:true});await startQuest(u,[t]);await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey},now,selected(kid));
+ let s=await state(u);assert.equal(s.game.quest.doneIds.length,0);assert.equal(s.game.station.current.count,0);const id=s.pendingCompletions[0].id;
+ await call(u,`/completions/${id}/approve`,'POST',{});let ks=(await call(u,'/state','GET',undefined,now,selected(kid))).body;assert.equal(ks.user.stars,t.stars+20);assert.equal(ks.game.station.current.count,1);
+ const e=(await call(u,'/history')).body.items.find((e:any)=>e.kind==='completion');await call(u,`/completions/${e.id}/undo`,'POST',{});ks=(await call(u,'/state','GET',undefined,now,selected(kid))).body;assert.equal(ks.user.stars,0);assert.equal(ks.game.quest.doneIds.length,0);
+});
+test('undo removes all bonuses if the quest is incomplete, then restoration nets only one bonus',async()=>{
+ const u=await setup(false),a=await join(u),t1=await addTask(u),t2=await addTask(u);await startQuest(u,[t1,t2]);await complete(u,t1);await complete(a,t2);
+ const original=(await state(u)).tasks.find((t:any)=>t.id===t2.id).completion.id;
+ const undo=await Promise.all([call(u,`/completions/${original}/undo`,'POST',{}),call(a,`/completions/${original}/undo`,'POST',{})]);assert.ok(undo.every(x=>x.status===200));assert.equal((await state(u)).user.stars,t1.stars);assert.equal((await state(a)).user.stars,0);
+ assert.equal((await startQuest(u,[t1])).status,409);await complete(a,(await state(a)).tasks.find((t:any)=>t.id===t2.id));assert.equal((await state(u)).user.stars,t1.stars+20);assert.equal((await state(a)).user.stars,t2.stars+20);
+});
+test('a remaining proof keeps the quest complete while only the no-longer-contributing profile loses its bonus',async()=>{
+ const u=await setup(false),a=await join(u),t=await addTask(u);await startQuest(u,[t]);await complete(u,t);const original=(await state(u)).tasks[0].completion.id;
+ const later=new Date('2026-10-30T12:00:00Z');await complete(a,(await state(a,later)).tasks[0],later);await call(u,`/completions/${original}/undo`,'POST',{},later);
+ const s=await state(u,later);assert.equal(s.game.quest.doneIds.length,1);assert.equal(s.user.stars,0);assert.equal((await state(a,later)).user.stars,t.stars+20);
+});
+test('late approval belongs to the approval week, and old-week corrections do not change new quest credits',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{approvalForChildren:true});await startQuest(u,[t]);await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey},now,selected(kid));const pending=(await state(u)).pendingCompletions[0].id;
+ const next=new Date('2026-11-02T12:00:00Z');await call(u,`/completions/${pending}/approve`,'POST',{},next);let s=(await call(u,'/state','GET',undefined,next,selected(kid))).body;assert.equal(s.user.stars,t.stars+20);assert.equal(s.game.quest.weekKey,'2026-11-02');assert.equal(s.household.weekCount,1);
+ const event=(await call(u,'/history')).body.items.find((e:any)=>e.kind==='completion');const next2=new Date('2026-11-09T12:00:00Z');await complete(u,(await state(u,next2)).tasks[0],next2);await call(u,`/completions/${event.id}/undo`,'POST',{},next2);
+ s=await state(u,next2);assert.equal(s.user.stars,t.stars+20);assert.equal(s.game.quest.doneIds.length,1);assert.equal(s.household.weekCount,1);assert.equal((await call(u,'/state','GET',undefined,next2,selected(kid))).body.user.stars,0);
+});
+test('automatic next-week quests omit archived and fully paused tasks and can be switched off',async()=>{
+ const u=await setup(false),t1=await addTask(u),t2=await addTask(u),t3=await addTask(u);await startQuest(u,[t1,t2,t3]);
+ await call(u,`/tasks/${t2.id}`,'DELETE',{});await call(u,`/tasks/${t3.id}/pause`,'POST',{from:'2026-11-02',until:'2026-11-08'});
+ const next=new Date('2026-11-02T12:00:00Z');const s=await state(u,next);assert.deepEqual(s.game.quest.tasks.map((t:any)=>t.id),[t1.id]);assert.equal(s.game.quest.doneIds.length,0);
+ await call(u,'/quests/repeat','PATCH',{enabled:false},next);assert.equal((await state(u,new Date('2026-11-09T12:00:00Z'))).game.quest,null);
+});
+test('quest setup counts current-week proofs once, including racing setup and completion',async()=>{
+ const u=await setup(false),t=await addTask(u);await complete(u,t);const body={title:'Retro',weekKey:weekKey(now),taskIds:[t.id],repeat:false};const rs=await Promise.all([call(u,'/quests','POST',body),call(u,'/quests','POST',body)]);assert.deepEqual(rs.map(r=>r.status).sort(),[200,409]);assert.equal((await state(u)).user.stars,t.stars+20);
+});
+test('savings targets use the current balance, remain isolated and update when a wish changes',async()=>{
+ const u=await setup(false),a=await join(u),kid=await child(u),other=await setup(false),r=await rewardFor(u),foreign=await rewardFor(other);const t=await addTask(u,{stars:40});await complete(u,t);
+ assert.equal((await call(u,'/profile/goal','PATCH',{rewardId:foreign.id})).status,404);assert.equal((await call(u,'/profile/goal','PATCH',{rewardId:r.id})).status,200);
+ let s=await state(u);assert.equal(s.game.savingGoal.remaining,110);assert.equal(s.game.savingGoal.saved,40);assert.equal((await state(a)).game.savingGoal,null);
+ await call(u,'/profile/goal','PATCH',{rewardId:r.id},now,selected(kid));assert.equal((await call(u,'/state','GET',undefined,now,selected(kid))).body.game.savingGoal.saved,0);
+ await call(u,`/rewards/${r.id}`,'PATCH',{title:'Neuer Wunsch',cost:30,icon:'gift'});s=await state(u);assert.equal(s.game.savingGoal.ready,true);assert.equal(s.game.savingGoal.title,'Neuer Wunsch');assert.equal(s.game.savingGoal.saved,30);
+ await call(u,`/rewards/${r.id}/redeem`,'POST',{requestKey:crypto.randomUUID()});assert.equal((await state(u)).game.savingGoal,null);assert.equal((await call(u,'/state','GET',undefined,now,selected(kid))).body.game.savingGoal.id,r.id);
+ await call(u,`/rewards/${r.id}`,'DELETE',{});assert.equal((await call(u,'/state','GET',undefined,now,selected(kid))).body.game.savingGoal,null);
+});
+test('quest correction with already spent stars preserves redemptions and shows the full saving gap',async()=>{
+ const u=await setup(false),t=await addTask(u,{stars:10});await startQuest(u,[t]);await complete(u,t);const r=await rewardFor(u,25);await call(u,`/rewards/${r.id}/redeem`,'POST',{requestKey:crypto.randomUUID()});const e=(await call(u,'/history')).body.items.find((e:any)=>e.kind==='completion');await call(u,`/completions/${e.id}/undo`,'POST',{});
+ await call(u,'/profile/goal','PATCH',{rewardId:r.id});const s=await state(u);assert.equal(s.user.stars,-25);assert.equal(s.redemptions.length,1);assert.equal(s.game.savingGoal.saved,0);assert.equal(s.game.savingGoal.remaining,50);assert.equal(s.game.savingGoal.ready,false);
+});
+test('new outfits and titles require real achievements; corrections retain cosmetics and fix task statistics',async()=>{
+ const u=await setup(false),t=await addTask(u,{icon:'plant',room:'Küche'});assert.equal((await call(u,'/outfits/garden/equip','POST',{})).status,403);assert.equal((await call(u,'/profile/game','PATCH',{personalGoal:2,titleId:'garden',patchId:'garden'})).status,403);
+ for(let i=0;i<5;i++){const d=new Date(`2026-11-0${i+1}T12:00:00Z`);await complete(u,(await state(u,d)).tasks[0],d);}
+ const date=new Date('2026-11-05T12:00:00Z');let s=await state(u,date);assert.equal(s.game.achievements.find((a:any)=>a.id==='garden').unlocked,true);assert.equal(s.outfits.find((o:any)=>o.id==='garden').unlocked,true);
+ assert.equal((await call(u,'/outfits/garden/equip','POST',{},date)).status,200);assert.equal((await call(u,'/profile/game','PATCH',{personalGoal:4,titleId:'garden',patchId:'garden'},date)).status,200);s=await state(u,date);assert.equal(s.user.title,'Gartenpilot');assert.equal(s.user.patch,'leaf');assert.equal(s.game.personalGoal.target,4);
+ const last=s.tasks[0].completion.id;await call(u,`/tasks/${t.id}`,'PATCH',{...s.tasks[0],icon:'trash',room:'Bad'},date);await call(u,`/completions/${last}/undo`,'POST',{},date);s=await state(u,date);assert.equal(s.game.achievements.find((a:any)=>a.id==='garden').value,4);assert.equal(s.game.achievements.find((a:any)=>a.id==='kitchen').value,4);assert.equal(s.outfits.find((o:any)=>o.id==='garden').unlocked,true);assert.equal(s.user.outfit,'garden');
+});
+test('historical mission counts unlock the new nebula suit without altering XP or spent stars',async()=>{
+ const u=await setup(false);await repo.mutate(u,now,h=>{h.members[0].completedCount=25;h.members[0].xp=1000;h.members[0].stars=7;return {result:null};});const s=await state(u);assert.equal(s.outfits.find((o:any)=>o.id==='nebula').unlocked,true);assert.equal(s.user.stars,7);assert.equal((await call(u,'/outfits/nebula/equip','POST',{})).status,200);assert.equal((await state(u)).user.stars,7);
+});
+test('personal goals and styling apply only to the selected authorized profile and enforce limits',async()=>{
+ const u=await setup(false),kid=await child(u),other=await join(u);const body={personalGoal:1,titleId:null,patchId:null};assert.equal((await call(u,'/profile/game','PATCH',body,now,selected(kid))).status,200);assert.equal((await call(u,'/state','GET',undefined,now,selected(kid))).body.game.personalGoal.target,1);assert.equal((await state(u)).game.personalGoal.target,3);
+ assert.equal((await call(other,'/profile/game','PATCH',body,now,selected(kid))).status,403);for(const n of [0,31,2.5])assert.equal((await call(u,'/profile/game','PATCH',{...body,personalGoal:n})).status,400);assert.equal((await call(u,'/profile/game','PATCH',{...body,titleId:'admin'})).status,403);assert.equal((await state(u)).user.stars,0);
+});
+test('version 0.5 export includes game progress and savings without exposing identity or invitation secrets',async()=>{
+ const u=await setup(false),r=await rewardFor(u),t=await addTask(u);await startQuest(u,[t]);await complete(u,t);await call(u,'/profile/goal','PATCH',{rewardId:r.id});const invite=(await call(u,'/invitations','POST',{})).body.token;const ex=(await call(u,'/export')).body;assert.equal(ex.version,4);assert.ok(ex.game.weeks[weekKey(now)].quest.everRewarded);assert.equal(ex.members[0].savingRewardId,r.id);assert.equal(JSON.stringify(ex).includes(u),false);assert.equal(JSON.stringify(ex).includes(invite.split('.')[1]),false);
+});
+
+test('quest options include partial-week availability but exclude old completed interval rounds',async()=>{
+ const u=await setup(false),partial=await addTask(u),monthly=await addTask(u,{cadence:'monthly',schedule:{startDate:'2026-10-01',monthDay:28}}),interval=await addTask(u,{cadence:'interval',schedule:{startDate:'2026-10-29',intervalWeeks:4}});
+ await complete(u,monthly);await complete(u,interval);
+ await call(u,`/tasks/${partial.id}/pause`,'POST',{from:'2026-10-30',until:'2026-11-08'});
+ const current=(await state(u)).game.questOptions.map((t:any)=>t.id);assert.ok(current.includes(partial.id));assert.ok(current.includes(monthly.id));assert.ok(current.includes(interval.id));
+ const later=new Date('2026-11-02T12:00:00Z');const next=(await state(u,later)).game.questOptions.map((t:any)=>t.id);assert.equal(next.includes(partial.id),false);assert.equal(next.includes(monthly.id),false);assert.equal(next.includes(interval.id),false);
+ assert.equal((await startQuest(u,[monthly],later)).status,400);
+});
