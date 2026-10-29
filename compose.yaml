@@ -1,0 +1,49 @@
+name: putzonaut
+services:
+  app:
+    build: .
+    image: putzonaut:0.1.0
+    restart: unless-stopped
+    init: true
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-3080}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_ORIGIN: ${APP_ORIGIN:?Bitte zuerst npm run configure ausführen}
+      SETUP_TOKEN: ${SETUP_TOKEN:?Bitte zuerst npm run configure ausführen}
+      DATABASE_URL: postgresql://putzonaut:${POSTGRES_PASSWORD:?Bitte zuerst npm run configure ausführen}@db:5432/putzonaut
+      TRUST_PROXY: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+  db:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: putzonaut
+      POSTGRES_USER: putzonaut
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Bitte zuerst npm run configure ausführen}
+    volumes:
+      - putzonaut_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U putzonaut -d putzonaut"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  putzonaut_data:

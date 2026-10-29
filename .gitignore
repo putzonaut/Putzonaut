@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.local/
+.sites-runtime/
+.openai/
+coverage/
+*.log
+artifacts/
+design/masters/
