@@ -1,10 +1,12 @@
-export type User = { id: string; name: string; username: string; role: 'admin' | 'member'; outfit: string; xp: number; stars: number; level: number; levelXp: number; nextLevelXp: number };
+import type { HouseholdKind } from '../shared/setup';
+export type User = { id: string; name: string; kind:'account'|'child';guardianId:string|null; username: string; role: 'admin' | 'member'; outfit: string; xp: number; stars: number; level: number; levelXp: number; nextLevelXp: number };
 export type Task = { id: string; title: string; room: string; icon: string; minutes: number; xp: number; stars: number; cadence: string; occurrenceKey: string; assignedTo?: string|null; assignedName?: string|null; dueDate?: string|null; overdue?:boolean; completion: null | { user_name: string; created_at: string } };
 export type Reward = { id: string; title: string; cost: number; icon: string };
 export type Outfit = { id: string; title: string; cost: number; level: number; unlocked: boolean };
 export type State = {
   user: User;
-  household: { id: string; name: string; goalTitle: string; weekGoal: number; weekCount: number; timezone: string };
+  viewer: User;
+  household: { id: string; name: string; kind:HouseholdKind; goalTitle: string; weekGoal: number; weekCount: number; timezone: string };
   tasks: Task[];
   members: (User & { weekCount: number })[];
   rewards: Reward[];
@@ -15,4 +17,4 @@ export type State = {
   completedCount: number;
 };
 
-export type HistoryItem={id:string;kind:string;name:string;title:string;createdAt:string;xp?:number;stars?:number};
+export type HistoryItem={id:string;kind:string;name:string;title:string;createdAt:string;xp?:number;stars?:number;recordedByName?:string};

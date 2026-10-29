@@ -65,9 +65,9 @@ Ein echter Installations- und Update-Test auf Umbrel sowie der Gerätetest auf A
 
 Der Quellcode enthält keine echten Nutzerdaten oder Zugangsdaten. Datenbanksicherungen sind zusätzlich zum Git-Repository notwendig. Für spätere native Apps ist das gleiche Backend vorgesehen; eine Capacitor-Integration wurde noch nicht hinzugefügt.
 
-## Aktuelle Web-App 0.2.0
+## Aktuelle Web-App 0.3.0
 
-Die aktive Webentwicklung liegt in [`web/`](web/README.md): echte Crew-Konten über ChatGPT, zentrale D1-Datenhaltung, Aufgaben mit Zuständigkeiten und Fälligkeiten, Punkte, Wünsche und Logbuch.
+Die aktive Webentwicklung liegt in [`web/`](web/README.md): geführter Einstieg für Familien, Paare, WGs und Einzelhaushalte, begleitete Kinderprofile, vollständige Crew-Verwaltung, Aufgaben, Punkte, Wünsche und Logbuch. Die private Entwicklungsveröffentlichung nutzt weiterhin ChatGPT zur Anmeldung; unabhängige Konten und der öffentliche Start folgen später.
 
 Webadresse: https://putzonaut-test.denny-subke.chatgpt.site
 

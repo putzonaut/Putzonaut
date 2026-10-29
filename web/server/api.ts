@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { crewChange } from './crew.ts';
+import { TASK_TEMPLATES } from '../shared/setup.ts';
 import { Repository } from './repository.ts';
-import { admin, AppError, digest, householdSchema, member, nameSchema, newHousehold, newMember, occurrenceKey, OUTFITS, randomToken, rewardSchema, taskSchema, view } from './domain.ts';
+import { activeMembers, profile, admin, AppError, digest, householdSchema, member, nameSchema, newHousehold, newMember, occurrenceKey, OUTFITS, randomToken, rewardSchema, taskSchema, view } from './domain.ts';
 import type { HistoryEvent, Household, Member } from './domain.ts';
 
 export type Identity={userId:string;fullName?:string|null};
@@ -16,7 +18,7 @@ async function readBody(request:Request){
 export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{now?:()=>Date;development?:boolean}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
-  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.2.0'});}
+  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.3.0'});}
   if(!identity)return json({error:'Bitte melde dich mit deinem ChatGPT-Konto an.'},401);
   if(!['GET','HEAD'].includes(method)){
    const allowed=options.development?url.origin:origin;
@@ -26,25 +28,31 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   if(route==='/bootstrap'&&method==='GET'){const row=await repo.forAccount(accountId);return json({needsSetup:!row,signedIn:true,suggestedName:identity.fullName?.split(' ')[0]??''});}
   const body=['POST','PATCH','DELETE'].includes(method)?await readBody(request):{};
   if(route==='/auth/setup'&&method==='POST'){
-   const v=z.object({name:nameSchema,householdName:z.string().trim().min(2).max(60),starterTasks:z.boolean().default(true)}).parse(body);
-   const h=newHousehold(accountId,v.name,v.householdName,v.starterTasks,now);await repo.create(h);return json({ok:true},201);
+   const v=z.object({name:nameSchema,householdName:z.string().trim().min(2).max(60),starterTasks:z.boolean().default(true),kind:z.enum(['family','couple','shared','solo']).default('family'),taskTemplates:z.array(z.string().refine(key=>TASK_TEMPLATES.some(t=>t.key===key))).max(6).optional()}).parse(body);
+   const h=newHousehold(accountId,v.name,v.householdName,v.starterTasks,now,v.kind,v.taskTemplates);await repo.create(h);return json({ok:true},201);
+  }
+  if(route==='/auth/invitation'&&method==='POST'){
+   const v=z.object({invite:z.string().regex(/^[0-9a-f-]{36}\.[0-9a-f]{64}$/)}).parse(body);const [id,token]=v.invite.split('.');const row=await repo.byId(id);const house=row?JSON.parse(row.document) as Household:null;const hash=await digest(token);const invite=house?.invites.find(i=>i.hash===hash&&!i.usedAt&&i.expiresAt>now.toISOString());
+   if(!house||house.closedAt||!invite)throw new AppError(410,'Diese Einladung ist ungültig, abgelaufen oder wurde schon benutzt.');
+   return json({name:house.name,kind:house.kind??'family',memberCount:activeMembers(house).length,expiresAt:invite.expiresAt,full:activeMembers(house).length>=12});
   }
   if(route==='/auth/join'&&method==='POST'){
    const v=z.object({name:nameSchema,invite:z.string().regex(/^[0-9a-f-]{36}\.[0-9a-f]{64}$/)}).parse(body);const [householdId,token]=v.invite.split('.');const hash=await digest(token);
-   return json(await repo.join(householdId,accountId,now,h=>{const invitation=h.invites.find(i=>i.hash===hash&&!i.usedAt&&i.expiresAt>now.toISOString());if(!invitation)throw new AppError(410,'Diese Einladung ist abgelaufen oder wurde schon benutzt.');if(h.members.length>=12)throw new AppError(409,'Eure Crew hat bereits zwölf Mitglieder.');const joined=newMember(accountId,v.name,'member',now);h.members.push(joined);invitation.usedAt=now.toISOString();return joined.id;}),201);
+   return json(await repo.join(householdId,accountId,now,h=>{const invitation=h.invites.find(i=>i.hash===hash&&!i.usedAt&&i.expiresAt>now.toISOString());if(!invitation)throw new AppError(410,'Diese Einladung ist abgelaufen oder wurde schon benutzt.');if(activeMembers(h).length>=12)throw new AppError(409,'Eure Crew hat bereits zwölf Mitglieder.');const joined=newMember(accountId,v.name,'member',now);h.members.push(joined);invitation.usedAt=now.toISOString();return joined.id;}),201);
   }
-  const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const actor=member(h,accountId);
-  if(route==='/state'&&method==='GET')return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision));
+  const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id};
+  if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
+  if(route==='/state'&&method==='GET')return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));
   if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){
-   admin(actor);const snapshot={format:'putzonaut-export',version:1,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,rewards:h.rewards,redemptions:h.redemptions};
+   admin(actor);const snapshot={format:'putzonaut-export',version:2,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,rewards:h.rewards,redemptions:h.redemptions};
    return new Response(JSON.stringify(snapshot,null,2),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="putzonaut-${now.toISOString().slice(0,10)}.json"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(route==='/invitations'&&method==='GET'){admin(actor);return json({items:h.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString()).map(({hash:_,...i})=>i)});}
   const id=route.split('/')[2];
   if(route==='/invitations'&&method==='POST'){
    const token=randomToken();const hash=await digest(token);const invitationId=crypto.randomUUID();
-   await repo.mutate(accountId,now,house=>{admin(member(house,accountId));house.invites=house.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString());if(house.invites.length>=10)throw new AppError(409,'Es sind bereits zehn Einladungen offen. Widerrufe zuerst eine alte Einladung.');house.invites.push({id:invitationId,hash,expiresAt:new Date(now.getTime()+7*86400000).toISOString(),usedAt:null});return {result:{ok:true}};});
+   await repo.mutate(accountId,now,house=>{admin(profile(house,accountId,profileId));house.invites=house.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString());if(house.invites.length>=10)throw new AppError(409,'Es sind bereits zehn Einladungen offen. Widerrufe zuerst eine alte Einladung.');house.invites.push({id:invitationId,hash,expiresAt:new Date(now.getTime()+7*86400000).toISOString(),usedAt:null});return {result:{ok:true}};},expected);
    return json({token:`${h.id}.${token}`,expiresInDays:7},201);
   }
   if(/^\/rewards\/[^/]+\/redeem$/.test(route)&&method==='POST'){
@@ -52,10 +60,11 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
    if(existing){if(existing.rewardId!==id)throw new AppError(409,'Diese Einlösung gehört zu einer anderen Belohnung.');return json(existing.redemption);}
   }
   const result=await repo.mutate<unknown>(accountId,now,house=>{
-   const user=member(house,accountId);const requireAdmin=()=>admin(user);
+   const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const crew=crewChange(route,method,body,house,user,now);if(crew)return crew;
    const find=<T extends {id:string}>(items:T[])=>{const item=items.find(i=>i.id===id);if(!item)throw new AppError(404,'Dieser Eintrag wurde nicht gefunden.');return item;};
-   const event=(kind:string,title:string,extra:Partial<HistoryEvent>={}):HistoryEvent=>({id:crypto.randomUUID(),kind,title,userId:user.id,name:user.name,createdAt:now.toISOString(),...extra});
-   const validateTask=(values:z.infer<typeof taskSchema>)=>{if(values.assignedTo&&!house.members.some(m=>m.id===values.assignedTo))throw new AppError(400,'Das gewählte Crewmitglied gibt es nicht.');if(values.dueDate){const d=new Date(`${values.dueDate}T12:00:00Z`);if(!Number.isFinite(d.getTime())||d.toISOString().slice(0,10)!==values.dueDate)throw new AppError(400,'Bitte wähle ein gültiges Datum.');}return values;};
+   const event=(kind:string,title:string,extra:Partial<HistoryEvent>={}):HistoryEvent=>({id:crypto.randomUUID(),kind,title,userId:user.id,name:user.name,createdAt:now.toISOString(),...(user.id!==viewer.id?{recordedBy:viewer.id,recordedByName:viewer.name}:{}),...extra});
+   const validateTask=(values:z.infer<typeof taskSchema>)=>{if(values.assignedTo&&!activeMembers(house).some(m=>m.id===values.assignedTo))throw new AppError(400,'Das gewählte Crewmitglied gibt es nicht.');if(values.dueDate){const d=new Date(`${values.dueDate}T12:00:00Z`);if(!Number.isFinite(d.getTime())||d.toISOString().slice(0,10)!==values.dueDate)throw new AppError(400,'Bitte wähle ein gültiges Datum.');}return values;};
    if(route==='/profile'&&method==='PATCH'){user.name=z.object({name:nameSchema}).parse(body).name;return {result:{ok:true}};}
    if(route==='/tasks'&&method==='POST'){requireAdmin();if(house.tasks.length>=200)throw new AppError(409,'Bitte archiviere zuerst eine alte Mission.');const task={...validateTask(taskSchema.parse(body)),id:crypto.randomUUID(),completion:null};house.tasks.push(task);return {result:{id:task.id}};}
    if(/^\/tasks\/[^/]+$/.test(route)&&method==='PATCH'){requireAdmin();Object.assign(find(house.tasks),validateTask(taskSchema.parse(body)));return {result:{ok:true}};}
@@ -85,7 +94,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
    if(route==='/household'&&method==='PATCH'){requireAdmin();Object.assign(house,householdSchema.parse(body));return {result:{ok:true}};}
    if(/^\/invitations\/[^/]+$/.test(route)&&method==='DELETE'){requireAdmin();find(house.invites);house.invites=house.invites.filter(i=>i.id!==id);return {result:{ok:true}};}
    throw new AppError(404,'Diese Funktion wurde nicht gefunden.');
-  });
+  },expected);
   return json(result);
  }catch(error){
   if(error instanceof AppError)return json({error:error.message},error.status);
