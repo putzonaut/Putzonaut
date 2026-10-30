@@ -5,7 +5,7 @@ import {Miniflare} from 'miniflare';
 import {handleApi} from '../server/api.ts';
 import {Repository} from '../server/repository.ts';
 import {digest} from '../server/domain.ts';
-import {ACHIEVEMENTS,GAME_OUTFITS,nextAchievements,achievementHint} from '../shared/game.ts';
+import {ACHIEVEMENTS,GAME_OUTFITS,SPECIAL_BADGES,specialBadgeArt,nextAchievements,achievementHint} from '../shared/game.ts';
 import {evidenceCategory} from '../shared/categories.ts';
 import {weekKey} from '../shared/planning.ts';
 const origin='https://putzonaut-test.denny-subke.chatgpt.site',now=new Date('2026-10-30T12:00:00Z');
@@ -116,6 +116,7 @@ test('goal hints and ordering reflect actual remaining work and do not suggest c
 });
 
 test('all advertised outfits resolve to distinct real project images and category inference stays conservative',async()=>{
- const files=await readdir(new URL('../public/art',import.meta.url));assert.equal(ACHIEVEMENTS.length,12);assert.equal(GAME_OUTFITS.length,10);for(const o of GAME_OUTFITS)assert.ok(files.includes(`hero-avatar${o.id==='starter'?'':'-'+o.id}.webp`));
+ const files=await readdir(new URL('../public/art',import.meta.url));assert.equal(ACHIEVEMENTS.length,19);assert.equal(GAME_OUTFITS.length,10);for(const o of GAME_OUTFITS)assert.ok(files.includes(`hero-avatar${o.id==='starter'?'':'-'+o.id}.webp`));
+ for(const badge of SPECIAL_BADGES)assert.ok(files.includes(specialBadgeArt(badge.id)!.split('/').pop()!));
  assert.equal(evidenceCategory({title:'Unbekannt',icon:'sparkles',room:'Haushalt'}),undefined);assert.equal(evidenceCategory({icon:'laundry',room:'Bad'}),'laundry');assert.equal(evidenceCategory({category:'pets',icon:'sparkles'}),'pets');
 });

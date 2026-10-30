@@ -1,8 +1,8 @@
 'use client';
 import {useState} from 'react';
 import {ArrowRight,Award,Bath,Bot,Check,ChevronRight,Compass,Crown,Flag,Gift,Leaf,LockKeyhole,Orbit,Plus,Rocket,Shirt,Sparkles,Star,Sun,Target,Telescope,Wrench,X} from 'lucide-react';
-import type {State,Task,Reward} from './types';
-import {nextAchievements,REWARD_IDEAS} from '../shared/game';
+import type {State,Task} from './types';
+import {nextAchievements,specialBadgeArt} from '../shared/game';
 import {displayDay} from './Missions';
 export function Meter({value,max,label}:{value:number;max:number;label:string}){const n=Math.max(0,Math.min(max,value));return <div className="progress" role="progressbar" aria-label={label} aria-valuenow={n} aria-valuemin={0} aria-valuemax={max}><span style={{width:`${max>0?n/max*100:0}%`}}/></div>;}
 const moduleIcons=[Leaf,Bot,Telescope,Wrench,Sun,Rocket];
@@ -26,11 +26,34 @@ export function SavingGoal({state,busy,onOpen,onClear}:{state:State;busy:boolean
 }
 export function PersonalGoal({state,onEdit}:{state:State;onEdit:()=>void}){const g=state.game.personalGoal;return <section className="personal-goal"><Target size={25}/><div><strong>Dein Tempo</strong><p>{g.count>=g.target?'Dein Wochenziel ist geschafft.':`${g.count} von ${g.target} Missionen diese Woche`}</p><Meter value={g.count} max={g.target} label="Dein persönliches Wochenziel"/></div><button className="text-button" aria-label="Persönliches Wochenziel ändern" onClick={onEdit}><ChevronRight size={18}/></button></section>;}
 const badgeIcons={first:Rocket,steady:Star,team:Gift,kitchen:Sparkles,garden:Leaf,nebula:Orbit,dust:Sparkles,hero:Crown,wash:Shirt,shine:Bath,allround:Compass,rhythm:Star};
-export function Achievements({state,busy=false,onStyle,onFocus}:{state:State;busy?:boolean;onStyle:()=>void;onFocus:(id:string|null)=>void}){
- const [all,setAll]=useState(false);const next=nextAchievements(state.game.achievements,state.game.focusAchievementId);
- const visible=all?state.game.achievements:(next.length?next:state.game.achievements.filter(a=>a.unlocked).slice().reverse()).slice(0,3);
- return <><p className="achievement-intro">{all?`${state.game.achievements.filter(a=>a.unlocked).length} von ${state.game.achievements.length} erreicht`:'Deine nächsten Ziele. In deinem Tempo.'}</p><div className="achievement-grid">{visible.map(a=>{const Icon=badgeIcons[a.id];const focused=a.id===state.game.focusAchievementId;return <article className={`achievement ${a.unlocked?'earned':''} ${focused?'focused':''}`} key={a.id}><Icon size={25}/><h3>{a.name}</h3><p>{a.description}</p>{a.unlocked?<span className="achievement-earned"><Check size={13}/>Freigeschaltet</span>:a.applicable?<><Meter value={a.value} max={a.target} label={a.name}/><small>{Math.min(a.value,a.target)} / {a.target}</small></>:<small>Für eine gemeinsame Crew</small>}{(a.title||a.outfit)&&<small className="achievement-reward">{a.outfit?'Neuer Anzug + Titel':'Titel + Abzeichen'}</small>}{!a.unlocked&&a.applicable&&<button className="text-button achievement-focus" disabled={busy} aria-pressed={focused} onClick={()=>onFocus(focused?null:a.id)}>{focused?<><Check size={13}/>Dein Ziel</>:'Als Ziel wählen'}</button>}</article>;})}</div><button className="button secondary collection-toggle" aria-expanded={all} onClick={()=>setAll(!all)}>{all?'Nächste Ziele zeigen':`Alle ${state.game.achievements.length} Meilensteine ansehen`}</button><button className="text-button centered" onClick={onStyle}><Award size={18}/>Titel und Abzeichen wählen</button></>;
+export function Achievements({state,busy=false,onStyle,onFocus,onWear}:{state:State;busy?:boolean;onStyle:()=>void;onFocus:(id:string|null)=>void;onWear:(id:string)=>void}){
+ const [tab,setTab]=useState<'next'|'badges'|'all'>('next');
+ const all=state.game.achievements,next=nextAchievements(all,state.game.focusAchievementId),badges=all.filter(a=>specialBadgeArt(a.id));
+ const visible=tab==='all'?all:tab==='badges'?badges:(next.length?next:all.filter(a=>a.unlocked).slice().reverse()).slice(0,3);
+ return <>
+  <div className="achievement-tabs" role="group" aria-label="Erfolge anzeigen">
+   <button aria-pressed={tab==='next'} onClick={()=>setTab('next')}>Nächste Ziele</button>
+   <button aria-pressed={tab==='badges'} onClick={()=>setTab('badges')}>Abzeichen <span>{badges.length}</span></button>
+   <button aria-pressed={tab==='all'} onClick={()=>setTab('all')}>Alle <span>{all.length}</span></button>
+  </div>
+  <p className="achievement-intro">{tab==='next'?'Deine nächsten Ziele. In deinem Tempo.':tab==='badges'?`${badges.filter(a=>a.unlocked).length} von ${badges.length} besonderen Abzeichen verdient. Zeig deinen Erfolg am Profil.`:`${all.filter(a=>a.unlocked).length} von ${all.length} Erfolgen erreicht.`}</p>
+  <div className="achievement-grid">{visible.map(a=>{
+   const Icon=badgeIcons[a.id as keyof typeof badgeIcons]??Award,art=specialBadgeArt(a.id),focused=a.id===state.game.focusAchievementId,worn=state.user.patchId===a.id;
+   return <article className={`achievement ${art?'special-achievement':''} ${a.unlocked?'earned':''} ${focused?'focused':''}`} key={a.id}>
+    {art?<img className="achievement-art" src={art} alt="" loading="lazy" width="104" height="104"/>:<Icon size={25}/>}
+    <h3>{a.name}</h3><p>{a.description}</p>
+    {a.unlocked?<span className="achievement-earned"><Check size={13}/>Freigeschaltet</span>:a.applicable?<><Meter value={a.value} max={a.target} label={a.name}/><small>{Math.min(a.value,a.target)} / {a.target}</small></>:<small>Für eine gemeinsame Crew</small>}
+    {(a.title||a.outfit)&&<small className="achievement-reward">{a.outfit?'Neuer Anzug + Titel':'Titel + Abzeichen'}</small>}
+    {!a.unlocked&&a.applicable&&<button className="text-button achievement-focus" disabled={busy} aria-pressed={focused} onClick={()=>onFocus(focused?null:a.id)}>{focused?<><Check size={13}/>Dein Ziel</>:'Als Ziel wählen'}</button>}
+    {a.unlocked&&a.patch&&<button className="text-button badge-wear" disabled={busy||worn} onClick={()=>onWear(a.id)}>{worn?<><Check size={13}/>Wird getragen</>:'Abzeichen tragen'}</button>}
+   </article>;
+  })}</div>
+  <button className="text-button centered" onClick={onStyle}><Award size={18}/>Titel und Abzeichen wählen</button>
+ </>;
 }
-export function Patch({name,size=18}:{name?:string|null;size?:number}){const icons={leaf:Leaf,orbit:Orbit,comet:Rocket,dust:Sparkles,crown:Crown,wash:Shirt,shine:Bath,compass:Compass,polar:Star};const Icon=icons[name as keyof typeof icons]??Star;return name?<span className={`profile-patch patch-${name}`}><Icon size={size}/></span>:null;}
+export function Patch({name,size=18}:{name?:string|null;size?:number}){
+ const art=specialBadgeArt(name),icons={leaf:Leaf,orbit:Orbit,comet:Rocket,dust:Sparkles,crown:Crown,wash:Shirt,shine:Bath,compass:Compass,polar:Star};
+ const Icon=icons[name as keyof typeof icons]??Star;
+ return name?<span className={`profile-patch patch-${name} ${art?'illustrated-patch':''}`} aria-hidden="true">{art?<img src={art} alt=""/>:<Icon size={size}/>}</span>:null;
+}
 export function GameSettings({state,busy,onSubmit}:{state:State;busy:boolean;onSubmit:(v:unknown)=>void}){const unlocked=state.game.achievements.filter(a=>a.unlocked);return <><div className="sheet-illustration"><Award size={45}/></div><h2>Dein eigener Kurs</h2><p>Wähle ein Wochenziel, das zu deinem Alltag passt, und zeige deine freigeschalteten Erfolge.</p><form onSubmit={e=>{e.preventDefault();const f=new FormData(e.currentTarget);onSubmit({personalGoal:Number(f.get('personalGoal')),titleId:f.get('titleId')||null,patchId:f.get('patchId')||null});}}><label>Dein Wochenziel<input type="number" name="personalGoal" min={1} max={30} required defaultValue={state.game.personalGoal.target}/></label><p className="game-note">Bestätigte Missionen zählen. Dein persönliches Ziel ist unabhängig vom gemeinsamen Crew-Ziel. Vier erreichte Zielwochen schalten Polarstern frei. Pausen sind erlaubt; frühere Wochen behalten ihr damaliges Ziel. Die Wochenzählung läuft seit {displayDay(state.game.personalGoal.trackedSince.slice(0,10))}.</p><label>Dein Titel<select name="titleId" defaultValue={state.user.titleId||''}><option value="">Ohne Titel</option>{unlocked.filter(a=>a.title).map(a=><option key={a.id} value={a.id}>{a.title}</option>)}</select></label><label>Dein Abzeichen<select name="patchId" defaultValue={state.user.patchId||''}><option value="">Ohne Abzeichen</option>{unlocked.filter(a=>a.patch).map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select></label><button className="button primary" disabled={busy}>Mein Profil speichern</button></form></>;}
-export function RewardIdeas({state,onChoose}:{state:State;onChoose:(r:Reward)=>void}){return <section className="reward-ideas"><div className="section-heading"><h2>Ein bisschen Vorfreude</h2></div><p>Vorschläge für euren Haushalt. Namen und Sterne könnt ihr vor dem Anlegen anpassen.</p><div>{REWARD_IDEAS[state.household.kind].filter(r=>!state.rewards.some(existing=>existing.title===r.title)).map(r=><button key={r.title} onClick={()=>onChoose({id:'',...r})}><Gift size={19}/><span><strong>{r.title}</strong><small>{r.cost} Sterne · Vorschlag</small></span><Plus size={17}/></button>)}</div></section>;}

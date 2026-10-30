@@ -5,6 +5,11 @@ import {ACHIEVEMENTS} from '../shared/game.ts';
 import {weekKey} from '../shared/planning.ts';
 import {ensureProgress,freshQuest,questEligible} from './progress.ts';
 export function gameChange(route:string,method:string,body:unknown,h:Household,user:Member,now:Date):{result:unknown;event?:HistoryEvent}|null{
+ if(route==='/profile/badge'&&method==='PATCH'){
+  const v=z.object({achievementId:z.string().nullable()}).parse(body);
+  if(v.achievementId&&!ACHIEVEMENTS.some(a=>a.id===v.achievementId&&a.patch&&user.achievements?.includes(a.id)))throw new AppError(403,'Dieses Abzeichen hast du noch nicht freigeschaltet.');
+  user.patchId=v.achievementId;return {result:{ok:true}};
+ }
  if(route==='/profile/achievement'&&method==='PATCH'){
   const v=z.object({achievementId:z.string().nullable()}).parse(body);
   const selected=ACHIEVEMENTS.find(a=>a.id===v.achievementId);

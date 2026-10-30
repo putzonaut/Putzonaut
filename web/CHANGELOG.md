@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 · 30. Oktober 2026
+
+- 16 anpassbare Wunschideen je Haushaltsart, insgesamt 64. Drei Vorschläge im Einstieg, vollständige Sammlung mit Suche und Sternefilter; vorhandene Wünsche werden ausgeblendet.
+- Sieben besondere Abzeichen im Putzonaut-Stil: Franz Beckenkehrer, Kehrminator, Jürgen Cleansman, Helene Wischer, George Cleaney, Otto von Wischmark und Roberto Blanko. Alle Motive wurden einzeln illustriert und mit transparentem Rand optimiert.
+- 19 Erfolge insgesamt; Profilansichten für nächste Ziele, besondere Abzeichen und die gesamte Sammlung. Neue Abzeichen lassen sich als nächstes Ziel auswählen und nach der Freischaltung direkt tragen.
+- Vorhandene bestätigte Leistungen zählen mit. Nachträgliche Freischaltungen werden dauerhaft gespeichert; Korrekturen und erforderliche Kinderfreigaben bleiben berücksichtigt. Abzeichen kosten keine Sterne und ändern weder Titel noch Wochenziel oder Anzug.
+- 130 automatisierte Tests; Typprüfung und Build geprüft. Neue Bilder separat geprüft, visuelle Browser- und echte Gerätetests wegen der nicht erreichbaren Vorschau weiterhin offen.
+
 ## 0.8.0 · 30. Oktober 2026
 
 - Zwölf Meilensteine und zehn individuell illustrierte Anzüge. Neu: Staubbezwinger, Haushaltsheld, Waschonaut, Glanzpilot, Allroundonaut und Im Rhythmus.

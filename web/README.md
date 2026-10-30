@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.8.0
+# Putzonaut · Web-App 0.9.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -33,6 +33,27 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
 - Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
 - Vollständige Crew-Sicherung mit Profilen, Punkten, Aufgaben, offenen Freigaben, Wünschen, Raumstation und dem gesamten Logbuch. Wiederherstellung im Profil mit Vorschau und automatischem Rücksprungpunkt; genaue Grenzen unten. Der bisherige Export-Endpunkt (Format 5) bleibt für vorhandene Nutzer verfügbar, ist aber nicht importierbar.
+
+## Wunschideen und besondere Abzeichen in Version 0.9
+
+- 16 anpassbare Wunschideen für jede Haushaltsart (Familie, Paar, WG und solo), insgesamt 64 statt 16. Kleine Wünsche beginnen bei 60 Sternen; größere gemeinsame Erlebnisse reichen bis 500 Sterne. Zunächst erscheinen drei Ideen, die vollständige Auswahl bietet Suche und einen Sternefilter. Bereits vorhandene gleichnamige Wünsche werden ausgeblendet. Eine Auswahl öffnet den bekannten Editor; Name und Sterne bleiben frei anpassbar. Bestehende Wünsche werden nicht verändert oder ungefragt angelegt.
+- Sieben eigenständig illustrierte Abzeichen ergänzen die zwölf bisherigen Meilensteine. Die Namen sind lesbarer Oberflächentext; die transparenten Medaillen zeigen den bestehenden Putzonaut-Charakter mit passenden Kostümen und Werkzeugen.
+- Im Profil wechseln „Nächste Ziele“, „Abzeichen“ und „Alle“ zwischen drei erreichbaren Zielen, den sieben besonderen Abzeichen und allen 19 Erfolgen. Auf der Basis bleibt genau ein nächstes Ziel; auch ein besonderes Abzeichen lässt sich dafür auswählen.
+- Freigeschaltete Abzeichen können unmittelbar auf der Erfolgsseite und in der Sammlung getragen werden. Das ändert nur das Abzeichen und kostet keine Sterne; persönliches Wochenziel, Titel und Anzug bleiben erhalten. Sie erscheinen am Avatar und im Profil.
+
+| Abzeichen | Bestätigte Leistung | Motiv |
+| --- | --- | --- |
+| Franz Beckenkehrer | 20 Missionen der Kategorie Aufräumen | Fußballkapitän mit Krone und Besen |
+| Kehrminator | 150 Missionen insgesamt | Freundlicher silberner Putzcyborg |
+| Jürgen Cleansman | 30 Missionen der Kategorie Küche | Sportlicher Coach mit Schwamm und Fußball |
+| Helene Wischer | 25 Missionen der Kategorie Bad | Violetter Bühnenstar mit Wischmikrofon |
+| George Cleaney | Acht erreichte persönliche Zielwochen | Eleganter Smoking und Poliertuch |
+| Otto von Wischmark | 40 Missionen der Kategorie Haushalt | Verspielter Admiral mit Schnurrbart und Wischstab |
+| Roberto Blanko | 30 Missionen der Kategorie Wäsche | Weißer Showanzug mit Bürstenmikrofon und Schaum |
+
+Bestehende belegte Kategorieleistungen und Gesamtabschlüsse zählen mit. Bereits in 0.8 gespeicherte persönliche Zielwochen zählen ebenfalls; die acht Wochen müssen nicht aufeinanderfolgen. Es werden weiterhin keine unbekannten historischen Wochenziele erfunden. Nachträglich erreichte Abzeichen werden beim Lesen einmalig dauerhaft gespeichert. Kinderleistungen zählen erst nach einer erforderlichen Freigabe. Korrekturen reduzieren den Fortschritt, bereits verdiente Abzeichen bleiben erhalten. Sicherungen übernehmen Abzeichen, Auswahl und Fortschritt ohne neue SQL-Migration.
+
+[Prüfstand 0.9](docs/QA-0.9.md) · [Abzeichengalerie und vollständige Imagegen-Prompts](docs/art-0.9-prompts.md)
 
 ## Meilensteine und Spind in Version 0.8
 
@@ -135,6 +156,6 @@ npm test
 npm run build
 ```
 
-118 automatisierte Prüfungen: 93 Integrationstests gegen Miniflare D1 und 25 Prüfungen für Planung, Auswahlregeln, Vorlagen, Punkte und Projektassets. Die 14 neuen Prüfungen decken vollständige Kategorieübernahme aus alten Logbüchern, vier nicht aufeinanderfolgende Zielwochen, unveränderliche historische Ziele, sechs Stationsstufen, Kategorienvielfalt, Kinderfreigaben, gleichzeitige Abschlüsse, Rücknahmen, Zielauswahl und die Kompatibilität neuer und alter Sicherungen ab. Bestehende Prüfungen für Konto- und Crew-Isolation, Punkte, Wünsche, Kalendergrenzen, Aufgabenplanung, Checklisten, Rollen, Quests und atomare Wiederherstellung bleiben erhalten.
+130 automatisierte Prüfungen: 104 Integrationstests gegen Miniflare D1 und 26 Prüfungen für Planung, Auswahlregeln, Vorlagen, Punkte und Projektassets. Zwölf neue Fälle prüfen alle sieben Freischaltschwellen, kostenlose Abzeichenauswahl, Rücknahmen, Kinderfreigaben und Profilisolation, dauerhafte Übernahme bestehender Leistungen, Sicherungen sowie Suche und Sternefilter der Wunschideen. Die 118 bisherigen Fälle bleiben erhalten; die Prüfung der vorhandenen Bilder umfasst zusätzlich alle sieben neuen Abzeichen.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.8 ließ sich die Vorschau starten, der bereitgestellte Browser erreichte sie jedoch erneut nicht (`ERR_CONNECTION_REFUSED`). Die sechs neuen Rastergrafiken wurden separat visuell geprüft. Die neue Oberfläche ist noch nicht im Browser geprüft. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.9 ließ sich die Vorschau starten, der bereitgestellte Browser erreichte sie jedoch erneut nicht (`ERR_CONNECTION_REFUSED`). Die sieben neuen Abzeichen wurden separat visuell geprüft. Die neue Oberfläche ist noch nicht im Browser geprüft. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.

@@ -2,23 +2,23 @@
 
 **Dein Haushalt. Eure Mission.** Haushaltsaufgaben als gemeinsame Missionen für Familien, Paare, WGs und Einzelhaushalte.
 
-## Aktuelle Web-App 0.8.0
+## Aktuelle Web-App 0.9.0
 
-[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.8.md)
+[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.9.md)
 
-Die aktive Entwicklung liegt in `web/`. Version 0.8 stellt den nächsten kleinen Einsatz in den Mittelpunkt: 5, 10 oder 20 Minuten wählen, eine passende offene Mission finden und loslegen. Die Vorlagenbibliothek umfasst 45 anpassbare Tätigkeiten in sieben Kategorien; beim Einrichten bleibt die Auswahl auf sechs Startervorlagen beschränkt.
+Die aktive Entwicklung liegt in `web/`. Die App stellt den nächsten kleinen Einsatz in den Mittelpunkt: 5, 10 oder 20 Minuten wählen, eine passende offene Mission finden und loslegen. Die Vorlagenbibliothek umfasst 45 anpassbare Tätigkeiten in sieben Kategorien; beim Einrichten bleibt die Auswahl auf sechs Startervorlagen beschränkt.
 
-Version 0.8 ergänzt zwölf Meilensteine, zehn individuell illustrierte Anzüge und sechs Stationsausbauten. Die Basis zeigt genau ein nächstes Ziel. Der Spind trennt eigene Anzüge und noch erreichbare Belohnungen; zunächst sind nur drei nächste Meilensteine sichtbar. Bestätigte historische Leistungen zählen soweit belegbar mit, persönliche Zielwochen werden ab 0.8 gespeichert und dürfen durch Pausen getrennt sein.
+Version 0.9 bietet 19 Erfolge mit sieben neu illustrierten Abzeichen, zehn individuell illustrierte Anzüge und sechs Stationsausbauten. Franz Beckenkehrer, Kehrminator, Jürgen Cleansman, Helene Wischer, George Cleaney, Otto von Wischmark und Roberto Blanko belohnen bestätigte Leistungen. Abzeichen lassen sich direkt tragen. Je Haushaltsart gibt es jetzt 16 anpassbare Wunschideen mit Suche und Sternefilter. [Abzeichengalerie und Prompts](web/docs/art-0.9-prompts.md). Die Basis zeigt genau ein nächstes Ziel. Der Spind trennt eigene Anzüge und noch erreichbare Belohnungen; zunächst sind nur drei nächste Meilensteine sichtbar. Bestätigte historische Leistungen zählen soweit belegbar mit, persönliche Zielwochen werden ab 0.8 gespeichert und dürfen durch Pausen getrennt sein.
 
 Integriert ist eine vollständige Crew-Sicherung einschließlich Logbuch, mit geprüfter Vorschau, atomarer Wiederherstellung und automatischem Rücksprungpunkt. Sie funktioniert in derselben bestehenden Crew bei unveränderten Mitgliedern und Berechtigungen. Konten- und Betreiber-Backups bleiben ein gesonderter Schritt vor der öffentlichen Beta. Die vollständigen Grenzen stehen in der Web-Dokumentation.
 
-Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 118 automatisierte Tests prüfen die Anwendung; die visuelle Prüfung von 0.8 und echte Android-/iPhone-Tests stehen noch aus, weil die bereitgestellte Browser-Vorschau nicht erreichbar war.
+Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 130 automatisierte Tests prüfen die Anwendung; die visuelle Prüfung der Oberfläche von 0.9 und echte Android-/iPhone-Tests stehen noch aus, weil die bereitgestellte Browser-Vorschau nicht erreichbar war.
 
 Die Website bleibt privat und verwendet weiterhin ChatGPT zur Anmeldung. Eine Crew-Einladung ersetzt die Website-Freigabe nicht. Unabhängige Anmeldung, Kontoverwaltung und öffentlicher Start folgen als nächste Phase; Domain, eigener Server und native Apps später.
 
 ## Frühere Docker-/PostgreSQL-Grundlage (0.1.0)
 
-Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.8 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
+Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.9 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
 
 Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. Die Oberfläche verwendet die eigens gestalteten Putzonaut-Illustrationen, selbst gehostete Schriftdateien und echte Bedienelemente.
 

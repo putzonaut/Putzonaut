@@ -20,10 +20,13 @@ export function freshQuest(title:string,tasks:{id:string;title:string}[]):Quest{
 export function achievementValue(m:Member,metric:string,crewSize:number){
  if(metric==='total')return m.completedCount;if(metric==='team')return crewSize;
  if(metric==='kitchen')return m.gameStats?.kitchen??0;if(metric==='plants')return m.gameStats?.plants??0;
- if(metric==='laundry'||metric==='bath')return m.career?.categories[metric]??0;
+ if(metric==='laundry'||metric==='bath'||metric==='tidy'||metric==='household')return m.career?.categories[metric]??0;
+ if(metric==='kitchenCareer')return m.career?.categories.kitchen??0;
  if(metric==='variety')return Object.values(m.career?.categories??{}).filter(n=>n>0).length;
  if(metric==='weeks')return Object.values(m.career?.weeks??{}).filter(w=>w.count>=w.goal).length;return 0;
 }
+/** Persist retroactive awards before a later correction can lower their counters. */
+export function hasUnclaimedAchievements(h:Household){const size=h.members.filter(m=>!m.removedAt).length;return h.members.some(m=>ACHIEVEMENTS.some(a=>!m.achievements?.includes(a.id)&&achievementValue(m,a.metric,size)>=a.target));}
 export function grantAchievements(h:Household){const size=h.members.filter(m=>!m.removedAt).length;for(const m of h.members){m.achievements??=[];for(const a of ACHIEVEMENTS){if(!m.achievements.includes(a.id)&&achievementValue(m,a.metric,size)>=a.target)m.achievements.push(a.id);if(a.outfit&&m.achievements.includes(a.id)&&!m.unlocked.includes(a.outfit))m.unlocked.push(a.outfit);}}}
 export function ensureProgress(h:Household,now:Date){
  ensureCareer(h,now);
