@@ -92,7 +92,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
    return {result:{ok:true},event:e};
   }
   if(t?.completion?.id===id)reopenTask(t,now,h.createdAt);
-  return {result:{ok:true},event:event('rejected',`${claim.title}: ${action==='withdraw'?'Meldung zurückgezogen':'noch einmal prüfen'}`,{userId:child.id,name:child.name,recordedBy:viewer.id,recordedByName:viewer.name})};
+  return {result:{ok:true},event:event('rejected',`${claim.title}: ${action==='withdraw'?'Meldung zurückgezogen':'noch einmal prüfen'}`,{taskId:claim.taskId,occurrenceKey:claim.occurrenceKey,userId:child.id,name:child.name,recordedBy:viewer.id,recordedByName:viewer.name})};
  }
  if(/^\/completions\/[^/]+\/undo$/.test(route)&&method==='POST'){
   const original=await repo.eventById(h.id,id);if(!original)throw new AppError(404,'Dieser Abschluss wurde nicht gefunden.');

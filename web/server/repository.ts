@@ -1,5 +1,6 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import {hydrateCareer} from './career.ts';
+import {updateRounds} from './rounds.ts';
 import {updateProgress} from './progress.ts';
 import {addDays,weekKey} from '../shared/planning.ts';
 import { AppError, member, normalize } from './domain.ts';
@@ -26,7 +27,7 @@ export class Repository{
    const h=JSON.parse(row.document) as Household;const actor=member(h,accountId);
    expected??={householdId:h.id,memberId:actor.id,restoreEpoch:h.restoreEpoch};
    if(h.id!==expected.householdId||actor.id!==expected.memberId||(h.restoreEpoch??'')!==(expected.restoreEpoch??''))throw new AppError(409,'Deine Crew-Mitgliedschaft hat sich geändert. Bitte lade die Seite neu.');
-   await hydrateCareer(h,this,now);normalize(h,now);const before=new Map(h.members.map(m=>[m.id,new Set(m.achievements??[])]));const change=await fn(h);await updateProgress(h,change.event,this,now);
+   await hydrateCareer(h,this,now);normalize(h,now);const before=new Map(h.members.map(m=>[m.id,new Set(m.achievements??[])]));const change=await fn(h);await updateProgress(h,change.event,this,now);updateRounds(h,change.event);
    if(change.event?.kind==='completion'&&change.result&&typeof change.result==='object'){const unlocks=h.members.flatMap(m=>{const achievementIds=(m.achievements??[]).filter(id=>!before.get(m.id)?.has(id));return achievementIds.length?[{userId:m.id,name:m.name,achievementIds}]:[];});Object.assign(change.result,{unlocks});}if(change.event?.bonusChanges?.length&&change.result&&typeof change.result==='object')Object.assign(change.result,{bonusChanges:change.event.bonusChanges});h.lastMutation=mutationId;
    const document=JSON.stringify(h);if(new TextEncoder().encode(document).length>900_000)throw new AppError(409,'Die Crew enthält sehr viele Einträge. Bitte archiviere ältere Aufgaben.');
    const update=this.db.prepare('UPDATE households SET document=?,revision=revision+1,updated_at=? WHERE id=? AND revision=?').bind(document,now.toISOString(),row.id,row.revision);

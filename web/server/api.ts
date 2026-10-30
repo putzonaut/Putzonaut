@@ -5,6 +5,8 @@ import {APP_VERSION} from '../src/version.ts';
 import {areaChange} from './areas.ts';
 import {ensureAreas} from '../shared/workspace.ts';
 import {gameChange} from './game.ts';
+import {roundChange} from './rounds.ts';
+import {crewWishChange} from './crew-wish.ts';
 import {hasUnclaimedAchievements} from './progress.ts';
 import {weekKey} from '../shared/planning.ts';
 import { missionChange } from './missions.ts';
@@ -56,7 +58,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   if(route==='/state'&&method==='GET'){if(!h.areas||!h.game?.weeks[weekKey(now)]||h.members.some(m=>!m.career)||hasUnclaimedAchievements(h)){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
   if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){
-   admin(actor);ensureAreas(h);const snapshot={format:'putzonaut-export',version:5,areas:h.areas,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,rewards:h.rewards,redemptions:h.redemptions};
+   admin(actor);ensureAreas(h);const snapshot={format:'putzonaut-export',version:5,areas:h.areas,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,routines:h.routines??[],crewWish:h.crewWish??null,rewards:h.rewards,redemptions:h.redemptions};
    return new Response(JSON.stringify(snapshot,null,2),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="putzonaut-${now.toISOString().slice(0,10)}.json"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(route==='/invitations'&&method==='GET'){admin(actor);return json({items:h.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString()).map(({hash:_,...i})=>i)});}
@@ -72,6 +74,8 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const result=await repo.mutate<unknown>(accountId,now,async house=>{
    const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const round=roundChange(route,method,body,house,user,now);if(round)return round;
+   const wish=await crewWishChange(route,method,body,house,user,member(house,accountId),now,repo);if(wish)return wish;
    const area=areaChange(route,method,body,house,user);if(area)return area;
    const game=gameChange(route,method,body,house,user,now);if(game)return game;
    const mission=await missionChange(route,method,body,house,user,member(house,accountId),now,repo);if(mission)return mission;

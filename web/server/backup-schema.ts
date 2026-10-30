@@ -16,7 +16,10 @@ const short=z.string().max(400);
 const step=z.object({id,title:z.string().min(1).max(80)}).strict();
 const steps=z.array(step).max(12).refine(s=>new Set(s.map(x=>x.id)).size===s.length);
 const occurrence=z.string().max(20).refine(s=>s==='once'||validDay(s));
+const starChange=z.object({userId:id,name:short,stars:count}).strict();
+const cleaningRound=z.object({id,version:count,title:z.string().min(2).max(60),createdAt:stamp,minutes:z.number().int().min(1).max(540),elapsedMs:z.number().min(0).max(1e13),runningSince:stamp.nullable(),timerEnabled:z.boolean(),finishedAt:stamp.nullable(),entries:z.array(z.object({taskId:id,occurrenceKey:occurrence,title:short,minutes:z.number().int().min(1).max(180),outcome:z.enum(['open','done','pending','crew','skipped']),eventId:id.optional(),xp:count,stars:count}).strict()).min(1).max(3)}).strict().refine(r=>new Set(r.entries.map(e=>e.taskId)).size===r.entries.length&&(!r.runningSince||r.timerEnabled&&!r.finishedAt));
 const person=z.object({
+ animations:z.boolean().optional(),round:cleaningRound.nullable().optional(),
  id,kind:z.enum(['account','child']).optional(),guardianId:id.nullable().optional(),removedAt:stamp.nullable().optional(),
  name:z.string().min(1).max(40),role:z.enum(['admin','member']),xp:count,stars:signedCount,outfit:z.string().max(40),
  unlocked:z.array(z.string().max(40)).max(50),completedCount:count,weekCount:count,joinedAt:stamp,
@@ -26,8 +29,9 @@ const person=z.object({
  titleId:z.string().max(40).nullable().optional(),patchId:z.string().max(40).nullable().optional(),
  achievements:z.array(z.string().max(40)).max(50).optional(),gameStats:z.object({kitchen:count,plants:count}).strict().optional(),
 }).strict();
-const redemption=z.object({id,user_id:id,reward_id:id,request_key:id,title:short,cost:count,user_name:short,created_at:stamp,fulfilled_at:stamp.nullable()}).strict();
+const redemption=z.object({shared:z.boolean().optional(),contributors:z.array(starChange).max(1000).optional(),id,user_id:id,reward_id:id,request_key:id,title:short,cost:count,user_name:short,created_at:stamp,fulfilled_at:stamp.nullable()}).strict();
 const event=z.object({
+ operation:z.string().max(1000).optional(),wishId:id.optional(),starChanges:z.array(starChange).max(1000).optional(),
  id,kind:z.string().min(1).max(40),userId:id,name:short,title:short,createdAt:stamp,
  xp:signedCount.optional(),stars:signedCount.optional(),rewardId:id.optional(),
  requestKey:z.string().max(80).refine(s=>z.string().uuid().safeParse(s).success||/^undo:[0-9a-f-]{36}$/.test(s)).optional(),
@@ -56,6 +60,8 @@ const task=taskSchema.extend({
 const quest=z.object({title:short,tasks:z.array(z.object({id,title:short}).strict()).max(5),doneIds:z.array(id).max(5),contributors:z.array(id).max(1000),everRewarded:z.boolean(),credits:z.record(id,z.boolean())}).strict();
 const game=z.object({since:stamp,weeks:z.record(day,z.object({key:day,goal:z.number().int().min(1).max(500),count,quest:quest.nullable()}).strict()),questTemplate:z.object({title:short,taskIds:z.array(id).max(5)}).strict().nullable()}).strict();
 const crew=z.object({
+ routines:z.array(z.object({id,title:z.string().min(2).max(60),taskIds:z.array(id).min(1).max(3).refine(ids=>new Set(ids).size===ids.length)}).strict()).max(12).optional(),
+ crewWish:rewardSchema.extend({id,contributions:z.record(id,count)}).strict().refine(w=>Object.values(w.contributions).reduce((a,b)=>a+b,0)<=w.cost).nullable().optional(),
  schema:z.literal(1),id,name:z.string().min(2).max(60),kind:z.enum(['family','couple','shared','solo']).optional(),
  goalTitle:z.string().min(2).max(80),weekGoal:z.number().int().min(1).max(500),weekKey:day,timezone:z.literal('Europe/Berlin'),createdAt:stamp,
  members:z.array(person).min(1).max(1000),tasks:z.array(task).max(200),rewards:z.array(rewardSchema.extend({id}).strict()).max(100),
@@ -73,6 +79,8 @@ function checkReferences(data:BackupPayload){
  const h=data.crew,ids=new Set(h.members.map(m=>m.id));
  const unique=(values:string[])=>new Set(values).size===values.length;
  const validMember=(value?:string|null)=>!value||ids.has(value);
+ const redemptions=[...h.redemptions,...data.history.flatMap(e=>e.redemption?[e.redemption]:[])];
+ if(!unique((h.routines??[]).map(r=>r.id))||h.crewWish&&Object.keys(h.crewWish.contributions).some(id=>!h.members.some(m=>m.id===id&&!m.removedAt))||redemptions.some(r=>r.contributors?.some(c=>!validMember(c.userId))||r.shared&&(!r.contributors?.length||!unique(r.contributors.map(c=>c.userId))||r.contributors.reduce((n,c)=>n+c.stars,0)!==r.cost))||data.history.some(e=>e.starChanges?.some(c=>!validMember(c.userId))))throw new AppError(400,'Die gemeinsame Wunschkasse passt nicht zur Crew.');
  if(!unique(h.members.map(x=>x.id))||!unique(h.tasks.map(x=>x.id))||!unique(h.rewards.map(x=>x.id))||!unique(h.redemptions.map(x=>x.id))||!unique((h.areas??[]).map(x=>x.id))||!unique(data.history.map(x=>x.id)))throw new AppError(400,'Die Sicherung enthält doppelte Einträge.');
  if(!h.members.every(m=>validMember(m.guardianId))||!h.tasks.every(t=>validMember(t.assignedTo)&&(t.rotationIds??[]).every(validMember)&&validMember(t.completion?.userId)))throw new AppError(400,'Die Sicherung enthält unbekannte Profile.');
  if(!h.redemptions.every(r=>validMember(r.user_id))||![...data.history,...(h.pendingCompletions??[])].every(e=>validMember(e.userId)&&validMember(e.recordedBy)&&(e.bonusChanges??[]).every(b=>validMember(b.userId))))throw new AppError(400,'Das Logbuch passt nicht zu dieser Crew.');

@@ -1,10 +1,25 @@
-# Putzonaut · Web-App 0.9.0
+# Putzonaut · Web-App 0.10.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Putzrunden und gemeinsame Wünsche in Version 0.10
+
+- **Geführte Putzrunde:** Auf der Basis 5, 10 oder 20 Minuten auswählen. Bis zu drei eigene oder freie offene Missionen passen zusammen in das Zeitbudget. Die Runde zeigt jeweils eine Aufgabe mit der vorhandenen Checkliste, anschließend die nächste und am Ende bestätigte XP, Sterne und den tatsächlichen Stationsfortschritt. Pro Profil bleibt eine laufende oder zuletzt beendete Runde gespeichert. Eine neue Runde ersetzt die vorherige Zusammenfassung.
+- **Optionaler Timer:** Standardmäßig ohne Zeitdruck, auf Wunsch einschaltbar und pausierbar. Der Server speichert Start und verbrauchte Zeit; Tabwechsel oder Neuladen setzen den Timer nicht zurück. Ablauf und Überspringen erledigen keine Aufgabe und vergeben keine Punkte. Eine Runde kann jederzeit beendet werden; übrige Aufgaben bleiben offen.
+- **Routinen:** Unter Missionen → Routinen kann der Captain bis zu zwölf Abläufe mit jeweils ein bis drei vorhandenen Aufgaben in eigener Reihenfolge speichern, bearbeiten oder entfernen. Ideen wie „Küche nach dem Essen“ verwenden vorhandene Missionen. Der manuelle Start nimmt nur aktuell verfügbare eigene oder freie Aufgaben mit. Es gibt keine neuen Aufgaben, zusätzlichen Punkte oder automatischen Abschlüsse.
+- **Raumkarten:** Missionen → Räume zeigt offene Aufgaben, wartende Kinderfreigaben, Pausen, leere Räume und einen aktuell erledigten Plan. Die nächste eigene oder freie Mission lässt sich direkt öffnen. Fremde Zuständigkeiten werden mitgezählt, aber nicht als eigener Einstieg angeboten. Die Karten bilden den Aufgabenplan ab, keine automatisch gemessene Sauberkeit.
+- **Gemeinsamer Wunsch:** Unter Beute startet der Captain einen gemeinsamen Wunsch mit festem Titel und Sternenziel. Jedes Profil kann freiwillig vorhandene Sterne einzahlen und den eigenen Beitrag bis zur Einlösung zurücknehmen. Beiträge werden sofort vom persönlichen Guthaben abgezogen. Bei voller Kasse löst der Captain genau einmal für alle ein, ohne weitere Belastung. Abbrechen erstattet alle Beiträge; gemeinsame Einlösungen sind für die gesamte Crew sichtbar. Persönliche Wünsche bleiben nutzbar.
+- **Kleine Animationen:** Der Putzonaut reagiert beim Start und Abschluss; neue Abzeichen und die Station werden kurz hervorgehoben. Profil → „Kleine Animationen“ schaltet Bewegungen ab. Die Geräteeinstellung „Bewegung reduzieren“ hat Vorrang. Die vier Hauptreiter bleiben Basis, Missionen, Crew und Beute.
+
+Putzrunden speichern die ursprüngliche Aufgabenrunde. Tageswechsel, geänderte Zuständigkeiten, Pausen und Archivierung ersetzen keine Mission unbemerkt. Kinderleistungen zählen erst nach erforderlicher Freigabe; Rücknahmen korrigieren auch die Rundenzusammenfassung. Für abgeschlossene Aufgaben gibt es ausschließlich die bisherigen normalen Punkte und gegebenenfalls bestehende Questboni. Die Zusammenfassung weist die normalen Missionspunkte aus.
+
+Die Wunschkasse und das persönliche Guthaben werden gemeinsam mit dem Logbuch atomar geändert. Wiederholte Anfragen belasten nicht doppelt, parallele Beiträge überfüllen das Ziel nicht, persönliche Ausgaben können dieselben Sterne nicht erneut verwenden. Verlassen oder Entfernen eines Profils erstattet offene Beiträge an dessen bisheriges Profil; sie werden nicht in eine neue Crew übertragen. Auch vollständig zurückgenommene Beiträge hinterlassen keine ungültigen Mitgliedsverweise. Eine Rücknahme einer bereits abgeschlossenen Mission korrigiert das persönliche Guthaben und kann dieses negativ machen; der schon gebuchte Wunschbeitrag bleibt separat erhalten.
+
+Sicherungen enthalten Rundenzustand, Routinen, Bewegungspräferenz, offene Wunschbeiträge, gemeinsame Einlösungen und Buchungen. Alte Sicherungen bleiben gültig. Bestehende Crew-Daten benötigen keine zusätzliche SQL-Migration. Änderungen erfordern weiterhin eine Onlineverbindung. [Prüfstand 0.10](docs/QA-0.10.md).
 
 ## Einstieg
 
@@ -156,6 +171,6 @@ npm test
 npm run build
 ```
 
-130 automatisierte Prüfungen: 104 Integrationstests gegen Miniflare D1 und 26 Prüfungen für Planung, Auswahlregeln, Vorlagen, Punkte und Projektassets. Zwölf neue Fälle prüfen alle sieben Freischaltschwellen, kostenlose Abzeichenauswahl, Rücknahmen, Kinderfreigaben und Profilisolation, dauerhafte Übernahme bestehender Leistungen, Sicherungen sowie Suche und Sternefilter der Wunschideen. Die 118 bisherigen Fälle bleiben erhalten; die Prüfung der vorhandenen Bilder umfasst zusätzlich alle sieben neuen Abzeichen.
+152 automatisierte Prüfungen: 126 Integrationsfälle gegen Miniflare D1 und 26 Prüfungen für Planung, Auswahlregeln, Vorlagen, Punkte und Projektassets. Die 22 neuen Fälle prüfen Putzrunden, Timer, Routinen, Raumzustände, Kinderfreigaben, gemeinsame Wunschbeiträge mit konkurrierenden Zugriffen, Rückerstattungen, Profilgrenzen und Sicherungen. Alle 130 bisherigen Fälle bleiben erhalten.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.9 ließ sich die Vorschau starten, der bereitgestellte Browser erreichte sie jedoch erneut nicht (`ERR_CONNECTION_REFUSED`). Die sieben neuen Abzeichen wurden separat visuell geprüft. Die neue Oberfläche ist noch nicht im Browser geprüft. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.10 meldete die Vorschau einen laufenden Server, der bereitgestellte Browser erreichte die exakte Adresse jedoch nicht (`ERR_CONNECTION_REFUSED`). Die neuen Ansichten und Animationen sind noch nicht visuell im Browser abgenommen. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.0 · 30. Oktober 2026
+
+- Geführte Putzrunden mit bis zu drei Aufgaben innerhalb von insgesamt 5, 10 oder 20 Minuten, optionalem pausierbarem Timer, gespeichertem Stand und Abschlussübersicht.
+- Bis zu zwölf manuell startbare Routinen aus vorhandenen Missionen; Raumkarten mit Aufgabenstatus und direktem Einstieg. Die vier Hauptreiter bleiben erhalten.
+- Gemeinsamer Crew-Wunsch mit freiwilligen Sternenbeiträgen, eigenen Rücknahmen, Erstattung beim Abbruch und einmaliger gemeinsamer Einlösung. Parallele Buchungen und persönliche Sternenausgaben bleiben atomar geschützt.
+- Kleine abschaltbare Putzonaut-, Erfolgs- und Stationsanimationen; Geräteeinstellung für reduzierte Bewegung wird berücksichtigt.
+- Rundenzusammenfassungen berücksichtigen Kinderfreigaben, Rücknahmen, ursprüngliche Termine und archivierte Aufgaben. Neue Daten sind in Sicherungen enthalten; alte Sicherungen bleiben kompatibel.
+- 152 automatisierte Tests, Typprüfung und Produktionsbuild. Browser- und echte Gerätetests bleiben wegen der nicht erreichbaren Vorschau offen.
+
 ## 0.9.0 · 30. Oktober 2026
 
 - 16 anpassbare Wunschideen je Haushaltsart, insgesamt 64. Drei Vorschläge im Einstieg, vollständige Sammlung mit Suche und Sternefilter; vorhandene Wünsche werden ausgeblendet.

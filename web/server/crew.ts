@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import {refundContribution} from './crew-wish.ts';
+import {updateRounds} from './rounds.ts';
+import type {StarChange} from '../shared/crew-wish.ts';
 import { activeMembers, admin, AppError, nameSchema, newMember, reopenTask } from './domain.ts';
 import type { Household, HistoryEvent, Member } from './domain.ts';
 
@@ -8,8 +11,9 @@ export function crewChange(route:string, method:string, body:unknown, h:Househol
  if(actor.kind==='child')throw new AppError(403,'Wechsle für die Crew-Verwaltung zurück zu deinem eigenen Profil.');
  const members=activeMembers(h);
  const target=()=>{const m=members.find(m=>m.id===route.split('/')[2]);if(!m)throw new AppError(404,'Dieses Crewmitglied ist nicht mehr dabei.');return m;};
- const event=(title:string):HistoryEvent=>({id:crypto.randomUUID(),kind:'crew',title,userId:actor.id,name:actor.name,createdAt:now.toISOString()});
- const archive=(m:Member)=>{m.removedAt=now.toISOString();m.accountId=null;for(const task of h.tasks){if(task.assignedTo===m.id)task.assignedTo=null;task.rotationIds=task.rotationIds?.filter(id=>id!==m.id);if(task.completion?.status==='pending'&&task.completion.userId===m.id)reopenTask(task,now,h.createdAt);}h.pendingCompletions=h.pendingCompletions?.filter(c=>c.userId!==m.id);};
+ const refunds:StarChange[]=[];
+ const event=(title:string):HistoryEvent=>({id:crypto.randomUUID(),kind:'crew',title,...(refunds.length?{starChanges:refunds}:{}),userId:actor.id,name:actor.name,createdAt:now.toISOString()});
+ const archive=(m:Member)=>{refunds.push(...refundContribution(h,m));m.round=null;m.removedAt=now.toISOString();m.accountId=null;for(const task of h.tasks){if(task.assignedTo===m.id)task.assignedTo=null;task.rotationIds=task.rotationIds?.filter(id=>id!==m.id);if(task.completion?.status==='pending'&&task.completion.userId===m.id)reopenTask(task,now,h.createdAt);}for(const claim of h.pendingCompletions??[])if(claim.userId===m.id)updateRounds(h,{...claim,kind:'rejected'});h.pendingCompletions=h.pendingCompletions?.filter(c=>c.userId!==m.id);};
  const checkChildren=(m:Member)=>{if(members.some(child=>child.kind==='child'&&child.guardianId===m.id))throw new AppError(409,'Übertrage zuerst die Begleitung der Kinderprofile an ein anderes Mitglied mit eigenem Konto.');};
  if(route==='/children'&&method==='POST'){
   if(members.length>=12)throw new AppError(409,'Eure Crew hat bereits zwölf aktive Mitglieder.');
