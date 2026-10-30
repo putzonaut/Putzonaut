@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0 · 30. Oktober 2026
+
+- Drei neue illustrierte Abzeichen: Harry Putzer für 75 Missionen, Albert Reinstein für je fünf Missionen in fünf frei gewählten Kategorien und Clean Elisabeth für zwölf persönliche Zielwochen. Zehn besondere Abzeichen und weiterhin zwölf getrennte Meilensteine.
+- Bestehende Freischalthürden überwiegend um 12,5–20 % erhöht; Polarstern um eine Woche. Komet kostet 350 Sterne, Sonnenheld benötigt Level 9. Späte Stationsmodule folgen nach 6, 9 und 14 Crew-Zielwochen. Einstieg und Teamgeist bleiben erreichbar.
+- Bereits verdiente Abzeichen, Titel und Anzüge bleiben erhalten. Schon erreichte Stationsmodule behalten beim einmaligen Übergang ihre bisherigen Voraussetzungen; tatsächliche Korrekturen bleiben wirksam. Alte Sicherungen werden unterstützt, keine SQL-Migration.
+- Küche und Pflanzen zählen anhand der bestätigten Tätigkeitskategorie statt Raum oder Symbol. Alberts Detailansicht zeigt die nötigen Kategorieeinsätze; die Galerie bleibt kompakt.
+- 178 automatisierte Tests, Typprüfung und Produktionsbuild. Drei Bildassets visuell geprüft; App-Browserprüfung und echte Android-/iPhone-Tests wegen der nicht erreichbaren Vorschau weiterhin offen.
+
 ## 0.11.0 · 30. Oktober 2026
 
 - „Deine Erfolge“ trennt zwölf kompakte Meilensteine und sieben illustrierte Abzeichen mit eigenen Zählern. „Alle“ entfällt; eine einzelne nächste Zielkarte ersetzt den bisherigen Ziele-Reiter. Details und Tragefunktion öffnen beim Antippen.

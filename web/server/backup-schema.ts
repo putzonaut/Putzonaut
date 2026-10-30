@@ -58,7 +58,7 @@ const task=taskSchema.extend({
  if(new Set(t.rotationIds??[]).size!==(t.rotationIds??[]).length)bad('Doppelte Zuständigkeit');
 });
 const quest=z.object({title:short,tasks:z.array(z.object({id,title:short}).strict()).max(5),doneIds:z.array(id).max(5),contributors:z.array(id).max(1000),everRewarded:z.boolean(),credits:z.record(id,z.boolean())}).strict();
-const game=z.object({since:stamp,weeks:z.record(day,z.object({key:day,goal:z.number().int().min(1).max(500),count,quest:quest.nullable()}).strict()),questTemplate:z.object({title:short,taskIds:z.array(id).max(5)}).strict().nullable()}).strict();
+const game=z.object({legacyStationStage:z.number().int().min(0).max(6).optional(),since:stamp,weeks:z.record(day,z.object({key:day,goal:z.number().int().min(1).max(500),count,quest:quest.nullable()}).strict()),questTemplate:z.object({title:short,taskIds:z.array(id).max(5)}).strict().nullable()}).strict();
 const crew=z.object({
  routines:z.array(z.object({id,title:z.string().min(2).max(60),taskIds:z.array(id).min(1).max(3).refine(ids=>new Set(ids).size===ids.length)}).strict()).max(12).optional(),
  crewWish:rewardSchema.extend({id,contributions:z.record(id,count)}).strict().refine(w=>Object.values(w.contributions).reduce((a,b)=>a+b,0)<=w.cost).nullable().optional(),

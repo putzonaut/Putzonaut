@@ -23,7 +23,7 @@ function metric(s:any,id:string){return s.game.achievements.find((a:any)=>a.id==
 const personal=(n:number)=>({personalGoal:n,titleId:null,patchId:null});
 
 test('legacy migration credits all reliable historical categories, excludes reversals and is durable',async()=>{
- const u=await setup(),h=await seed(u,h=>{delete h.members[0].career;h.members[0].completedCount=100;h.members[0].xp=2500;h.members[0].stars=222;});const m=h.members[0];
+ const u=await setup(),h=await seed(u,h=>{delete h.members[0].career;h.members[0].completedCount=115;h.members[0].xp=2500;h.members[0].stars=222;});const m=h.members[0];
  const events=Array.from({length:61},(_,i)=>({id:crypto.randomUUID(),kind:'completion',userId:m.id,name:m.name,title:'Archived laundry',icon:'laundry',room:'Waschkeller',createdAt:'2026-10-12T12:00:00.000Z',taskId:crypto.randomUUID(),xp:20,stars:5}));
  for(const e of events)await repo.db.prepare('INSERT INTO events(id,household_id,member_id,kind,created_at,payload) VALUES(?,?,?,?,?,?)').bind(e.id,h.id,m.id,e.kind,e.createdAt,JSON.stringify(e)).run();
  const e={id:crypto.randomUUID(),kind:'correction',userId:m.id,name:m.name,title:'Archived laundry',createdAt:now.toISOString(),requestKey:'undo:'+events[0].id,reverses:events[0].id};
@@ -32,34 +32,34 @@ test('legacy migration credits all reliable historical categories, excludes reve
  const revision=(await repo.forAccount(u))!.revision;s=await state(u);assert.equal((await repo.forAccount(u))!.revision,revision);assert.equal(metric(s,'wash').value,60);
 });
 
-test('ten laundry completions unlock once, equip without charge, and corrections retain earned cosmetics',async()=>{
+test('twelve laundry completions unlock once, equip without charge, and corrections retain earned cosmetics',async()=>{
  const u=await setup(),id=await task(u);assert.equal((await call(u,'/outfits/wash/equip','POST',{})).status,403);
  await call(u,'/profile/achievement','PATCH',{achievementId:'wash'});
- let last:any;for(let i=0;i<10;i++){last=await complete(u,id,new Date(now.getTime()+i*86400000));assert.equal(last.status,200);if(i<9)assert.ok(!last.body.unlocks.some((x:any)=>x.achievementIds.includes('wash')));}
- const date=new Date(now.getTime()+9*86400000);assert.ok(last.body.unlocks[0].achievementIds.includes('wash'));let s=await state(u,date);assert.equal(metric(s,'wash').value,10);assert.ok(!nextAchievements(s.game.achievements,s.game.focusAchievementId).some(a=>a.id==='wash'));
- assert.equal((await complete(u,id,date)).status,409);assert.equal((await call(u,'/outfits/wash/equip','POST',{},date)).status,200);assert.equal((await state(u,date)).user.stars,50);
+ let last:any;for(let i=0;i<12;i++){last=await complete(u,id,new Date(now.getTime()+i*86400000));assert.equal(last.status,200);if(i<11)assert.ok(!last.body.unlocks.some((x:any)=>x.achievementIds.includes('wash')));}
+ const date=new Date(now.getTime()+11*86400000);assert.ok(last.body.unlocks[0].achievementIds.includes('wash'));let s=await state(u,date);assert.equal(metric(s,'wash').value,12);assert.ok(!nextAchievements(s.game.achievements,s.game.focusAchievementId).some(a=>a.id==='wash'));
+ assert.equal((await complete(u,id,date)).status,409);assert.equal((await call(u,'/outfits/wash/equip','POST',{},date)).status,200);assert.equal((await state(u,date)).user.stars,60);
  const t=s.tasks[0];await call(u,`/tasks/${id}`,'PATCH',{...t,category:'bath',icon:'bath'},date);await call(u,`/tasks/${id}`,'DELETE',{},date);assert.equal((await call(u,`/completions/${last.body.id}/undo`,'POST',{},date)).status,200);
- s=await state(u,date);assert.equal(metric(s,'wash').value,9);assert.equal(metric(s,'shine').value,0);assert.equal(s.user.outfit,'wash');assert.ok(s.outfits.find((o:any)=>o.id==='wash').unlocked);
- assert.equal((await call(u,`/completions/${last.body.id}/undo`,'POST',{},date)).status,200);assert.equal(metric(await state(u,date),'wash').value,9);
+ s=await state(u,date);assert.equal(metric(s,'wash').value,11);assert.equal(metric(s,'shine').value,0);assert.equal(s.user.outfit,'wash');assert.ok(s.outfits.find((o:any)=>o.id==='wash').unlocked);
+ assert.equal((await call(u,`/completions/${last.body.id}/undo`,'POST',{},date)).status,200);assert.equal(metric(await state(u,date),'wash').value,11);
 });
 
-test('five distinct categories unlock Allroundonaut; repeated categories do not inflate variety',async()=>{
- const u=await setup();for(const category of ['laundry','laundry','bath','kitchen','tidy','pets'])assert.equal((await complete(u,await task(u,category))).status,200);
- const s=await state(u);assert.equal(metric(s,'allround').value,5);assert.equal(metric(s,'wash').value,2);assert.equal(metric(s,'shine').value,1);assert.ok(s.outfits.find((o:any)=>o.id==='allround').unlocked);
+test('six distinct categories unlock Allroundonaut; repeated categories do not inflate variety',async()=>{
+ const u=await setup();for(const category of ['laundry','laundry','bath','kitchen','tidy','household','plants'])assert.equal((await complete(u,await task(u,category))).status,200);
+ const s=await state(u);assert.equal(metric(s,'allround').value,6);assert.equal(metric(s,'wash').value,2);assert.equal(metric(s,'shine').value,1);assert.ok(s.outfits.find((o:any)=>o.id==='allround').unlocked);
  assert.equal((await call(u,'/tasks','POST',{title:'Wrong category',category:'made-up',room:'Haushalt',icon:'laundry',minutes:5,xp:20,stars:5,cadence:'daily'})).status,400);
 });
 
-test('ten bathroom missions unlock Glanzpilot without counting mere room placement',async()=>{
- const u=await setup();await complete(u,await task(u,'laundry',{room:'Bad'}));for(let i=0;i<10;i++)await complete(u,await task(u,'bath'));
- const s=await state(u);assert.equal(metric(s,'shine').value,10);assert.equal(metric(s,'wash').value,1);assert.ok(s.outfits.find((o:any)=>o.id==='shine').unlocked);
+test('twelve bathroom missions unlock Glanzpilot without counting mere room placement',async()=>{
+ const u=await setup();await complete(u,await task(u,'laundry',{room:'Bad'}));for(let i=0;i<12;i++)await complete(u,await task(u,'bath'));
+ const s=await state(u);assert.equal(metric(s,'shine').value,12);assert.equal(metric(s,'wash').value,1);assert.ok(s.outfits.find((o:any)=>o.id==='shine').unlocked);
 });
 
-test('four personal goal weeks need not be consecutive and historical correction updates their count',async()=>{
+test('five personal goal weeks need not be consecutive and historical correction updates their count',async()=>{
  const u=await setup(),id=await task(u);await call(u,'/profile/game','PATCH',personal(1));let first='';
- const dates=['2026-10-30','2026-11-09','2026-11-23','2026-12-07'].map(d=>new Date(d+'T12:00:00Z'));
+ const dates=['2026-10-30','2026-11-09','2026-11-23','2026-12-07','2026-12-21'].map(d=>new Date(d+'T12:00:00Z'));
  for(let i=0;i<dates.length;i++){const r=await complete(u,id,dates[i]);assert.equal(r.status,200);if(i===0)first=r.body.id;assert.equal(metric(await state(u,dates[i]),'rhythm').value,i+1);}
- let s=await state(u,dates[3]);assert.ok(s.outfits.find((o:any)=>o.id==='polar').unlocked);assert.equal((await call(u,`/completions/${first}/undo`,'POST',{},dates[3])).status,200);
- s=await state(u,dates[3]);assert.equal(metric(s,'rhythm').value,3);assert.ok(s.outfits.find((o:any)=>o.id==='polar').unlocked);assert.equal(s.game.personalGoal.count,1);
+ let s=await state(u,dates[4]);assert.ok(s.outfits.find((o:any)=>o.id==='polar').unlocked);assert.equal((await call(u,`/completions/${first}/undo`,'POST',{},dates[4])).status,200);
+ s=await state(u,dates[4]);assert.equal(metric(s,'rhythm').value,4);assert.ok(s.outfits.find((o:any)=>o.id==='polar').unlocked);assert.equal(s.game.personalGoal.count,1);
 });
 
 test('personal goal edits affect only the current week and cannot rewrite previous targets',async()=>{
@@ -71,11 +71,11 @@ test('personal goal edits affect only the current week and cannot rewrite previo
 test('pending children earn categories and unlocks only after approval from their original mission snapshot',async()=>{
  const u=await setup();const kid=(await call(u,'/children','POST',{name:'Mini'})).body.id;assert.ok(kid);const headers={'X-Putzonaut-Profile':kid};
  await call(u,'/profile/achievement','PATCH',{achievementId:'wash'},now,headers);
- for(let i=0;i<10;i++){const id=await task(u,'laundry',{approvalForChildren:true});const submitted=await complete(u,id,now,headers);assert.ok(submitted.body.pending);assert.equal(metric(await state(u,now,headers),'wash').value,i);
+ for(let i=0;i<12;i++){const id=await task(u,'laundry',{approvalForChildren:true});const submitted=await complete(u,id,now,headers);assert.ok(submitted.body.pending);assert.equal(metric(await state(u,now,headers),'wash').value,i);
   const t=(await state(u)).tasks.find((t:any)=>t.id===id);await call(u,`/tasks/${id}`,'PATCH',{...t,category:'bath',icon:'bath'});
-  const approved=await call(u,`/completions/${submitted.body.id}/approve`,'POST',{});assert.equal(approved.status,200);if(i===9){assert.equal(approved.body.unlocks[0].userId,kid);assert.ok(approved.body.unlocks[0].achievementIds.includes('wash'));}
+  const approved=await call(u,`/completions/${submitted.body.id}/approve`,'POST',{});assert.equal(approved.status,200);if(i===11){assert.equal(approved.body.unlocks[0].userId,kid);assert.ok(approved.body.unlocks[0].achievementIds.includes('wash'));}
  }
- const child=await state(u,now,headers);assert.equal(metric(child,'wash').value,10);assert.equal(metric(child,'shine').value,0);assert.equal(metric(await state(u),'wash').value,0);assert.ok(child.outfits.find((o:any)=>o.id==='wash').unlocked);
+ const child=await state(u,now,headers);assert.equal(metric(child,'wash').value,12);assert.equal(metric(child,'shine').value,0);assert.equal(metric(await state(u),'wash').value,0);assert.ok(child.outfits.find((o:any)=>o.id==='wash').unlocked);
 });
 
 test('concurrent writes add each category and personal week completion exactly once',async()=>{
@@ -90,7 +90,7 @@ test('goal selection is per profile, rejects invalid or earned goals, and skips 
 });
 
 test('station stages follow six thresholds and are not confused with the number of successful weeks',async()=>{
- const u=await setup();for(const [wins,stage] of [[0,0],[3,3],[4,3],[5,4],[7,4],[8,5],[11,5],[12,6],[15,6]]){
+ const u=await setup();for(const [wins,stage] of [[0,0],[3,3],[4,3],[5,3],[6,4],[8,4],[9,5],[13,5],[14,6],[15,6]]){
   await seed(u,h=>{h.game.weeks={};for(let i=0;i<wins;i++){const key=weekKey(new Date(Date.UTC(2026,0,5+i*7,12)));h.game.weeks[key]={key,count:1,goal:1,quest:null};}});
   const s=await state(u);assert.equal(s.game.station.stage,stage);assert.equal(s.game.station.modules.filter((m:any)=>m.unlocked).length,stage);
  }
@@ -111,12 +111,12 @@ test('tampered career counters fail schema validation even with a recomputed che
 });
 
 test('goal hints and ordering reflect actual remaining work and do not suggest completed achievements',()=>{
- const wash={...ACHIEVEMENTS.find(a=>a.id==='wash')!,value:8,unlocked:false};assert.equal(achievementHint(wash),'Noch 2 Wäschemissionen bis Waschonaut.');const rhythm={...ACHIEVEMENTS.find(a=>a.id==='rhythm')!,value:3,unlocked:false};assert.match(achievementHint(rhythm),/1 erreichte Zielwoche/);
+ const wash={...ACHIEVEMENTS.find(a=>a.id==='wash')!,value:10,unlocked:false};assert.equal(achievementHint(wash),'Noch 2 Wäschemissionen bis Waschonaut.');const rhythm={...ACHIEVEMENTS.find(a=>a.id==='rhythm')!,value:4,unlocked:false};assert.match(achievementHint(rhythm),/1 erreichte Zielwoche/);
  assert.equal(nextAchievements([wash,rhythm])[0].id,'wash');assert.equal(nextAchievements([wash,rhythm],'rhythm')[0].id,'rhythm');assert.equal(nextAchievements([{...wash,unlocked:true}]).length,0);
 });
 
 test('all advertised outfits resolve to distinct real project images and category inference stays conservative',async()=>{
- const files=await readdir(new URL('../public/art',import.meta.url));assert.equal(ACHIEVEMENTS.length,19);assert.equal(GAME_OUTFITS.length,10);for(const o of GAME_OUTFITS)assert.ok(files.includes(`hero-avatar${o.id==='starter'?'':'-'+o.id}.webp`));
+ const files=await readdir(new URL('../public/art',import.meta.url));assert.equal(ACHIEVEMENTS.length,22);assert.equal(GAME_OUTFITS.length,10);for(const o of GAME_OUTFITS)assert.ok(files.includes(`hero-avatar${o.id==='starter'?'':'-'+o.id}.webp`));
  for(const badge of SPECIAL_BADGES)assert.ok(files.includes(specialBadgeArt(badge.id)!.split('/').pop()!));
  assert.equal(evidenceCategory({title:'Unbekannt',icon:'sparkles',room:'Haushalt'}),undefined);assert.equal(evidenceCategory({icon:'laundry',room:'Bad'}),'laundry');assert.equal(evidenceCategory({category:'pets',icon:'sparkles'}),'pets');
 });

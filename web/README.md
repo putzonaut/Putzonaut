@@ -1,10 +1,22 @@
-# Putzonaut · Web-App 0.11.0
+# Putzonaut · Web-App 0.12.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Neue Abzeichen und feinere Freischaltungen in Version 0.12
+
+**Harry Putzer**, **Albert Reinstein** und **Clean Elisabeth** ergänzen die Sammlung auf zehn besondere Abzeichen. Ihre Motive zeigen den vertrauten Putzonauten als Zauberer, Forscher und königliche Glanzfigur. Harry benötigt 75 bestätigte Missionen, Albert in fünf frei gewählten Kategorien jeweils mindestens fünf bestätigte Missionen, Elisabeth zwölf erreichte persönliche Zielwochen. Alberts Detailansicht zeigt den Stand jeder Kategorie.
+
+Die bisherigen Hürden steigen überwiegend um 12,5–20 %. Polarstern benötigt eine zusätzliche Zielwoche (fünf statt vier); erster Einsatz und Teamgeist bleiben bei einer Mission bzw. zwei Personen. Komet kostet 350 Sterne, Sonnenheld benötigt Level 9. Die späteren Stationsmodule folgen nach sechs, neun und vierzehn Crew-Zielwochen. Bereits verdiente Abzeichen, Titel und Anzüge bleiben erhalten; schon erreichte Stationsmodule behalten ihre alten Voraussetzungen. Korrekturen zählen weiterhin korrekt. Der Übergang und alte Sicherungen werden ohne SQL-Migration unterstützt.
+
+Küchen- und Pflanzenmeilensteine verwenden nun wie die übrigen Kategorieziele die bestätigte Tätigkeitskategorie. Raum und Symbol erzeugen keinen zusätzlichen Fortschritt. Kinderfreigaben, ursprüngliche Kategorien, historische Abschlüsse und archivierte Aufgaben werden berücksichtigt. Die Übersicht bleibt bei zwölf Meilensteinen, einer getrennten Abzeichengalerie, einem nächsten Ziel und den vier Hauptreitern.
+
+[Alle Voraussetzungen und Plausibilitätsprüfung](docs/BALANCE-0.12.md) · [Prüfstand 0.12](docs/QA-0.12.md) · [Drei Motive und vollständige Prompts](docs/art-0.12-prompts.md)
+
+Die folgenden versionsbezogenen Abschnitte beschreiben den jeweiligen früheren Ausbaustand. Für aktuelle Freischalthürden gilt die Tabelle für 0.12.
 
 ## Sammlungen und Statistik in Version 0.11
 
@@ -188,6 +200,6 @@ npm test
 npm run build
 ```
 
-167 automatisierte Prüfungen: 140 Integrationsfälle gegen Miniflare D1 und 27 Prüfungen für gemeinsame Regeln und Projektassets. Die 15 neuen Fälle prüfen die vollständige und überschneidungsfreie Trennung der Sammlungen sowie Statistikgrenzen, Kalenderwechsel, Kinderfreigaben, Rücknahmen, Profilberechtigungen, historische Kategorien und Sicherungen. Alle 152 bisherigen Fälle bleiben erhalten.
+178 automatisierte Prüfungen: 151 Integrationsfälle gegen Miniflare D1 und 27 Prüfungen für gemeinsame Regeln und Projektassets. Neue Fälle prüfen die drei zusätzlichen Abzeichen, genaue Schwellen, Bestandsschutz, eindeutige Kategorien und die Übernahme bestehender Stationen einschließlich Korrekturen und Sicherungen. Bisherige Statistik-, Aufgaben-, Rechte- und Buchungsprüfungen bleiben erhalten.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.11 startete die Vorschau nach Entfernen einer veralteten lokalen Vinext-Sperrdatei; der bereitgestellte Browser erreichte die exakte Adresse weiterhin nicht (`ERR_CONNECTION_REFUSED`). Die getrennten Sammlungen und neuen Diagramme sind noch nicht visuell im Browser abgenommen. Vollständige Anmeldung sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Für 0.12 startet sie, aber der bereitgestellte Browser erreicht die exakte Adresse weiterhin nicht (`ERR_CONNECTION_REFUSED`). Die drei neuen Abzeichenbilder wurden separat visuell geprüft. Die App-Oberfläche sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.

@@ -32,10 +32,11 @@ const metric=(s:any,id:string)=>s.game.achievements.find((a:any)=>a.id===id);
 
 for(const a of SPECIAL_BADGES){
  test(`${a.name}: unlock at the exact confirmed threshold, wear for free, retain after correction`,async()=>{
-  const u=await setup(),category=a.metric==='kitchenCareer'?'kitchen':['total','weeks'].includes(a.metric)?'pets':a.metric,id=await task(u,category);
+  const u=await setup(),category=a.metric==='practisedCategories'?'household':a.metric==='kitchenCareer'?'kitchen':['total','weeks'].includes(a.metric)?'pets':a.metric,id=await task(u,category);
   await seed(u,h=>{
    const m=h.members[0];m.stars=70;
-   if(a.metric==='total')m.completedCount=a.target-1;
+   if(a.metric==='practisedCategories')m.career.categories={kitchen:5,bath:5,laundry:5,tidy:5,household:4};
+   else if(a.metric==='total')m.completedCount=a.target-1;
    else if(a.metric==='weeks'){
     m.personalGoal=3;m.weekCount=2;
     for(let i=1;i<a.target;i++)m.career.weeks[weekKey(new Date(now.getTime()-i*14*86400000))]={count:3,goal:3};
@@ -55,12 +56,12 @@ for(const a of SPECIAL_BADGES){
  });
 }
 
-test('eligible 0.8 careers persist all seven retroactive badges once without changing points or wishes',async()=>{
+test('eligible existing careers persist all ten retroactive badges once without changing points or wishes',async()=>{
  const u=await setup();await call(u,'/rewards','POST',{title:'Mein eigener Wunsch',cost:123,icon:'gift'});
  await seed(u,h=>{
-  const m=h.members[0];m.completedCount=150;m.xp=4000;m.stars=222;
-  m.career.categories={tidy:20,kitchen:30,bath:25,household:40,laundry:30};
-  for(let i=1;i<=8;i++)m.career.weeks[weekKey(new Date(now.getTime()-i*14*86400000))]={count:3,goal:3};
+  const m=h.members[0];m.completedCount=175;m.xp=4000;m.stars=222;
+  m.career.categories={tidy:24,kitchen:35,bath:30,household:45,laundry:35};
+  for(let i=1;i<=12;i++)m.career.weeks[weekKey(new Date(now.getTime()-i*14*86400000))]={count:3,goal:3};
  });
  const s=await state(u),saved=await raw(u);assert.ok(SPECIAL_BADGES.every(a=>metric(s,a.id).unlocked));
  assert.ok(SPECIAL_BADGES.every(a=>saved.members[0].achievements.includes(a.id)));assert.equal(s.user.xp,4000);assert.equal(s.user.stars,222);assert.equal(s.rewards[0].title,'Mein eigener Wunsch');
@@ -70,9 +71,9 @@ test('eligible 0.8 careers persist all seven retroactive badges once without cha
 test('child badges count only after approval and cannot be worn through another profile',async()=>{
  const u=await setup(),child=(await call(u,'/children','POST',{name:'Lio'})).body.id;
  const id=await task(u,'tidy',{assignedTo:child,approvalForChildren:true});
- await seed(u,h=>{h.members.find((m:any)=>m.id===child).career.categories.tidy=19;});
+ await seed(u,h=>{h.members.find((m:any)=>m.id===child).career.categories.tidy=23;});
  const headers={'X-Putzonaut-Profile':child},pending=await complete(u,id,headers);assert.equal(pending.status,200);
- let s=await state(u,headers);assert.equal(metric(s,'franz-beckenkehrer').unlocked,false);assert.equal(metric(s,'franz-beckenkehrer').value,19);
+ let s=await state(u,headers);assert.equal(metric(s,'franz-beckenkehrer').unlocked,false);assert.equal(metric(s,'franz-beckenkehrer').value,23);
  assert.equal((await call(u,'/profile/badge','PATCH',{achievementId:'franz-beckenkehrer'},headers)).status,403);
  const approved=await call(u,`/completions/${pending.body.id}/approve`,'POST',{});assert.equal(approved.status,200);
  assert.ok(approved.body.unlocks.some((x:any)=>x.userId===child&&x.achievementIds.includes('franz-beckenkehrer')));
@@ -82,7 +83,7 @@ test('child badges count only after approval and cannot be worn through another 
 });
 
 test('badge selection keeps title and goal, rejects unknown or non-badge achievements and can be cleared',async()=>{
- const u=await setup();await seed(u,h=>{h.members[0].completedCount=10;});await state(u);
+ const u=await setup();await seed(u,h=>{h.members[0].completedCount=12;});await state(u);
  assert.equal((await call(u,'/profile/game','PATCH',{personalGoal:6,titleId:'steady',patchId:null})).status,200);
  assert.equal((await call(u,'/profile/badge','PATCH',{achievementId:'steady'})).status,200);
  let s=await state(u);assert.equal(s.game.personalGoal.target,6);assert.equal(s.user.titleId,'steady');assert.equal(s.user.patchId,'steady');
@@ -91,11 +92,11 @@ test('badge selection keeps title and goal, rejects unknown or non-badge achieve
 });
 
 test('new badge selection, focus and counters survive a full backup restore',async()=>{
- const u=await setup();await seed(u,h=>{h.members[0].career.categories.tidy=20;});await state(u);
+ const u=await setup();await seed(u,h=>{h.members[0].career.categories.tidy=24;});await state(u);
  await call(u,'/profile/badge','PATCH',{achievementId:'franz-beckenkehrer'});await call(u,'/profile/achievement','PATCH',{achievementId:'kehrminator'});
  const backup=(await call(u,'/backups')).body,preview=(await call(u,'/backups/preview','POST',{backup})).body;
  assert.equal((await call(u,'/backups/restore','POST',{backup,expectedRevision:preview.expectedRevision,confirmation:'Testcrew'})).status,200);
- const s=await state(u);assert.equal(s.user.patchId,'franz-beckenkehrer');assert.equal(s.game.focusAchievementId,'kehrminator');assert.equal(metric(s,'franz-beckenkehrer').value,20);assert.equal(metric(s,'franz-beckenkehrer').unlocked,true);
+ const s=await state(u);assert.equal(s.user.patchId,'franz-beckenkehrer');assert.equal(s.game.focusAchievementId,'kehrminator');assert.equal(metric(s,'franz-beckenkehrer').value,24);assert.equal(metric(s,'franz-beckenkehrer').unlocked,true);
 });
 
 test('wish discovery has balanced valid choices for every household, finds words, filters cost and excludes duplicates',()=>{
@@ -109,7 +110,7 @@ test('wish discovery has balanced valid choices for every household, finds words
  assert.ok(!rewardIdeas('family',[{title:'  WUNSCHESSEN  '}]).some(r=>r.title==='Wunschessen'));
  assert.ok(rewardIdeas('solo',[],'','small').every(r=>r.cost<=120));assert.ok(rewardIdeas('solo',[],'','medium').every(r=>r.cost>120&&r.cost<=250));assert.ok(rewardIdeas('solo',[],'','large').every(r=>r.cost>250));
  assert.deepEqual(rewardIdeas('family',[],'unauffindbarer Wunsch'),[]);
- assert.match(achievementHint({...SPECIAL_BADGES[0],value:19,unlocked:false}),/1 Aufräummission/);
- assert.match(achievementHint({...SPECIAL_BADGES[2],value:29,unlocked:false}),/1 Küchenmission/);
- assert.match(achievementHint({...SPECIAL_BADGES[5],value:39,unlocked:false}),/1 Mission in der Kategorie Haushalt/);
+ assert.match(achievementHint({...SPECIAL_BADGES[0],value:23,unlocked:false}),/1 Aufräummission/);
+ assert.match(achievementHint({...SPECIAL_BADGES[2],value:34,unlocked:false}),/1 Küchenmission/);
+ assert.match(achievementHint({...SPECIAL_BADGES[5],value:44,unlocked:false}),/1 Mission in der Kategorie Haushalt/);
 });
