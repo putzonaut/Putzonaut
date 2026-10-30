@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 · 30. Oktober 2026
+
+- „Deine Erfolge“ trennt zwölf kompakte Meilensteine und sieben illustrierte Abzeichen mit eigenen Zählern. „Alle“ entfällt; eine einzelne nächste Zielkarte ersetzt den bisherigen Ziele-Reiter. Details und Tragefunktion öffnen beim Antippen.
+- Neuer Profileintrag „Deine Statistik“ mit Kennzahlen für 7, 30 und 90 Tage, interaktiven Balken- und Ringdiagrammen, auslesbarer Wertetabelle sowie einem Wochenzielvergleich über sechs Wochen.
+- Statistik aus bestätigten Logbuchabschlüssen, einschließlich archivierter Aufgaben und korrekter Rücknahmen. Kinderleistungen zählen ab Freigabe; unbekannte Kategorien und fehlende historische Ziele bleiben ausdrücklich erkennbar.
+- Persönliche Profilgrenzen, konsistente Datenbanklesungen, Zeitumstellungen und Wiederherstellung berücksichtigt. Keine zusätzlichen Trackingdaten, Datenbankmigrationen oder Diagrammabhängigkeiten.
+- 167 automatisierte Prüfungen, Typprüfung und Produktionsbuild. Visuelle Browserprüfung und reale Android-/iPhone-Tests wegen der nicht erreichbaren Vorschau weiterhin offen.
+
 ## 0.10.0 · 30. Oktober 2026
 
 - Geführte Putzrunden mit bis zu drei Aufgaben innerhalb von insgesamt 5, 10 oder 20 Minuten, optionalem pausierbarem Timer, gespeichertem Stand und Abschlussübersicht.

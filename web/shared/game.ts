@@ -21,6 +21,7 @@ export const SPECIAL_BADGES=[
  {id:'roberto-blanko',name:'Roberto Blanko',description:'30 bestätigte Missionen in der Kategorie Wäsche.',target:30,metric:'laundry',title:'Roberto Blanko',patch:'roberto-blanko',outfit:null},
 ] as const;
 export function specialBadgeArt(id?:string|null){return SPECIAL_BADGES.some(a=>a.id===id)?`/art/badge-${id}.webp`:null;}
+export function achievementCollections<T extends {id:string}>(items:T[]){const ids=new Set<string>(SPECIAL_BADGES.map(a=>a.id));return {milestones:items.filter(a=>!ids.has(a.id)),badges:items.filter(a=>ids.has(a.id))};}
 export const ACHIEVEMENTS=[
  {id:'first',name:'Erster Einsatz',description:'Eine bestätigte Mission.',target:1,metric:'total',title:null,patch:null,outfit:null},
  {id:'steady',name:'Dranbleiber',description:'Zehn bestätigte Missionen.',target:10,metric:'total',title:'Sternensammler',patch:'star',outfit:null},

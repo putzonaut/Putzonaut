@@ -2,7 +2,7 @@
 import {useState} from 'react';
 import {ArrowRight,Award,Bath,Bot,Check,ChevronRight,Compass,Crown,Flag,Gift,Leaf,LockKeyhole,Orbit,Plus,Rocket,Shirt,Sparkles,Star,Sun,Target,Telescope,Wrench,X} from 'lucide-react';
 import type {State,Task} from './types';
-import {nextAchievements,specialBadgeArt} from '../shared/game';
+import {achievementCollections,achievementHint,nextAchievements,specialBadgeArt} from '../shared/game';
 import {displayDay} from './Missions';
 export function Meter({value,max,label}:{value:number;max:number;label:string}){const n=Math.max(0,Math.min(max,value));return <div className="progress" role="progressbar" aria-label={label} aria-valuenow={n} aria-valuemin={0} aria-valuemax={max}><span style={{width:`${max>0?n/max*100:0}%`}}/></div>;}
 const moduleIcons=[Leaf,Bot,Telescope,Wrench,Sun,Rocket];
@@ -26,30 +26,32 @@ export function SavingGoal({state,busy,onOpen,onClear}:{state:State;busy:boolean
 }
 export function PersonalGoal({state,onEdit}:{state:State;onEdit:()=>void}){const g=state.game.personalGoal;return <section className="personal-goal"><Target size={25}/><div><strong>Dein Tempo</strong><p>{g.count>=g.target?'Dein Wochenziel ist geschafft.':`${g.count} von ${g.target} Missionen diese Woche`}</p><Meter value={g.count} max={g.target} label="Dein persönliches Wochenziel"/></div><button className="text-button" aria-label="Persönliches Wochenziel ändern" onClick={onEdit}><ChevronRight size={18}/></button></section>;}
 const badgeIcons={first:Rocket,steady:Star,team:Gift,kitchen:Sparkles,garden:Leaf,nebula:Orbit,dust:Sparkles,hero:Crown,wash:Shirt,shine:Bath,allround:Compass,rhythm:Star};
-export function Achievements({state,busy=false,onStyle,onFocus,onWear}:{state:State;busy?:boolean;onStyle:()=>void;onFocus:(id:string|null)=>void;onWear:(id:string)=>void}){
- const [tab,setTab]=useState<'next'|'badges'|'all'>('next');
- const all=state.game.achievements,next=nextAchievements(all,state.game.focusAchievementId),badges=all.filter(a=>specialBadgeArt(a.id));
- const visible=tab==='all'?all:tab==='badges'?badges:(next.length?next:all.filter(a=>a.unlocked).slice().reverse()).slice(0,3);
- return <>
-  <div className="achievement-tabs" role="group" aria-label="Erfolge anzeigen">
-   <button aria-pressed={tab==='next'} onClick={()=>setTab('next')}>Nächste Ziele</button>
+export function Achievements({state,onStyle,onOpen}:{state:State;onStyle:()=>void;onOpen:(id:string)=>void}){
+ const [tab,setTab]=useState<'milestones'|'badges'>('milestones');
+ const {milestones,badges}=achievementCollections(state.game.achievements),next=nextAchievements(state.game.achievements,state.game.focusAchievementId)[0],visible=tab==='milestones'?milestones:badges;
+ return <section className="achievement-collection" aria-label="Deine Erfolge">
+  {next?<button className="collection-next" aria-haspopup="dialog" onClick={()=>onOpen(next.id)}><Target size={23}/><span><small>DEIN NÄCHSTES ZIEL</small><strong>{achievementHint(next)}</strong><span className="milestone-meter" role="progressbar" aria-label={next.name} aria-valuenow={Math.min(next.value,next.target)} aria-valuemin={0} aria-valuemax={next.target}><i style={{width:`${Math.min(100,next.value/next.target*100)}%`}}/></span></span><ChevronRight size={18}/></button>:<p className="collection-complete"><Sparkles size={22}/>Alle passenden Ziele erreicht. Dein Einsatz kann sich sehen lassen!</p>}
+  <div className="achievement-tabs collection-tabs" role="group" aria-label="Sammlung auswählen">
+   <button aria-pressed={tab==='milestones'} onClick={()=>setTab('milestones')}>Meilensteine <span>{milestones.length}</span></button>
    <button aria-pressed={tab==='badges'} onClick={()=>setTab('badges')}>Abzeichen <span>{badges.length}</span></button>
-   <button aria-pressed={tab==='all'} onClick={()=>setTab('all')}>Alle <span>{all.length}</span></button>
   </div>
-  <p className="achievement-intro">{tab==='next'?'Deine nächsten Ziele. In deinem Tempo.':tab==='badges'?`${badges.filter(a=>a.unlocked).length} von ${badges.length} besonderen Abzeichen verdient. Zeig deinen Erfolg am Profil.`:`${all.filter(a=>a.unlocked).length} von ${all.length} Erfolgen erreicht.`}</p>
-  <div className="achievement-grid">{visible.map(a=>{
-   const Icon=badgeIcons[a.id as keyof typeof badgeIcons]??Award,art=specialBadgeArt(a.id),focused=a.id===state.game.focusAchievementId,worn=state.user.patchId===a.id;
-   return <article className={`achievement ${art?'special-achievement':''} ${a.unlocked?'earned':''} ${focused?'focused':''}`} key={a.id}>
-    {art?<img className="achievement-art" src={art} alt="" loading="lazy" width="104" height="104"/>:<Icon size={25}/>}
-    <h3>{a.name}</h3><p>{a.description}</p>
-    {a.unlocked?<span className="achievement-earned"><Check size={13}/>Freigeschaltet</span>:a.applicable?<><Meter value={a.value} max={a.target} label={a.name}/><small>{Math.min(a.value,a.target)} / {a.target}</small></>:<small>Für eine gemeinsame Crew</small>}
-    {(a.title||a.outfit)&&<small className="achievement-reward">{a.outfit?'Neuer Anzug + Titel':'Titel + Abzeichen'}</small>}
-    {!a.unlocked&&a.applicable&&<button className="text-button achievement-focus" disabled={busy} aria-pressed={focused} onClick={()=>onFocus(focused?null:a.id)}>{focused?<><Check size={13}/>Dein Ziel</>:'Als Ziel wählen'}</button>}
-    {a.unlocked&&a.patch&&<button className="text-button badge-wear" disabled={busy||worn} onClick={()=>onWear(a.id)}>{worn?<><Check size={13}/>Wird getragen</>:'Abzeichen tragen'}</button>}
-   </article>;
-  })}</div>
-  <button className="text-button centered" onClick={onStyle}><Award size={18}/>Titel und Abzeichen wählen</button>
- </>;
+  <p className="achievement-intro">{visible.filter(a=>a.unlocked).length} von {visible.length} {tab==='milestones'?'Meilensteinen erreicht.':'besonderen Abzeichen verdient.'}</p>
+  {tab==='milestones'?<div className="milestone-collection">{milestones.map(a=>{const Icon=badgeIcons[a.id as keyof typeof badgeIcons]??Award,outfit=state.outfits.find(o=>o.id===a.outfit);return <button className={`milestone-row ${a.unlocked?'earned':''}`} key={a.id} aria-haspopup="dialog" onClick={()=>onOpen(a.id)}>
+   <span className="milestone-symbol"><Icon size={23}/></span><span className="milestone-copy"><strong>{a.name}</strong><span>{a.description}</span>{a.unlocked?<small className="earned-label"><Check size={13}/>Erreicht</small>:a.applicable?<><span className="milestone-meter" role="progressbar" aria-label={a.name} aria-valuenow={Math.min(a.value,a.target)} aria-valuemin={0} aria-valuemax={a.target}><i style={{width:`${Math.min(100,a.value/a.target*100)}%`}}/></span><small>{Math.min(a.value,a.target)} / {a.target}{state.game.focusAchievementId===a.id?' · Dein Ziel':''}</small></>:<small>Für eine gemeinsame Crew</small>}{(a.title||outfit)&&<small className="collection-reward">{outfit?`Anzug: ${outfit.title}`:'Titel + Abzeichen'}</small>}</span><ChevronRight size={16}/>
+  </button>;})}</div>:<div className="badge-collection">{badges.map(a=><button className={`badge-tile ${a.unlocked?'earned':''} ${state.user.patchId===a.id?'worn':''}`} key={a.id} aria-haspopup="dialog" onClick={()=>onOpen(a.id)}>
+   <span className="badge-tile-art"><img src={specialBadgeArt(a.id)!} alt="" loading="lazy" width="104" height="104"/></span><strong>{a.name}</strong>{a.unlocked?<span className="earned-label"><Check size={13}/>{state.user.patchId===a.id?'Wird getragen':'Verdient'}</span>:<><span className="milestone-meter" role="progressbar" aria-label={a.name} aria-valuenow={Math.min(a.value,a.target)} aria-valuemin={0} aria-valuemax={a.target}><i style={{width:`${Math.min(100,a.value/a.target*100)}%`}}/></span><small>{Math.min(a.value,a.target)} / {a.target}{state.game.focusAchievementId===a.id?' · Dein Ziel':''}</small></>}
+  </button>)}</div>}
+  <p className="tiny-note">Antippen zeigt Voraussetzung und Belohnung.</p><button className="text-button centered" onClick={onStyle}><Award size={18}/>Titel und Abzeichen wählen</button>
+ </section>;
+}
+export function AchievementDetails({state,id,busy,onFocus,onWear}:{state:State;id:string;busy:boolean;onFocus:(id:string|null)=>void;onWear:(id:string)=>void}){
+ const a=state.game.achievements.find(a=>a.id===id);if(!a)return <><h2>Erfolg nicht mehr verfügbar</h2><p>Bitte öffne deine Sammlung erneut.</p></>;
+ const art=specialBadgeArt(a.id),Icon=badgeIcons[a.id as keyof typeof badgeIcons]??Award,focused=state.game.focusAchievementId===a.id,worn=state.user.patchId===a.id,outfit=state.outfits.find(o=>o.id===a.outfit);
+ return <div className="achievement-detail">{art?<img className="badge-detail-art" src={art} alt="" width="210" height="210"/>:<div className="sheet-illustration"><Icon size={48}/></div>}<span className="eyebrow gold">{art?'BESONDERES ABZEICHEN':'DEIN MEILENSTEIN'}</span><h2>{a.name}</h2><p>{a.description}</p>{a.unlocked?<p className="earned-label"><Check size={17}/>Verdient. Dieser Erfolg gehört dir.</p>:a.applicable?<><Meter value={a.value} max={a.target} label={a.name}/><p className="game-note">{Math.min(a.value,a.target)} / {a.target} · {achievementHint(a)}</p></>:<p>Dieses Ziel ist für eine gemeinsame Crew gedacht.</p>}
+  {outfit?<p className="achievement-benefit"><Sparkles size={19}/>Anzug „{outfit.title}“, Titel und Abzeichen</p>:a.title?<p className="achievement-benefit"><Award size={19}/>Titel „{a.title}“ und Abzeichen</p>:null}
+  {!a.unlocked&&a.applicable&&<button className="button secondary" disabled={busy} aria-pressed={focused} onClick={()=>onFocus(focused?null:a.id)}>{focused?'Als eigenes Ziel abwählen':'Als nächstes Ziel wählen'}</button>}
+  {a.unlocked&&a.patch&&<button className="button primary" disabled={busy||worn} onClick={()=>onWear(a.id)}>{worn?<><Check size={17}/>Wird getragen</>:'Abzeichen tragen'}</button>}
+ </div>;
 }
 export function Patch({name,size=18}:{name?:string|null;size?:number}){
  const art=specialBadgeArt(name),icons={leaf:Leaf,orbit:Orbit,comet:Rocket,dust:Sparkles,crown:Crown,wash:Shirt,shine:Bath,compass:Compass,polar:Star};

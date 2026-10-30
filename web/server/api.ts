@@ -8,6 +8,8 @@ import {gameChange} from './game.ts';
 import {roundChange} from './rounds.ts';
 import {crewWishChange} from './crew-wish.ts';
 import {hasUnclaimedAchievements} from './progress.ts';
+import {statisticsView} from './statistics.ts';
+import type {StatisticRange} from '../shared/statistics.ts';
 import {weekKey} from '../shared/planning.ts';
 import { missionChange } from './missions.ts';
 import { crewChange } from './crew.ts';
@@ -55,6 +57,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
   if(!['GET','HEAD'].includes(method)&&(request.headers.get('X-Putzonaut-Epoch')??'')!==(h.restoreEpoch??''))throw new AppError(409,'Eure Crew wurde wiederhergestellt. Bitte lade den aktuellen Stand, bevor du etwas änderst.');
   const backupResponse=await backupRoute(route,method,body,repo,accountId,profileId,row,now);if(backupResponse)return backupResponse;
+  if(route==='/statistics'&&method==='GET'){const days=z.coerce.number().refine(n=>[7,30,90].includes(n)).parse(url.searchParams.get('days')??30) as StatisticRange;return json(await statisticsView(repo,accountId,profileId,h.id,actor.id,days,now));}
   if(route==='/state'&&method==='GET'){if(!h.areas||!h.game?.weeks[weekKey(now)]||h.members.some(m=>!m.career)||hasUnclaimedAchievements(h)){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
   if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){

@@ -2,11 +2,13 @@
 
 **Dein Haushalt. Eure Mission.** Haushaltsaufgaben als gemeinsame Missionen für Familien, Paare, WGs und Einzelhaushalte.
 
-## Aktuelle Web-App 0.10.0
+## Aktuelle Web-App 0.11.0
 
-[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.10.md)
+[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.11.md)
 
 Die aktive Entwicklung liegt in `web/`. Die App stellt den nächsten kleinen Einsatz in den Mittelpunkt: 5, 10 oder 20 Minuten wählen, eine passende offene Mission finden und loslegen. Die Vorlagenbibliothek umfasst 45 anpassbare Tätigkeiten in sieben Kategorien; beim Einrichten bleibt die Auswahl auf sechs Startervorlagen beschränkt.
+
+Version 0.11 trennt zwölf kompakte Meilensteine und sieben illustrierte Abzeichen in eigene Sammlungen. Eine einzelne nächste Zielkarte ersetzt den bisherigen Ziele-Reiter; Details und Tragefunktion öffnen beim Antippen. Unter Profil → Deine Statistik zeigen Kennzahlen sowie interaktive Balken- und Ringdiagramme den eigenen Einsatz für 7, 30 oder 90 Tage. Hinzu kommt ein Wochenzielvergleich über sechs Kalenderwochen. Bestätigte Logbucheinträge, Rücknahmen, Kinderfreigaben und historische Zielwerte werden berücksichtigt; fehlende frühere Ziele werden nicht geschätzt.
 
 Version 0.10 ergänzt geführte Putzrunden mit insgesamt 5, 10 oder 20 Minuten, einem optionalen pausierbaren Timer und einer gespeicherten Zusammenfassung. Wiederverwendbare Routinen und Raumkarten liegen unter Missionen. In einem gemeinsamen Crew-Wunsch können Profile freiwillig Sterne zusammenlegen, eigene Beiträge zurücknehmen und gemeinsam sparen; der Captain löst den vollen Topf einmalig ein. Kleine abschaltbare Animationen begleiten Start, Abschluss und Fortschritt. Die vier Hauptreiter bleiben bestehen. Alle neuen Daten sind mit Sicherungen, Kinderfreigaben und Rücknahmen kompatibel.
 
@@ -14,13 +16,13 @@ Seit Version 0.9 gibt es 19 Erfolge mit sieben neu illustrierten Abzeichen, zehn
 
 Integriert ist eine vollständige Crew-Sicherung einschließlich Logbuch, mit geprüfter Vorschau, atomarer Wiederherstellung und automatischem Rücksprungpunkt. Sie funktioniert in derselben bestehenden Crew bei unveränderten Mitgliedern und Berechtigungen. Konten- und Betreiber-Backups bleiben ein gesonderter Schritt vor der öffentlichen Beta. Die vollständigen Grenzen stehen in der Web-Dokumentation.
 
-Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 152 automatisierte Tests prüfen die Anwendung; die visuelle Prüfung der Oberfläche von 0.10 und echte Android-/iPhone-Tests stehen noch aus, weil die bereitgestellte Browser-Vorschau nicht erreichbar war.
+Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 167 automatisierte Tests prüfen die Anwendung; die visuelle Prüfung der Oberfläche von 0.11 und echte Android-/iPhone-Tests stehen noch aus, weil die bereitgestellte Browser-Vorschau nicht erreichbar war.
 
 Die Website bleibt privat und verwendet weiterhin ChatGPT zur Anmeldung. Eine Crew-Einladung ersetzt die Website-Freigabe nicht. Unabhängige Anmeldung, Kontoverwaltung und öffentlicher Start folgen als nächste Phase; Domain, eigener Server und native Apps später.
 
 ## Frühere Docker-/PostgreSQL-Grundlage (0.1.0)
 
-Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.10 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
+Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.11 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
 
 Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. Die Oberfläche verwendet die eigens gestalteten Putzonaut-Illustrationen, selbst gehostete Schriftdateien und echte Bedienelemente.
 

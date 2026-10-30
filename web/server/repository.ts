@@ -5,6 +5,7 @@ import {updateProgress} from './progress.ts';
 import {addDays,weekKey} from '../shared/planning.ts';
 import { AppError, member, normalize } from './domain.ts';
 import type { Household, HistoryEvent } from './domain.ts';
+import type {StatisticBucket} from '../shared/statistics.ts';
 export type Database=Pick<D1Database,'prepare'|'batch'>;
 export type Row={id:string;document:string;revision:number};
 export class Repository{
@@ -12,6 +13,15 @@ export class Repository{
  constructor(db:Database){this.db=db;}
  async forAccount(accountId:string){return this.db.prepare('SELECT h.id,h.document,h.revision FROM households h JOIN memberships m ON m.household_id=h.id WHERE m.account_id=?').bind(accountId).first<Row>();}
  async byId(id:string){return this.db.prepare('SELECT id,document,revision FROM households WHERE id=?').bind(id).first<Row>();}
+ async statisticsSnapshot(accountId:string,householdId:string,memberId:string,from:string,through:string){
+  // One read transaction keeps the profile, restore epoch and event evidence together.
+  // Aggregate in SQL without the logbook's pagination or an arbitrary event limit.
+  const results=await this.db.batch([
+   this.db.prepare('SELECT h.id,h.document,h.revision FROM households h JOIN memberships m ON m.household_id=h.id WHERE m.account_id=?').bind(accountId),
+   this.db.prepare("SELECT substr(e.created_at,1,13)||':00:00.000Z' AS at,json_extract(e.payload,'$.category') AS category,json_extract(e.payload,'$.icon') AS icon,json_extract(e.payload,'$.room') AS room,json_extract(e.payload,'$.title') AS title,count(*) AS count,coalesce(sum(json_extract(e.payload,'$.xp')),0) AS xp,coalesce(sum(json_extract(e.payload,'$.stars')),0) AS stars FROM events e LEFT JOIN events r ON r.household_id=e.household_id AND r.member_id=e.member_id AND r.request_key='undo:'||e.id WHERE e.household_id=? AND e.member_id=? AND e.kind='completion' AND e.created_at>=? AND e.created_at<=? AND r.id IS NULL GROUP BY at,category,icon,room,title").bind(householdId,memberId,from,through),
+  ]);
+  return {row:results[0].results[0] as Row|undefined,rows:results[1].results as StatisticBucket[]};
+ }
  async history(householdId:string,offset=0,limit=50){const r=await this.db.prepare("SELECT e.payload, r.id AS reversal FROM events e LEFT JOIN events r ON r.member_id=e.member_id AND r.request_key='undo:'||e.id WHERE e.household_id=? ORDER BY e.created_at DESC,e.id DESC LIMIT ? OFFSET ?").bind(householdId,limit,offset).all<{payload:string;reversal:string|null}>();return r.results.map(r=>({...JSON.parse(r.payload),reversed:!!r.reversal}) as HistoryEvent);}
  async weekCompletions(householdId:string,key:string){const rows=await this.db.prepare("SELECT e.payload FROM events e LEFT JOIN events r ON r.member_id=e.member_id AND r.request_key='undo:'||e.id WHERE e.household_id=? AND e.kind='completion' AND e.created_at>=? AND e.created_at<? AND r.id IS NULL").bind(householdId,addDays(key,-1)+'T00:00:00.000Z',addDays(key,8)+'T00:00:00.000Z').all<{payload:string}>();return rows.results.map(r=>JSON.parse(r.payload) as HistoryEvent).filter(e=>weekKey(new Date(e.createdAt))===key);}
  async categoryEvidence(householdId:string){

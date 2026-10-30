@@ -1,10 +1,27 @@
-# Putzonaut · Web-App 0.10.0
+# Putzonaut · Web-App 0.11.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Sammlungen und Statistik in Version 0.11
+
+**Profil → Deine Erfolge** enthält zwei voneinander getrennte Sammlungen: zwölf Meilensteine als kompakte Fortschrittskarten und sieben besondere Abzeichen als Galerie mit zwei Motiven nebeneinander. Jede Sammlung hat ihren eigenen Zähler. „Alle“ entfällt; statt „Nächste Ziele“ steht genau ein empfohlenes oder selbst gewähltes Ziel darüber. Antippen öffnet Voraussetzung, Belohnung, Zielauswahl und bei freigeschalteten Abzeichen die Möglichkeit zum Tragen. Bestehende Erfolge, Anzüge, Titel, Abzeichen und Zielauswahlen bleiben erhalten.
+
+**Profil → Deine Statistik** ist direkt unter dem persönlichen Wochenziel erreichbar. Die vier Hauptreiter bleiben unverändert. Die Ansicht gilt für das ausgewählte eigene oder berechtigt begleitete Kinderprofil und zeigt:
+
+- Kennzahlen für **7, 30 oder 90 Tage**: bestätigte Missionen, verdiente Missionssterne, XP und Tage mit mindestens einem bestätigten Einsatz.
+- Ein antippbares **Balkendiagramm**: sieben Tage einzeln, 30 Tage nach Kalenderwochen, 90 Tage nach Kalendermonaten. Randwochen und Randmonate enthalten ausschließlich Tage des gewählten Zeitraums. Alle Werte sind zusätzlich als Tabelle verfügbar.
+- Ein **Ringdiagramm nach Tätigkeitskategorien** mit auswählbarer Legende, absoluten Zahlen und gerundeten Prozentanteilen. Historische Kategorien werden aus dem damaligen Abschluss bestimmt; unklare Zuordnungen heißen „Ohne Kategorie“.
+- Ein **Wochenziel-Diagramm für die letzten sechs Kalenderwochen**, unabhängig vom gewählten Zeitraum. Erreichte Ziele werden farblich hervorgehoben; fehlende historische Zielwerte werden nicht erfunden.
+
+Die Statistik liest bestätigte, nicht zurückgenommene Abschlüsse aus dem vollständigen passenden Logbuch. Sie ist nicht auf die letzte Logbuchseite beschränkt. Kinderleistungen zählen am Tag ihrer Freigabe, archivierte Aufgaben weiterhin; nachträgliche Änderungen an Kategorien, Aufgabenpunkten oder Titeln schreiben die Historie nicht um. Missionssterne sind die normalen Aufgabenpunkte, ohne Questboni, Wunschbeiträge, Rückerstattungen oder Ausgaben. Das aktuelle ausgebbare Guthaben steht weiterhin im Profil und Kopfbereich. Wochenziele verwenden den gespeicherten persönlichen Wochenfortschritt.
+
+Kalendertage richten sich nach Europe/Berlin einschließlich Zeitumstellungen. Die API liest Profildaten und aggregierte Ereignisse gemeinsam in einer Datenbanktransaktion und prüft die Profilberechtigung nochmals gegen diesen Stand. Die Ansicht lädt bei Profil-, Daten- und Tageswechsel neu, verwirft überholte Antworten und bietet einen manuellen Aktualisierungsknopf. Leere Zeiträume zeigen echte Nullwerte und einen Einstieg in eine kleine Putzrunde.
+
+Es werden keine zusätzlichen Nutzungsdaten oder Diagrammstände gespeichert. Bestehende Sicherungen enthalten bereits alle benötigten Belege; Wiederherstellen aktualisiert auch die Statistik. Keine zusätzliche Datenbankmigration oder Diagrammbibliothek erforderlich. Native SVG- und CSS-Diagramme verwenden die bestehende Gestaltung und berücksichtigen reduzierte Bewegung. [Prüfstand 0.11](docs/QA-0.11.md).
 
 ## Putzrunden und gemeinsame Wünsche in Version 0.10
 
@@ -171,6 +188,6 @@ npm test
 npm run build
 ```
 
-152 automatisierte Prüfungen: 126 Integrationsfälle gegen Miniflare D1 und 26 Prüfungen für Planung, Auswahlregeln, Vorlagen, Punkte und Projektassets. Die 22 neuen Fälle prüfen Putzrunden, Timer, Routinen, Raumzustände, Kinderfreigaben, gemeinsame Wunschbeiträge mit konkurrierenden Zugriffen, Rückerstattungen, Profilgrenzen und Sicherungen. Alle 130 bisherigen Fälle bleiben erhalten.
+167 automatisierte Prüfungen: 140 Integrationsfälle gegen Miniflare D1 und 27 Prüfungen für gemeinsame Regeln und Projektassets. Die 15 neuen Fälle prüfen die vollständige und überschneidungsfreie Trennung der Sammlungen sowie Statistikgrenzen, Kalenderwechsel, Kinderfreigaben, Rücknahmen, Profilberechtigungen, historische Kategorien und Sicherungen. Alle 152 bisherigen Fälle bleiben erhalten.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.10 meldete die Vorschau einen laufenden Server, der bereitgestellte Browser erreichte die exakte Adresse jedoch nicht (`ERR_CONNECTION_REFUSED`). Die neuen Ansichten und Animationen sind noch nicht visuell im Browser abgenommen. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.11 startete die Vorschau nach Entfernen einer veralteten lokalen Vinext-Sperrdatei; der bereitgestellte Browser erreichte die exakte Adresse weiterhin nicht (`ERR_CONNECTION_REFUSED`). Die getrennten Sammlungen und neuen Diagramme sind noch nicht visuell im Browser abgenommen. Vollständige Anmeldung sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.
