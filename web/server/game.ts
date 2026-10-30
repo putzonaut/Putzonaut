@@ -5,6 +5,13 @@ import {ACHIEVEMENTS} from '../shared/game.ts';
 import {weekKey} from '../shared/planning.ts';
 import {ensureProgress,freshQuest,questEligible} from './progress.ts';
 export function gameChange(route:string,method:string,body:unknown,h:Household,user:Member,now:Date):{result:unknown;event?:HistoryEvent}|null{
+ if(route==='/profile/achievement'&&method==='PATCH'){
+  const v=z.object({achievementId:z.string().nullable()}).parse(body);
+  const selected=ACHIEVEMENTS.find(a=>a.id===v.achievementId);
+  if(v.achievementId&&(!selected||(selected.metric==='team'&&h.kind==='solo')))throw new AppError(400,'Wähle einen passenden Meilenstein.');
+  if(v.achievementId&&user.achievements?.includes(v.achievementId))throw new AppError(409,'Diesen Meilenstein hast du bereits erreicht.');
+  user.focusAchievementId=v.achievementId;return {result:{ok:true}};
+ }
  if(route==='/profile/goal'&&method==='PATCH'){
   const v=z.object({rewardId:z.string().uuid().nullable()}).parse(body);if(v.rewardId&&!h.rewards.some(r=>r.id===v.rewardId))throw new AppError(404,'Diesen Wunsch gibt es in deiner Crew nicht.');user.savingRewardId=v.rewardId;return {result:{ok:true}};
  }

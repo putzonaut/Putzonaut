@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0 · 30. Oktober 2026
+
+- Zwölf Meilensteine und zehn individuell illustrierte Anzüge. Neu: Staubbezwinger, Haushaltsheld, Waschonaut, Glanzpilot, Allroundonaut und Im Rhythmus.
+- Eine nächste Zielanzeige auf der Basis; frei wählbare Meilensteine und automatische Fortsetzung nach dem Erreichen.
+- Spind mit „Meine Anzüge“ und „Entdecken“, zunächst drei nächste Meilensteine und vollständige Sammlung auf Wunsch.
+- Neue Freischaltungen auf der Erfolgsseite mit direktem Anziehen ohne zusätzliche Sternenkosten.
+- Belegbasierte Übernahme alter Kategorieerfolge; vier persönliche Zielwochen ohne Pflicht zur ununterbrochenen Serie. Historische persönliche Ziele werden ab 0.8 gespeichert.
+- Sechs illustrierte Stationsausbauten bei 1/2/3/5/8/12 erreichten Crew-Zielwochen; neue Werkstatt, Solardeck und Andockbucht.
+- Neue Fortschritte und Zielauswahl bleiben mit Sicherungen und Rücknahmen kompatibel. Bestätigungen und Kategorien werden dem richtigen Profil zugeordnet.
+- 118 erfolgreiche automatisierte Tests. Visuelle Browserprüfung weiterhin wegen nicht erreichbarer Vorschau offen; neue Grafiken separat geprüft.
+
 ## 0.7.0 · 30. Oktober 2026
 
 - Kurzstart mit 5, 10 oder 20 Minuten und bis zu drei tatsächlich verfügbaren Missionen; eigene Zuständigkeiten werden berücksichtigt.

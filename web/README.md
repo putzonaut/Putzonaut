@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.7.0
+# Putzonaut · Web-App 0.8.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -33,6 +33,29 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
 - Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
 - Vollständige Crew-Sicherung mit Profilen, Punkten, Aufgaben, offenen Freigaben, Wünschen, Raumstation und dem gesamten Logbuch. Wiederherstellung im Profil mit Vorschau und automatischem Rücksprungpunkt; genaue Grenzen unten. Der bisherige Export-Endpunkt (Format 5) bleibt für vorhandene Nutzer verfügbar, ist aber nicht importierbar.
+
+## Meilensteine und Spind in Version 0.8
+
+Zwölf Meilensteine und zehn Anzüge geben kurzfristige und längerfristige Ziele. Die Basis ersetzt die kompakte Levelanzeige durch genau ein nächstes Ziel mit verbleibenden Missionen. Im Profil und bei noch gesperrten Meilenstein-Anzügen lässt sich ein eigenes Ziel wählen; nach Erreichen folgt automatisch das nächste passende. Bei Einzelhaushalten wird Teamgeist nicht als nächstes Ziel vorgeschlagen.
+
+| Neuer Meilenstein | Voraussetzung | Belohnung |
+| --- | --- | --- |
+| Staubbezwinger | 50 bestätigte Missionen insgesamt | Titel und Abzeichen |
+| Haushaltsheld | 100 bestätigte Missionen insgesamt | Galaxiekapitän in Dunkelblau/Gold |
+| Waschonaut | Zehn bestätigte Wäschemissionen | Waschonaut in Eisblau |
+| Glanzpilot | Zehn bestätigte Badezimmermissionen | Glanzpilot in Türkis |
+| Allroundonaut | Bestätigte Missionen aus fünf verschiedenen Kategorien | Allroundonaut in Orange/Violett |
+| Im Rhythmus | Persönliches Wochenziel in vier beliebigen Wochen erreicht | Polarstern in Weiß/Eisblau |
+
+- Der Spind trennt **Meine Anzüge** und **Entdecken**. Meilensteine zeigen zuerst höchstens drei nächste Ziele; die vollständige Sammlung erscheint auf Wunsch. Die vier Hauptreiter bleiben bestehen.
+- Neu erreichte Meilensteine erscheinen nach einem direkten Abschluss auf der Erfolgsseite. Neue Anzüge können dort unmittelbar und ohne Sternenkosten angezogen werden. Bei einer Kinderfreigabe erhält die Begleitperson die Freischaltungsmeldung; der Anzug liegt anschließend im Spind des Kindes.
+- Gesamtabschlüsse zählen unverändert weiter. Wäsche, Bad und Kategorienvielfalt übernehmen beim ersten Zugriff alle eindeutig belegten, nicht zurückgenommenen Abschlüsse aus dem gesamten Logbuch, auch archivierter Aufgaben. Unklare alte Kategorien werden nicht erraten. Vorlagen speichern ihre Kategorie; eigene Missionen bieten eine eingeklappte Kategorieauswahl, unabhängig vom Raum.
+- Persönliche Wochenziele wurden früher nicht historisch gespeichert. Ihre neue Wochenzählung beginnt daher beim ersten Zugriff mit 0.8 und berücksichtigt bereits bestätigte Abschlüsse der laufenden Woche. Es wird kein früheres Wochenziel erfunden. Änderungen gelten für die laufende Woche; vergangene Wochen behalten ihr damaliges Ziel. Vier Zielwochen müssen nicht aufeinanderfolgen, es gibt keinen Serienverlust bei Pausen.
+- Kinderabschlüsse zählen erst nach einer erforderlichen Freigabe. Kategorien stammen aus der damaligen Aufgabenmeldung und bleiben bei späterem Bearbeiten unverändert. Rücknahmen berichtigen Zähler und historische Zielwochen. Bereits verdiente kosmetische Freischaltungen bleiben erhalten.
+- Die Raumstation wächst auf sechs Ausbauten: Pflanzenecke nach 1, Roboterhelfer nach 2, Aussichtskuppel nach 3, Werkstatt nach 5, Solardeck nach 8 und Andockbucht nach 12 erreichten Crew-Zielwochen. Frühere Stationserfolge zählen mit. Die Illustration zeigt den tatsächlichen Freischaltungsstand; Rücknahmen können den Ausbau entsprechend korrigieren.
+- Sicherungen enthalten auch die neuen Fortschritte, historischen persönlichen Ziele und das gewählte nächste Ziel. Sicherungen im Format von 0.7 bleiben wiederherstellbar und erhalten danach dieselbe belegbasierte Übernahme. Es ist keine neue SQL-Migration erforderlich.
+
+[Prüfstand 0.8](docs/QA-0.8.md) · [Bildquellen und vollständige Prompts](docs/art-0.8-prompts.md)
 
 ## Einfach loslegen in Version 0.7
 
@@ -112,6 +135,6 @@ npm test
 npm run build
 ```
 
-104 automatisierte Prüfungen: 81 Integrationstests gegen Miniflare D1, 8 Kalendertests, 2 Prüfungen für Punktevorschläge und Wunschideen sowie 9 Prüfungen für Wochenvorschau, Suche und Aufgabenkopien und 4 Prüfungen für Kurzstart und Vorlagen. Die 13 neuen API-Prüfungen decken vollständige Sicherung, Vorschau, Wiederherstellung, Rücksprungpunkt, parallele Anfragen, Berechtigungen, veraltete Clients sowie das echte Anlegen aller 45 Vorlagen ab. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen Stationsausbau, Questboni bei gleichzeitigen Aktionen, nachträgliche Korrekturen und Wochenwechsel, Sparziele, Freischaltungen, persönliche Ziele, frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel. Die neuen Prüfungen decken außerdem Bereichsrechte, Namens- und Mengenlimits, Checklistenänderungen und parallele Schritte, unveränderliche Kinderfreigaben, Kopien ohne Altzustand und einen Ablauf von Crew-Gründung/Beitritt über Teilschritte und Questbonus bis zur Wunscheinlösung und zum Export ab.
+118 automatisierte Prüfungen: 93 Integrationstests gegen Miniflare D1 und 25 Prüfungen für Planung, Auswahlregeln, Vorlagen, Punkte und Projektassets. Die 14 neuen Prüfungen decken vollständige Kategorieübernahme aus alten Logbüchern, vier nicht aufeinanderfolgende Zielwochen, unveränderliche historische Ziele, sechs Stationsstufen, Kategorienvielfalt, Kinderfreigaben, gleichzeitige Abschlüsse, Rücknahmen, Zielauswahl und die Kompatibilität neuer und alter Sicherungen ab. Bestehende Prüfungen für Konto- und Crew-Isolation, Punkte, Wünsche, Kalendergrenzen, Aufgabenplanung, Checklisten, Rollen, Quests und atomare Wiederherstellung bleiben erhalten.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.7 ließ sich die Vorschau starten, der bereitgestellte Browser erreichte sie jedoch nicht (Verbindung abgelehnt; anschließende Browser-Sicherheitsblockade). Die neue Oberfläche ist daher noch nicht visuell im Browser geprüft. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen sind kein Ersatz für diese Gerätetests.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.8 ließ sich die Vorschau starten, der bereitgestellte Browser erreichte sie jedoch erneut nicht (`ERR_CONNECTION_REFUSED`). Die sechs neuen Rastergrafiken wurden separat visuell geprüft. Die neue Oberfläche ist noch nicht im Browser geprüft. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.

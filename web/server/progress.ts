@@ -1,3 +1,4 @@
+import {ensureCareer,updateCareer} from './career.ts';
 import type {Household,Member,HistoryEvent} from './domain.ts';
 import type {Repository} from './repository.ts';
 import {ACHIEVEMENTS,GAME_OUTFITS,QUEST_BONUS,STATION_MODULES} from '../shared/game.ts';
@@ -16,21 +17,28 @@ export function questEligible(h:Household,key:string){
  });
 }
 export function freshQuest(title:string,tasks:{id:string;title:string}[]):Quest{return {title,tasks:tasks.map(t=>({id:t.id,title:t.title})),doneIds:[],contributors:[],everRewarded:false,credits:{}};}
-export function achievementValue(m:Member,metric:string,crewSize:number){return metric==='total'?m.completedCount:metric==='team'?crewSize:metric==='kitchen'?m.gameStats?.kitchen??0:m.gameStats?.plants??0;}
+export function achievementValue(m:Member,metric:string,crewSize:number){
+ if(metric==='total')return m.completedCount;if(metric==='team')return crewSize;
+ if(metric==='kitchen')return m.gameStats?.kitchen??0;if(metric==='plants')return m.gameStats?.plants??0;
+ if(metric==='laundry'||metric==='bath')return m.career?.categories[metric]??0;
+ if(metric==='variety')return Object.values(m.career?.categories??{}).filter(n=>n>0).length;
+ if(metric==='weeks')return Object.values(m.career?.weeks??{}).filter(w=>w.count>=w.goal).length;return 0;
+}
 export function grantAchievements(h:Household){const size=h.members.filter(m=>!m.removedAt).length;for(const m of h.members){m.achievements??=[];for(const a of ACHIEVEMENTS){if(!m.achievements.includes(a.id)&&achievementValue(m,a.metric,size)>=a.target)m.achievements.push(a.id);if(a.outfit&&m.achievements.includes(a.id)&&!m.unlocked.includes(a.outfit))m.unlocked.push(a.outfit);}}}
 export function ensureProgress(h:Household,now:Date){
+ ensureCareer(h,now);
  h.game??={since:now.toISOString(),weeks:{},questTemplate:null};const key=weekKey(now);
  if(!h.game.weeks[key]){const eligible=questEligible(h,key);const template=h.game.questTemplate;const tasks=template?template.taskIds.flatMap(id=>{const t=eligible.find(t=>t.id===id);return t?[t]:[];}):[];h.game.weeks[key]={key,goal:h.weekGoal,count:0,quest:template&&tasks.length?freshQuest(template.title,tasks):null};}
  const week=h.game.weeks[key];week.count=h.members.reduce((n,m)=>n+m.weekCount,0);grantAchievements(h);return week;
 }
 export function progressView(h:Household,m:Member,now:Date){
  const week=ensureProgress(h,now),wins=Object.values(h.game!.weeks).filter(w=>w.count>=w.goal).length;
- const achievements=ACHIEVEMENTS.map(a=>({...a,value:achievementValue(m,a.metric,h.members.filter(m=>!m.removedAt).length),unlocked:m.achievements!.includes(a.id)}));
+ const achievements=ACHIEVEMENTS.map(a=>({...a,applicable:a.metric!=='team'||h.kind!=='solo',value:achievementValue(m,a.metric,h.members.filter(m=>!m.removedAt).length),unlocked:m.achievements!.includes(a.id)}));
  const goal=h.rewards.find(r=>r.id===m.savingRewardId);const available=Math.max(0,m.stars);
  const eligible=questEligible(h,week.key),wanted=h.kind==='solo'?2:h.kind==='shared'?4:3;
  const kitchen=eligible.filter(t=>t.room==='Küche');const candidates=kitchen.length>=2?kitchen:eligible;
  const suggestions=candidates.slice(0,wanted).map(t=>({id:t.id,title:t.title}));
- return {station:{wins,stage:Math.min(3,wins),modules:STATION_MODULES.map(module=>({...module,unlocked:wins>=module.wins})),current:{key:week.key,count:week.count,goal:week.goal},nextWeekGoal:h.weekGoal},quest:week.quest?{...week.quest,weekKey:week.key,bonus:QUEST_BONUS,endsOn:addDays(week.key,6),tasks:week.quest.tasks.map(t=>({...t,done:week.quest!.doneIds.includes(t.id),available:h.tasks.some(x=>x.id===t.id)})),contributors:week.quest.contributors.map(id=>({id,name:h.members.find(m=>m.id===id)?.name??'Ehemaliges Mitglied'}))}:null,questOptions:eligible.map(t=>({id:t.id,title:t.title,room:t.room})),questSuggestion:{title:kitchen.length>=2?'Küche klar!':'Gemeinsam klar Schiff!',tasks:suggestions},questTemplate:h.game!.questTemplate,achievements,personalGoal:{target:m.personalGoal??(m.kind==='child'?2:3),count:m.weekCount},savingGoal:goal?{...goal,saved:Math.min(goal.cost,available),remaining:Math.max(0,goal.cost-m.stars),ready:m.stars>=goal.cost}:null,outfits:GAME_OUTFITS.map(o=>({...o,unlocked:m.unlocked.includes(o.id),requirement:o.achievement?ACHIEVEMENTS.find(a=>a.id===o.achievement)!.description:null}))};
+ return {focusAchievementId:m.focusAchievementId??null,station:{wins,stage:STATION_MODULES.filter(module=>wins>=module.wins).length,modules:STATION_MODULES.map(module=>({...module,unlocked:wins>=module.wins})),current:{key:week.key,count:week.count,goal:week.goal},nextWeekGoal:h.weekGoal},quest:week.quest?{...week.quest,weekKey:week.key,bonus:QUEST_BONUS,endsOn:addDays(week.key,6),tasks:week.quest.tasks.map(t=>({...t,done:week.quest!.doneIds.includes(t.id),available:h.tasks.some(x=>x.id===t.id)})),contributors:week.quest.contributors.map(id=>({id,name:h.members.find(m=>m.id===id)?.name??'Ehemaliges Mitglied'}))}:null,questOptions:eligible.map(t=>({id:t.id,title:t.title,room:t.room})),questSuggestion:{title:kitchen.length>=2?'Küche klar!':'Gemeinsam klar Schiff!',tasks:suggestions},questTemplate:h.game!.questTemplate,achievements,personalGoal:{target:m.personalGoal??(m.kind==='child'?2:3),count:m.weekCount,trackedSince:m.career?.since??now.toISOString()},savingGoal:goal?{...goal,saved:Math.min(goal.cost,available),remaining:Math.max(0,goal.cost-m.stars),ready:m.stars>=goal.cost}:null,outfits:GAME_OUTFITS.map(o=>({...o,unlocked:m.unlocked.includes(o.id),requirement:o.achievement?ACHIEVEMENTS.find(a=>a.id===o.achievement)!.description:null}))};
 }
 async function updateQuest(h:Household,week:GameWeek,e:HistoryEvent,repo:Repository){
  const q=week.quest;if(!q)return;
@@ -42,7 +50,7 @@ async function updateQuest(h:Household,week:GameWeek,e:HistoryEvent,repo:Reposit
 }
 /** Called before the guarded D1 batch: game rewards share the same CAS and transaction. */
 export async function updateProgress(h:Household,e:HistoryEvent|undefined,repo:Repository,now:Date){
- const current=ensureProgress(h,now);if(!e)return;
+ const current=ensureProgress(h,now);if(!e)return;updateCareer(h,e,now);
  if(e.kind==='completion'){
   const m=h.members.find(m=>m.id===e.userId)!;m.gameStats??={kitchen:0,plants:0};if(e.room==='Küche')m.gameStats.kitchen++;if(e.icon==='plant')m.gameStats.plants++;e.progressTracked=true;
   await updateQuest(h,current,e,repo);

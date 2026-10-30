@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {CATEGORY_IDS} from '../shared/categories.ts';
 import {AREA_ICONS} from '../shared/workspace.ts';
 import {validDay} from '../shared/planning.ts';
 import {AppError,taskSchema,rewardSchema,digest} from './domain.ts';
@@ -19,6 +20,8 @@ const person=z.object({
  id,kind:z.enum(['account','child']).optional(),guardianId:id.nullable().optional(),removedAt:stamp.nullable().optional(),
  name:z.string().min(1).max(40),role:z.enum(['admin','member']),xp:count,stars:signedCount,outfit:z.string().max(40),
  unlocked:z.array(z.string().max(40)).max(50),completedCount:count,weekCount:count,joinedAt:stamp,
+ focusAchievementId:z.string().max(40).nullable().optional(),
+ career:z.object({version:z.literal(1),since:stamp,categories:z.object(Object.fromEntries(CATEGORY_IDS.map(id=>[id,count.optional()])) as Record<typeof CATEGORY_IDS[number],z.ZodOptional<typeof count>>).strict(),weeks:z.record(day,z.object({count,goal:z.number().int().min(1).max(30)}).strict())}).strict().optional(),
  savingRewardId:id.nullable().optional(),personalGoal:z.number().int().min(1).max(30).optional(),
  titleId:z.string().max(40).nullable().optional(),patchId:z.string().max(40).nullable().optional(),
  achievements:z.array(z.string().max(40)).max(50).optional(),gameStats:z.object({kitchen:count,plants:count}).strict().optional(),
@@ -29,7 +32,7 @@ const event=z.object({
  xp:signedCount.optional(),stars:signedCount.optional(),rewardId:id.optional(),
  requestKey:z.string().max(80).refine(s=>z.string().uuid().safeParse(s).success||/^undo:[0-9a-f-]{36}$/.test(s)).optional(),
  redemption:redemption.optional(),recordedBy:id.optional(),recordedByName:short.optional(),taskId:id.optional(),occurrenceKey:occurrence.optional(),
- approvalRequired:z.boolean().optional(),steps:steps.optional(),room:short.optional(),icon:z.string().max(30).optional(),
+ category:z.enum(CATEGORY_IDS).optional(),approvalRequired:z.boolean().optional(),steps:steps.optional(),room:short.optional(),icon:z.string().max(30).optional(),
  progressTracked:z.boolean().optional(),originalCreatedAt:stamp.optional(),reverses:id.optional(),
  bonusChanges:z.array(z.object({userId:id,name:short,stars:signedCount,week:day}).strict()).max(1000).optional(),
 }).strict();
