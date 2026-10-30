@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.0 · 30. Oktober 2026
+
+- Sieben-Tage-Plan mit offenen und kommenden Runden, Tagesauswahl und geplanter Zuständigkeit.
+- Eigene Bereiche mit zwölf Symbolen, Bearbeitung und passenden Missionsfiltern.
+- Bis zu zwölf Teilschritte pro Mission, serverseitige Vollständigkeitsprüfung und Punkte erst für den gesamten Abschluss.
+- Schutz gegen veraltete Checklisten, sichere parallele Änderungen sowie ursprüngliche Checklisten bei Kinderfreigaben.
+- Suche in Titel, Bereich und Teilschritten; editierbare Aufgabenkopien und jederzeit erreichbare Vorlagen.
+- Direkter Rücknahmeweg nach einem Abschluss; Missionen und Wochenplan vor der ausführlichen Wochenquest.
+- Exportformat 5, kompatible Weiterführung bestehender Daten und 87 erfolgreiche automatisierte Tests.
+
 ## 0.5.0
 
 - Wachsende gemeinsame Raumstation mit drei illustrierten Ausbauten und dauerhaft gespeicherten Zielwochen.

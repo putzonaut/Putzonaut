@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.5.0
+# Putzonaut · Web-App 0.6.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -30,7 +30,18 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 - Eigene Wünsche, bestätigtes Einlösen und Markieren erfüllter Belohnungen.
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
 - Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
-- JSON-Export des aktuellen Crewstands (Format 4) mit Profilen, Punkten, Aufgaben, offenen Freigaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
+- JSON-Export des aktuellen Crewstands (Format 5) mit Profilen, Punkten, Aufgaben, offenen Freigaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
+
+## Alltag und Übersicht in Version 0.6
+
+- Die Sieben-Tage-Ansicht zeigt offene und kommende Aufgabenrunden mit der am jeweiligen Tag geltenden Zuständigkeit, einschließlich des Wechsels am Montag. Jede offene Runde erscheint einmal am ersten möglichen Tag; Wochenaufgaben bleiben bis Sonntag erledigbar. Bereits erledigte Runden stehen weiterhin in der Listenansicht. Zukünftige Runden lassen sich ansehen, aber nicht vorzeitig abhaken.
+- Vier feste Standardbereiche werden um bis zu 20 eigene Bereiche ergänzt. Der Captain vergibt Namen und eines von zwölf Symbolen. Umbenennen aktualisiert die zugeordneten Aufgaben, nicht frühere Logbucheinträge. Ein eigener Bereich kann entfernt werden, wenn keine aktiven Missionen mehr zugeordnet sind.
+- Missionen können bis zu zwölf Teilschritte enthalten. Die Checkliste gehört zur jeweiligen Aufgabenrunde und ist für die Crew sichtbar; ändern dürfen sie zuständige Profile und der Captain. Einzelne Schritte vergeben keine Punkte. Erst der vollständige Abschluss schreibt XP und Sterne dem abschließenden Profil gut, bei Kinderfreigaben nach Bestätigung.
+- Wiederholungen beginnen mit leeren Checklisten. In offenen Runden bleiben unveränderte Schritte bei einer Bearbeitung erhalten; neue oder umbenannte Schritte sind wieder offen. Gemeldete Kinderaufgaben und erledigte Runden behalten ihre ursprüngliche Checkliste. Veraltete Anfragen nach Bearbeiten oder Zurücknehmen werden abgewiesen. Die Korrektur einer alten Runde verändert keine Checkliste einer neueren Runde.
+- Die Suche berücksichtigt Titel, Bereiche und Teilschritte. Bereichsfilter und „Meine Aufgaben“ lassen sich kombinieren; im Wochenplan gilt die geplante Zuständigkeit des jeweiligen Tages.
+- Aufgabenvorlagen sind jederzeit über „Missionen → Vorlagen“ erreichbar und vor dem Anlegen editierbar. „Mission duplizieren“ übernimmt die Definition mit frischen Teilschritten und Startdatum heute; Zuständigkeit, Rotation, Pause und bisherige Abschlüsse werden nicht kopiert. Kinderfreigabe und Punkte bleiben als editierbare Einstellungen erhalten.
+- Nach einem direkten Abschluss führt „Rückgängig“ ohne Umweg ins Logbuch zur vorhandenen Rücknahmebestätigung. Punkte und mögliche Questboni werden weiterhin nachvollziehbar korrigiert. Für spätere Korrekturen bleibt das Logbuch verfügbar.
+- Exportformat 5 enthält zusätzlich Bereiche, Teilschritte und ihren aktuellen Rundenzustand. Bestehende Daten werden ohne SQL-Migration und ohne Zurücksetzen weitergeführt.
 
 ## Raumstation und Motivation in Version 0.5
 
@@ -77,6 +88,6 @@ npm test
 npm run build
 ```
 
-61 automatisierte Prüfungen: 51 Integrationstests gegen Miniflare D1, 8 Kalendertests und 2 Prüfungen für Punktevorschläge und Wunschideen. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen Stationsausbau, Questboni bei gleichzeitigen Aktionen, nachträgliche Korrekturen und Wochenwechsel, Sparziele, Freischaltungen, persönliche Ziele, frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel.
+87 automatisierte Prüfungen: 68 Integrationstests gegen Miniflare D1, 8 Kalendertests, 2 Prüfungen für Punktevorschläge und Wunschideen sowie 9 Prüfungen für Wochenvorschau, Suche und Aufgabenkopien. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen Stationsausbau, Questboni bei gleichzeitigen Aktionen, nachträgliche Korrekturen und Wochenwechsel, Sparziele, Freischaltungen, persönliche Ziele, frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel. Die neuen Prüfungen decken außerdem Bereichsrechte, Namens- und Mengenlimits, Checklistenänderungen und parallele Schritte, unveränderliche Kinderfreigaben, Kopien ohne Altzustand und einen Ablauf von Crew-Gründung/Beitritt über Teilschritte und Questbonus bis zur Wunscheinlösung und zum Export ab.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung; Komponentenansichten lassen sich zusätzlich mit ausdrücklich gekennzeichneten, temporären Beispieldaten prüfen. Solche Prüfseiten werden nicht veröffentlicht. Vollständige Anmeldung auf der veröffentlichten Website und reale Android-/iPhone-Geräte bleiben gesonderte Praxistests.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Die neuen Komponenten wurden bei 360 und 510 Pixeln Inhaltsbreite mit ausdrücklich gekennzeichneten, temporären Beispieldaten geprüft: Wochenwechsel/Zuständigkeit, Suche, Checklisten, Duplizieren, Vorlagen und Bereiche. Solche Prüfseiten werden nicht veröffentlicht. Vollständige Anmeldung auf der veröffentlichten Website und reale Android-/iPhone-Geräte bleiben gesonderte Praxistests.

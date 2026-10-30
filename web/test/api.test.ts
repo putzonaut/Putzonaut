@@ -13,7 +13,7 @@ after(async()=>{await mf.dispose();});
 async function call(user:string|null,path:string,method='GET',body?:unknown,date=now,extraHeaders:Record<string,string>={}){const response=await handleApi(new Request(origin+'/api'+path,{method,headers:{Origin:origin,'Content-Type':'application/json',...extraHeaders},...(body!==undefined?{body:JSON.stringify(body)}:{})}),user?{userId:user}:null,repo,{now:()=>date});return {status:response.status,body:await response.json() as any,headers:response.headers};}
 async function setup(starterTasks=true){const user=crypto.randomUUID();const result=await call(user,'/auth/setup','POST',{name:'Alex',householdName:'Sternencrew',starterTasks});assert.equal(result.status,201);return user;}
 async function state(user:string,date=now){const r=await call(user,'/state','GET',undefined,date);assert.equal(r.status,200);return r.body;}
-async function complete(user:string,task:any,date=now){return call(user,`/tasks/${task.id}/complete`,'POST',{occurrenceKey:task.occurrenceKey},date);}
+async function complete(user:string,task:any,date=now){return call(user,`/tasks/${task.id}/complete`,'POST',{occurrenceKey:task.occurrenceKey,checklistVersion:task.checklist?.version},date);}
 async function addTask(user:string,values:Record<string,unknown>={}){const result=await call(user,'/tasks','POST',{title:'Spezialmission',room:'Haushalt',icon:'sparkles',minutes:10,xp:100,stars:200,cadence:'daily',...values});assert.equal(result.status,200);return (await state(user)).tasks.find((t:any)=>t.id===result.body.id);}
 test('real onboarding starts empty, persists across repository instances and hides account IDs',async()=>{const u=await setup();const s=await state(u);assert.equal(s.user.xp,0);assert.equal(s.user.stars,0);assert.equal(s.members.length,1);assert.equal(s.tasks.length,6);assert.equal(s.rewards.length,0);assert.equal(s.household.weekCount,0);assert.equal(JSON.stringify(s).includes(u),false);const another=new Repository(repo.db);assert.ok(await another.forAccount(u));const response=await call(u,'/state');assert.match(response.headers.get('Cache-Control')!,/no-store/);});
 test('parallel setup produces a single household without orphaned rows',async()=>{const u=crypto.randomUUID();const before=await repo.db.prepare('SELECT count(*) AS n FROM households').first<{n:number}>();const results=await Promise.all([call(u,'/auth/setup','POST',{name:'Alex',householdName:'Crew A'}),call(u,'/auth/setup','POST',{name:'Alex',householdName:'Crew B'})]);assert.deepEqual(results.map(r=>r.status).sort(),[201,409]);const after=await repo.db.prepare('SELECT count(*) AS n FROM households').first<{n:number}>();assert.equal(after!.n,before!.n+1);});
@@ -287,7 +287,7 @@ test('personal goals and styling apply only to the selected authorized profile a
  assert.equal((await call(other,'/profile/game','PATCH',body,now,selected(kid))).status,403);for(const n of [0,31,2.5])assert.equal((await call(u,'/profile/game','PATCH',{...body,personalGoal:n})).status,400);assert.equal((await call(u,'/profile/game','PATCH',{...body,titleId:'admin'})).status,403);assert.equal((await state(u)).user.stars,0);
 });
 test('version 0.5 export includes game progress and savings without exposing identity or invitation secrets',async()=>{
- const u=await setup(false),r=await rewardFor(u),t=await addTask(u);await startQuest(u,[t]);await complete(u,t);await call(u,'/profile/goal','PATCH',{rewardId:r.id});const invite=(await call(u,'/invitations','POST',{})).body.token;const ex=(await call(u,'/export')).body;assert.equal(ex.version,4);assert.ok(ex.game.weeks[weekKey(now)].quest.everRewarded);assert.equal(ex.members[0].savingRewardId,r.id);assert.equal(JSON.stringify(ex).includes(u),false);assert.equal(JSON.stringify(ex).includes(invite.split('.')[1]),false);
+ const u=await setup(false),r=await rewardFor(u),t=await addTask(u);await startQuest(u,[t]);await complete(u,t);await call(u,'/profile/goal','PATCH',{rewardId:r.id});const invite=(await call(u,'/invitations','POST',{})).body.token;const ex=(await call(u,'/export')).body;assert.equal(ex.version,5);assert.ok(ex.game.weeks[weekKey(now)].quest.everRewarded);assert.equal(ex.members[0].savingRewardId,r.id);assert.equal(JSON.stringify(ex).includes(u),false);assert.equal(JSON.stringify(ex).includes(invite.split('.')[1]),false);
 });
 
 test('quest options include partial-week availability but exclude old completed interval rounds',async()=>{
@@ -297,4 +297,95 @@ test('quest options include partial-week availability but exclude old completed 
  const current=(await state(u)).game.questOptions.map((t:any)=>t.id);assert.ok(current.includes(partial.id));assert.ok(current.includes(monthly.id));assert.ok(current.includes(interval.id));
  const later=new Date('2026-11-02T12:00:00Z');const next=(await state(u,later)).game.questOptions.map((t:any)=>t.id);assert.equal(next.includes(partial.id),false);assert.equal(next.includes(monthly.id),false);assert.equal(next.includes(interval.id),false);
  assert.equal((await startQuest(u,[monthly],later)).status,400);
+});
+
+async function markStep(u:string,t:any,index:number,done=true,date=now,headers:Record<string,string>={}){return call(u,`/tasks/${t.id}/checklist`,'PATCH',{occurrenceKey:t.occurrenceKey,checklistVersion:t.checklist.version,stepId:t.steps[index].id,done},date,headers);}
+async function taskState(u:string,id:string,date=now,headers:Record<string,string>={}){const r=await call(u,'/state','GET',undefined,date,headers);assert.equal(r.status,200);return r.body.tasks.find((t:any)=>t.id===id);}
+async function createArea(u:string,name='Balkon'){const r=await call(u,'/areas','POST',{name,icon:'sun'});assert.equal(r.status,200);return r.body.id;}
+
+test('0.5 documents gain durable default areas once without resetting earned progress',async()=>{
+ const u=await setup(),t=(await state(u)).tasks[0];await complete(u,t);const row=(await repo.forAccount(u))!,h=JSON.parse(row.document);delete h.areas;for(const task of h.tasks)delete task.areaId;
+ await repo.db.prepare('UPDATE households SET document=? WHERE id=?').bind(JSON.stringify(h),h.id).run();const s=await state(u);assert.equal(s.areas.length,4);assert.equal(s.tasks[0].areaId,'living');assert.equal(s.user.xp,t.xp);assert.equal(s.tasks[0].status,'done');assert.deepEqual(s.tasks[0].checklist.steps,[]);
+ const revision=(await repo.forAccount(u))!.revision;await state(u);assert.equal((await repo.forAccount(u))!.revision,revision);assert.ok(JSON.parse((await repo.forAccount(u))!.document).areas);
+});
+test('areas enforce captain access, unique names, household isolation and standard protection',async()=>{
+ const u=await setup(false),member=await join(u),kid=await child(u),other=await setup(false),foreign=await createArea(other);assert.equal((await call(member,'/areas','POST',{name:'Garten',icon:'leaf'})).status,403);assert.equal((await call(u,'/areas','POST',{name:'Garten',icon:'leaf'},now,selected(kid))).status,403);
+ const area=await createArea(u);assert.equal((await call(u,'/areas','POST',{name:'  BALKON  ',icon:'leaf'})).status,409);assert.equal((await call(u,'/areas','POST',{name:'Küche',icon:'paw'})).status,409);
+ assert.equal((await call(u,`/areas/${foreign}`,'PATCH',{name:'Fremd',icon:'leaf'})).status,404);assert.equal((await call(u,'/areas/kitchen','DELETE',{})).status,409);assert.equal((await call(u,'/areas/kitchen','PATCH',{name:'Andere Küche',icon:'leaf'})).status,409);
+ const payload={title:'Blumen pflegen',room:'Küche',areaId:foreign,icon:'plant',minutes:10,xp:40,stars:15,cadence:'daily'};assert.equal((await call(u,'/tasks','POST',payload)).status,400);
+ assert.equal((await call(u,'/tasks','POST',{...payload,areaId:area})).status,200);const t=(await state(u)).tasks[0];assert.equal(t.room,'Balkon');assert.equal(t.roomIcon,'sun');
+});
+test('area rename updates current tasks while history stays unchanged; used areas cannot be removed',async()=>{
+ const u=await setup(false),areaId=await createArea(u),t=await addTask(u,{areaId,room:'Balkon'});await complete(u,t);assert.equal((await call(u,`/areas/${areaId}`,'PATCH',{name:'Dachterrasse',icon:'leaf'})).status,200);
+ assert.equal((await taskState(u,t.id)).room,'Dachterrasse');assert.equal((await call(u,'/history')).body.items[0].room,'Balkon');assert.equal((await call(u,`/areas/${areaId}`,'DELETE',{})).status,409);
+ await call(u,`/tasks/${t.id}`,'DELETE',{});assert.equal((await call(u,`/areas/${areaId}`,'DELETE',{})).status,200);assert.equal((await state(u)).areas.length,4);assert.equal((await state(u)).user.stars,t.stars);
+});
+test('concurrent same-name area creation and the 24-area limit remain atomic',async()=>{
+ const u=await setup(false);const results=await Promise.all([call(u,'/areas','POST',{name:'Garten',icon:'leaf'}),call(u,'/areas','POST',{name:'garten',icon:'leaf'})]);assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
+ for(let i=0;i<19;i++)await createArea(u,'Bereich '+i);assert.equal((await state(u)).areas.length,24);assert.equal((await call(u,'/areas','POST',{name:'Zu viel',icon:'home'})).status,409);
+});
+test('checklists reject invalid, duplicate and foreign step IDs and cap step counts',async()=>{
+ const u=await setup(false),t=await addTask(u,{steps:[{title:'Spiegel'},{title:'Boden'}]});assert.equal(t.steps.length,2);assert.notEqual(t.steps[0].id,t.steps[1].id);
+ assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...t,steps:Array.from({length:13},()=>({title:'Schritt'}))})).status,400);assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...t,steps:[{title:'   '}]})).status,400);
+ assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...t,steps:[t.steps[0],t.steps[0]]})).status,400);assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...t,steps:[{id:crypto.randomUUID(),title:'Fremd'}]})).status,400);
+ assert.equal((await call(u,'/tasks','POST',{...t,title:'Kopie'})).status,400);assert.equal((await complete(u,t)).status,409);
+});
+test('concurrent checklist ticks merge without points, completion and quest bonus remain single awards',async()=>{
+ const u=await setup(false),a=await join(u),t=await addTask(u,{steps:[{title:'Spiegel'},{title:'Boden'}]});await startQuest(u,[t]);const rs=await Promise.all([markStep(u,t,0),markStep(a,t,1),markStep(u,t,0)]);assert.ok(rs.every(r=>r.status===200));
+ let s=await state(u);assert.equal(s.user.stars,0);assert.equal(s.household.weekCount,0);assert.equal((await call(u,'/history')).body.items.filter((e:any)=>e.kind==='completion').length,0);assert.equal(s.tasks[0].checklist.doneIds.length,2);
+ const done=await Promise.all([complete(u,s.tasks[0]),complete(a,s.tasks[0])]);assert.deepEqual(done.map(r=>r.status).sort(),[200,409]);s=await state(u);assert.equal(s.household.weekCount,1);assert.equal(s.members.reduce((n:number,m:any)=>n+m.stars,0),t.stars+20);assert.equal(s.members.reduce((n:number,m:any)=>n+m.xp,0),t.xp);
+ assert.equal((await markStep(u,t,0,false)).status,409);
+});
+test('checklist writes enforce task assignment, selected child access, crew isolation and pauses',async()=>{
+ const u=await setup(false),a=await join(u),b=await join(u),kid=await child(a),other=await setup(false);const t=await addTask(u,{assignedTo:kid,steps:[{title:'Aufräumen'}]});
+ assert.equal((await markStep(b,t,0)).status,403);assert.equal((await markStep(b,t,0,true,now,selected(kid))).status,403);assert.equal((await markStep(other,t,0)).status,404);
+ assert.equal((await markStep(a,t,0,true,now,selected(kid))).status,200);await call(u,`/tasks/${t.id}/pause`,'POST',{from:'2026-10-29',until:null});assert.equal((await markStep(u,t,0,false)).status,409);
+ const future=await addTask(u,{cadence:'once',dueDate:'2027-01-01',steps:[{title:'Später'}]});assert.equal((await markStep(u,future,0)).status,409);
+});
+test('daily checklist resets on the next round and refuses stale or fabricated progress',async()=>{
+ const u=await setup(false),t=await addTask(u,{steps:[{title:'Spiegel'}]});await markStep(u,t,0);await complete(u,t);const tomorrow=new Date('2026-10-30T12:00:00Z');const next=await taskState(u,t.id,tomorrow);
+ assert.deepEqual(next.checklist.doneIds,[]);assert.equal((await markStep(u,t,0,true,tomorrow)).status,409);assert.equal((await complete(u,next,tomorrow)).status,409);
+ assert.equal((await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:next.occurrenceKey,checklistVersion:next.checklist.version,checklist:{doneIds:[t.steps[0].id]},stepsDone:true},tomorrow)).status,409);
+ await markStep(u,next,0,true,tomorrow);assert.equal((await complete(u,next,tomorrow)).status,200);assert.equal((await state(u,tomorrow)).user.stars,t.stars*2);
+});
+test('step edits retain only unchanged checks and reject writes from an older checklist version',async()=>{
+ const u=await setup(false),t=await addTask(u,{steps:[{title:'Spiegel'},{title:'Boden'},{title:'Tür'}]});for(let i=0;i<3;i++)await markStep(u,t,i);
+ const edited={...t,steps:[t.steps[0],{...t.steps[1],title:'Boden wischen'},{title:'Regal'}]};assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',edited)).status,200);let next=await taskState(u,t.id);assert.deepEqual(next.checklist.doneIds,[t.steps[0].id]);assert.equal((await markStep(u,t,1)).status,409);assert.equal((await complete(u,t)).status,409);
+ const {steps,...legacy}=next;await call(u,`/tasks/${t.id}`,'PATCH',{...legacy,title:'Neuer Name'});next=await taskState(u,t.id);assert.equal(next.steps.length,3);assert.deepEqual(next.checklist.doneIds,[t.steps[0].id]);
+ await call(u,`/tasks/${t.id}`,'PATCH',{...next,cadence:'weekly'});next=await taskState(u,t.id);assert.deepEqual(next.checklist.doneIds,[]);
+});
+test('completion returns a direct undo handle; undo resets this checklist and invalidates delayed ticks',async()=>{
+ const u=await setup(false),t=await addTask(u,{steps:[{title:'Spiegel'}]});await markStep(u,t,0);const done=await complete(u,t);assert.equal(done.status,200);assert.equal(done.body.canUndo,true);assert.ok(done.body.id);assert.equal(done.body.createdAt,now.toISOString());
+ const undone=await Promise.all([call(u,`/completions/${done.body.id}/undo`,'POST',{}),call(u,`/completions/${done.body.id}/undo`,'POST',{})]);assert.ok(undone.every(r=>r.status===200));const next=await taskState(u,t.id);assert.deepEqual(next.checklist.doneIds,[]);assert.equal((await markStep(u,t,0)).status,409);assert.equal((await state(u)).user.stars,0);
+ await markStep(u,next,0);assert.equal((await complete(u,next)).status,200);assert.equal((await state(u)).user.stars,t.stars);
+});
+test('undo of an older round preserves newer checklist progress',async()=>{
+ const u=await setup(false),t=await addTask(u,{steps:[{title:'Spiegel'},{title:'Boden'}]});await markStep(u,t,0);await markStep(u,t,1);const done=await complete(u,t);const later=new Date('2026-11-02T12:00:00Z');const next=await taskState(u,t.id,later);await markStep(u,next,0,true,later);
+ await call(u,`/completions/${done.body.id}/undo`,'POST',{},later);const after=await taskState(u,t.id,later);assert.deepEqual(after.checklist.doneIds,[t.steps[0].id]);assert.equal(after.checklist.version,next.checklist.version);assert.equal((await state(u,later)).household.weekCount,0);
+});
+test('child approval uses its submitted checklist snapshot even after the task changes',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{steps:[{title:'Spiegel'}],approvalForChildren:true});await startQuest(u,[t]);await markStep(u,t,0,true,now,selected(kid));
+ const submitted=await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey,checklistVersion:t.checklist.version},now,selected(kid));assert.equal(submitted.body.canUndo,false);const claim=(await state(u)).pendingCompletions[0];assert.equal(claim.steps[0].title,'Spiegel');assert.equal((await state(u)).household.weekCount,0);
+ await call(u,`/tasks/${t.id}`,'PATCH',{...t,steps:[{title:'Neue Aufgabe'}],xp:10,stars:5});assert.equal((await taskState(u,t.id)).checklist.steps[0].title,'Spiegel');
+ assert.equal((await call(u,`/completions/${claim.id}/approve`,'POST',{})).status,200);const s=(await call(u,'/state','GET',undefined,now,selected(kid))).body;assert.equal(s.user.xp,t.xp);assert.equal(s.user.stars,t.stars+20);assert.equal(s.tasks[0].checklist.steps[0].title,'Spiegel');
+ const event=(await call(u,'/history')).body.items.find((e:any)=>e.kind==='completion');assert.equal(event.steps[0].title,'Spiegel');await call(u,`/completions/${event.id}/undo`,'POST',{});const reset=await taskState(u,t.id);assert.equal(reset.checklist.steps[0].title,'Neue Aufgabe');assert.deepEqual(reset.checklist.doneIds,[]);
+});
+test('rejected child reports reset current checklists but preserve a later round',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{steps:[{title:'Aufräumen'}],approvalForChildren:true});await markStep(u,t,0,true,now,selected(kid));await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey,checklistVersion:t.checklist.version},now,selected(kid));let claim=(await state(u)).pendingCompletions[0];await call(u,`/completions/${claim.id}/reject`,'POST',{});let current=await taskState(u,t.id);assert.deepEqual(current.checklist.doneIds,[]);
+ await markStep(u,current,0,true,now,selected(kid));await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:current.occurrenceKey,checklistVersion:current.checklist.version},now,selected(kid));claim=(await state(u)).pendingCompletions[0];const later=new Date('2026-10-30T12:00:00Z');current=await taskState(u,t.id,later);await markStep(u,current,0,true,later);await call(u,`/completions/${claim.id}/withdraw`,'POST',{},later,selected(kid));assert.deepEqual((await taskState(u,t.id,later)).checklist.doneIds,[t.steps[0].id]);
+});
+test('removing a child cancels its pending checklist and prevents stale progress restoration',async()=>{
+ const u=await setup(false),kid=await child(u),t=await addTask(u,{steps:[{title:'Aufräumen'}],approvalForChildren:true,assignedTo:kid});await markStep(u,t,0,true,now,selected(kid));await call(u,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:t.occurrenceKey,checklistVersion:t.checklist.version},now,selected(kid));
+ await call(u,`/members/${kid}`,'DELETE',{});const current=await taskState(u,t.id);assert.deepEqual(current.checklist.doneIds,[]);assert.equal(current.effectiveAssignedTo,null);assert.equal((await markStep(u,t,0)).status,409);assert.equal((await state(u)).user.stars,0);
+});
+test('final checklist tick racing completion never bypasses remaining work or double-credits',async()=>{
+ const u=await setup(false),t=await addTask(u,{steps:[{title:'Ein letzter Schritt'}]});const [tick,done]=await Promise.all([markStep(u,t,0),complete(u,t)]);assert.equal(tick.status,200);assert.ok([200,409].includes(done.status));if(done.status===409)assert.equal((await complete(u,await taskState(u,t.id))).status,200);
+ assert.equal((await state(u)).user.xp,t.xp);assert.equal((await call(u,'/history')).body.items.filter((e:any)=>e.kind==='completion').length,1);
+});
+test('the seven-day state exposes future rotation and never allows future completion',async()=>{
+ const u=await setup(false),a=await join(u);const s=await state(u),aId=(await state(a)).user.id;const t=await addTask(u,{rotationIds:[s.user.id,aId]});const plan=(await state(u)).planner;assert.equal(plan.days.length,7);assert.equal(plan.from,'2026-10-29');assert.equal(plan.through,'2026-11-04');const monday=plan.days.find((d:any)=>d.date==='2026-11-02').rounds[0];assert.equal(monday.assignedTo,aId);assert.equal(monday.availableNow,false);assert.equal((await call(a,`/tasks/${t.id}/complete`,'POST',{occurrenceKey:monday.occurrenceKey})).status,403);
+});
+test('0.6 journey: setup, invitation, custom area, checklist, quest, saving goal, redemption and export',async()=>{
+ const u=await setup(false),a=await join(u),areaId=await createArea(u,'Kinderzimmer');const t=await addTask(u,{areaId,room:'Kinderzimmer',steps:[{title:'Bücher ins Regal'},{title:'Boden freiräumen'}],stars:30});await startQuest(u,[t]);const reward=await rewardFor(u,40);await call(a,'/profile/goal','PATCH',{rewardId:reward.id});await markStep(a,t,0);await markStep(a,t,1);assert.equal((await complete(a,await taskState(a,t.id))).status,200);let s=await state(a);assert.equal(s.game.savingGoal.ready,true);assert.equal(s.user.stars,50);
+ assert.equal((await call(a,`/rewards/${reward.id}/redeem`,'POST',{requestKey:crypto.randomUUID()})).status,200);s=await state(a);assert.equal(s.user.stars,10);assert.equal(s.game.savingGoal,null);const ex=(await call(u,'/export')).body;assert.equal(ex.version,5);assert.equal(ex.areas.find((x:any)=>x.id===areaId).name,'Kinderzimmer');assert.equal(ex.tasks[0].steps.length,2);assert.equal(JSON.stringify(ex).includes(a),false);assert.equal((await call(a,'/export')).status,403);
 });

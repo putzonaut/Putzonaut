@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import {areaChange} from './areas.ts';
+import {ensureAreas} from '../shared/workspace.ts';
 import {gameChange} from './game.ts';
 import {weekKey} from '../shared/planning.ts';
 import { missionChange } from './missions.ts';
@@ -21,7 +23,7 @@ async function readBody(request:Request){
 export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{now?:()=>Date;development?:boolean}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
-  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.5.0'});}
+  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.6.0'});}
   if(!identity)return json({error:'Bitte melde dich mit deinem ChatGPT-Konto an.'},401);
   if(!['GET','HEAD'].includes(method)){
    const allowed=options.development?url.origin:origin;
@@ -45,10 +47,10 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id};
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
-  if(route==='/state'&&method==='GET'){if(!h.game?.weeks[weekKey(now)]){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
+  if(route==='/state'&&method==='GET'){if(!h.areas||!h.game?.weeks[weekKey(now)]){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
   if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){
-   admin(actor);const snapshot={format:'putzonaut-export',version:4,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,rewards:h.rewards,redemptions:h.redemptions};
+   admin(actor);ensureAreas(h);const snapshot={format:'putzonaut-export',version:5,areas:h.areas,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,rewards:h.rewards,redemptions:h.redemptions};
    return new Response(JSON.stringify(snapshot,null,2),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="putzonaut-${now.toISOString().slice(0,10)}.json"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(route==='/invitations'&&method==='GET'){admin(actor);return json({items:h.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString()).map(({hash:_,...i})=>i)});}
@@ -64,6 +66,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const result=await repo.mutate<unknown>(accountId,now,async house=>{
    const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const area=areaChange(route,method,body,house,user);if(area)return area;
    const game=gameChange(route,method,body,house,user,now);if(game)return game;
    const mission=await missionChange(route,method,body,house,user,member(house,accountId),now,repo);if(mission)return mission;
    const crew=crewChange(route,method,body,house,user,now);if(crew)return crew;
