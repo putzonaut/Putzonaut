@@ -21,7 +21,7 @@ export type State = {
   redemptions: { id: string; title: string; cost: number; user_name: string; fulfilled_at: string | null; created_at: string }[];
   outfits: Outfit[];
   recent: { id: string; title: string; name: string; createdAt: string }[];
-  revision:number; syncedAt:string;
+  restoreEpoch:string;revision:number; syncedAt:string;
   completedCount: number;
 };
 

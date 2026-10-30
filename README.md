@@ -1,8 +1,22 @@
 # Putzonaut
 
-**Dein Haushalt. Eure Mission.** Eine installierbare Web-App für gemeinsame Haushaltsaufgaben, persönliche Fortschritte und Familienbelohnungen.
+**Dein Haushalt. Eure Mission.** Haushaltsaufgaben als gemeinsame Missionen für Familien, Paare, WGs und Einzelhaushalte.
 
-## Stand: 0.1.0 – erste Testversion
+## Aktuelle Web-App 0.7.0
+
+[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.7.md)
+
+Die aktive Entwicklung liegt in `web/`. Version 0.7 stellt den nächsten kleinen Einsatz in den Mittelpunkt: 5, 10 oder 20 Minuten wählen, eine passende offene Mission finden und loslegen. Die Vorlagenbibliothek umfasst 45 anpassbare Tätigkeiten in sieben Kategorien; beim Einrichten bleibt die Auswahl auf sechs Startervorlagen beschränkt.
+
+Neu ist eine vollständige Crew-Sicherung einschließlich Logbuch, mit geprüfter Vorschau, atomarer Wiederherstellung und automatischem Rücksprungpunkt. Sie funktioniert in derselben bestehenden Crew bei unveränderten Mitgliedern und Berechtigungen. Konten- und Betreiber-Backups bleiben ein gesonderter Schritt vor der öffentlichen Beta. Die vollständigen Grenzen stehen in der Web-Dokumentation.
+
+Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 104 automatisierte Tests prüfen die Anwendung; die visuelle Prüfung von 0.7 und echte Android-/iPhone-Tests stehen noch aus, weil die bereitgestellte Browser-Vorschau nicht erreichbar war.
+
+Die Website bleibt privat und verwendet weiterhin ChatGPT zur Anmeldung. Eine Crew-Einladung ersetzt die Website-Freigabe nicht. Unabhängige Anmeldung, Kontoverwaltung und öffentlicher Start folgen als nächste Phase; Domain, eigener Server und native Apps später.
+
+## Frühere Docker-/PostgreSQL-Grundlage (0.1.0)
+
+Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.7 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
 
 Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. Die Oberfläche verwendet die eigens gestalteten Putzonaut-Illustrationen, selbst gehostete Schriftdateien und echte Bedienelemente.
 
@@ -65,10 +79,3 @@ Ein echter Installations- und Update-Test auf Umbrel sowie der Gerätetest auf A
 
 Der Quellcode enthält keine echten Nutzerdaten oder Zugangsdaten. Datenbanksicherungen sind zusätzlich zum Git-Repository notwendig. Für spätere native Apps ist das gleiche Backend vorgesehen; eine Capacitor-Integration wurde noch nicht hinzugefügt.
 
-## Aktuelle Web-App 0.6.0
-
-Die aktive Webentwicklung liegt in [`web/`](web/README.md): geführter Einstieg für Familien, Paare, WGs und Einzelhaushalte, begleitete Kinderprofile, vollständige Crew-Verwaltung sowie flexible Aufgabenplanung, wechselnde Zuständigkeiten, Aufgabenpausen, Kinderfreigaben und korrigierbare Abschlüsse. Version 0.5 ergänzt eine ausbaubare Raumstation, Wochenquests mit einmaligen Bonussternen, persönliche Spar- und Wochenziele, zwei neue Anzüge sowie Titel, Abzeichen und Punktevorschläge aus Dauer und Aufwand. Version 0.6 ergänzt einen Sieben-Tage-Plan mit geplanter Zuständigkeit, eigene Bereiche mit Symbolen, Teilschritte pro Aufgabenrunde, Suche, editierbare Aufgabenkopien und jederzeit erreichbare Vorlagen. Abschlüsse lassen sich direkt aus der Erfolgsansicht zurücknehmen. 87 automatisierte Prüfungen sichern unter anderem parallele Checklistenänderungen und Bonusvergaben, Kinderfreigaben, Rücknahmen und Wochenwechsel ab. Punkte, Wünsche und Logbuch bleiben integriert. Die private Entwicklungsveröffentlichung nutzt weiterhin ChatGPT zur Anmeldung; unabhängige Konten und der öffentliche Start folgen später.
-
-Webadresse: https://putzonaut-test.denny-subke.chatgpt.site
-
-Die Website bleibt privat. Eine Crew-Einladung ersetzt die zusätzliche Freigabe der Website nicht. Domain und eigener Server folgen später. Die Docker-/PostgreSQL-Grundlage im Repository-Hauptverzeichnis bleibt für diesen späteren Umzug erhalten; sie ist noch nicht auf den Datenstand der Web-App migriert.

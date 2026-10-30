@@ -1,8 +1,10 @@
-# Putzonaut · Web-App 0.6.0
+# Putzonaut · Web-App 0.7.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
+
+Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
 
 ## Einstieg
 
@@ -30,7 +32,29 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 - Eigene Wünsche, bestätigtes Einlösen und Markieren erfüllter Belohnungen.
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
 - Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
-- JSON-Export des aktuellen Crewstands (Format 5) mit Profilen, Punkten, Aufgaben, offenen Freigaben und Wünschen, einschließlich ausgeschiedener Profile. Keine Konten-Identitäten oder Einladungsschlüssel. Dies ist kein vollständiges Datenbankbackup; das gesamte Logbuch ist nicht enthalten. Ein Import ist noch nicht implementiert.
+- Vollständige Crew-Sicherung mit Profilen, Punkten, Aufgaben, offenen Freigaben, Wünschen, Raumstation und dem gesamten Logbuch. Wiederherstellung im Profil mit Vorschau und automatischem Rücksprungpunkt; genaue Grenzen unten. Der bisherige Export-Endpunkt (Format 5) bleibt für vorhandene Nutzer verfügbar, ist aber nicht importierbar.
+
+## Einfach loslegen in Version 0.7
+
+- Auf der Basis steht zuerst die Frage „Wie viel Zeit hast du?“. 5, 10 oder 20 Minuten ergeben bis zu drei passende, aktuell offene Aufgaben. Eine Mission wird deutlich hervorgehoben; „Andere Mission“ wechselt durch die Vorschläge. „Loslegen“ öffnet die gewohnte Aufgabenansicht mit Checkliste und Abschluss.
+- Es zählen die geschätzten Minuten für die ganze Aufgabe. Eigene Zuständigkeiten werden bevorzugt, danach überfällige und freie Aufgaben. Fremd zugeteilte, pausierte, erledigte, zur Freigabe gemeldete und zukünftige Runden werden nicht vorgeschlagen – auch nicht für Captains. Der Kurzstart vergibt keine Zusatzpunkte und meldet nichts automatisch als erledigt.
+- Die Basis zeigt höchstens zwei weitere verfügbare Aufgaben. Level, Raumstation und vorhandene Ziele bleiben erreichbar, während die ausführlichen Einstellungen im Profil bzw. in den Missionen liegen. Die vier Hauptreiter bleiben unverändert.
+- 45 anpassbare Tätigkeiten statt bisher sechs: Küche, Bad, Wäsche, Aufräumen, allgemeiner Haushalt, Pflanzen/draußen und Haustiere. Suche und Kategorieauswahl grenzen die Vorlagen ein; zunächst erscheinen acht, weitere auf Wunsch. Aufgaben mit mehreren Arbeitsschritten bringen eine editierbare Checkliste mit.
+- Bestehende Crews erhalten keine automatisch hinzugefügten Aufgaben. Der Einstieg bietet weiterhin nur die sechs bekannten Startervorlagen, einzeln abwählbar.
+
+## Sicherung und Wiederherstellung
+
+Unter **Profil → Sichern & wiederherstellen** lädt der Captain eine JSON-Datei herunter. Sie enthält alle fachlichen Crew-Daten einschließlich des vollständigen Logbuchs und ausgeschiedener Profile, jedoch keine Konto-IDs, Anmeldedaten oder Einladungsschlüssel. Maximal 8 MB und 10.000 Logbucheinträge; größere Sicherungen werden ausdrücklich abgebrochen und nie gekürzt.
+
+Die Datei lässt sich in **derselben noch bestehenden Crew** wiederherstellen, solange Mitglieder, Rollen und Kinderbegleitungen unverändert sind. Vorschau und Bestätigung mit dem Crew-Namen gehen dem Ersetzen voraus. Punkte, Missionen, Wünsche und Logbuch werden gemeinsam zurückgesetzt. Neuere Änderungen werden dabei verworfen. Offene Einladungen werden widerrufen, bestehende Konto-Zuordnungen bleiben erhalten. Ältere Exporte bis Version 0.6 lassen sich nicht importieren.
+
+Unmittelbar vor jeder Wiederherstellung wird der aktuelle Crewstand einschließlich Logbuch in derselben Datenbanktransaktion als Rücksprungpunkt gespeichert. Er kann heruntergeladen und über dieselbe Vorschau wieder eingespielt werden. Es gibt **einen** Rücksprungpunkt je Crew; die nächste Wiederherstellung ersetzt ihn. Ändert jemand die Crew nach der Vorschau, wird das Einspielen abgewiesen. Veraltete Browseranfragen werden nach einer Wiederherstellung ebenfalls abgewiesen, bis die Ansicht aktualisiert wurde.
+
+Die Prüfsumme erkennt beschädigte oder veränderte Dateien; sie ist keine digitale Signatur. Die Wiederherstellung ist eine ausschließlich dem aktuell berechtigten Captain erlaubte Änderung. Dateien anderer Crews, ungültige Daten und geänderte Berechtigungsstände werden abgewiesen.
+
+Das ist kein Backup der gesamten Plattform und keine Kontowiederherstellung: Eine geschlossene oder gelöschte Crew sowie verlorene Konto-Zuordnungen lassen sich damit nicht neu anlegen. Der Betreiber benötigt zusätzlich eine vollständige Datenbanksicherung außerhalb dieser Datenbank. Das wird vor dem öffentlichen Betrieb und dem späteren Serverumzug ergänzt.
+
+Die additive Migration `0001_bent_manta.sql` legt nur die zwei Tabellen für den Rücksprungpunkt an. Vorhandene Crew-Daten und bisherige Migrationen werden nicht verändert. [Prüfablauf und offene Gerätetests](docs/QA-0.7.md).
 
 ## Alltag und Übersicht in Version 0.6
 
@@ -69,7 +93,7 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 
 Die aktuelle Website bleibt eine private Entwicklungsveröffentlichung. Erwachsene melden sich dort über ChatGPT an und benötigen zusätzlich Website-Zugriff. Eine Crew-Einladung ändert diese Freigabe nicht. Einladungen werden nicht automatisch versandt.
 
-Das Produktziel ist eine unabhängig nutzbare Web-App. Eigene Anmeldung ohne ChatGPT, Kontolöschung, Wiederherstellungsverfahren, vollständige Backups, öffentlicher Betrieb und der Umzug auf eine eigene Domain sind noch vor dem öffentlichen Start umzusetzen. Dafür bleibt die Docker-/PostgreSQL-Grundlage im Hauptverzeichnis erhalten; sie enthält noch nicht die neuen Webfunktionen. Ein öffentlicher Zugang wird durch dieses Update nicht eingerichtet.
+Das Produktziel ist eine unabhängig nutzbare Web-App. Eigene Anmeldung ohne ChatGPT, Kontolöschung, Kontowiederherstellung, unabhängige Betreiber-Backups, öffentlicher Betrieb und der Umzug auf eine eigene Domain sind noch vor dem öffentlichen Start umzusetzen. Dafür bleibt die Docker-/PostgreSQL-Grundlage im Hauptverzeichnis erhalten; sie enthält noch nicht die neuen Webfunktionen. Ein öffentlicher Zugang wird durch dieses Update nicht eingerichtet.
 
 ## Daten und Berechtigungen
 
@@ -88,6 +112,6 @@ npm test
 npm run build
 ```
 
-87 automatisierte Prüfungen: 68 Integrationstests gegen Miniflare D1, 8 Kalendertests, 2 Prüfungen für Punktevorschläge und Wunschideen sowie 9 Prüfungen für Wochenvorschau, Suche und Aufgabenkopien. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen Stationsausbau, Questboni bei gleichzeitigen Aktionen, nachträgliche Korrekturen und Wochenwechsel, Sparziele, Freischaltungen, persönliche Ziele, frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel. Die neuen Prüfungen decken außerdem Bereichsrechte, Namens- und Mengenlimits, Checklistenänderungen und parallele Schritte, unveränderliche Kinderfreigaben, Kopien ohne Altzustand und einen Ablauf von Crew-Gründung/Beitritt über Teilschritte und Questbonus bis zur Wunscheinlösung und zum Export ab.
+104 automatisierte Prüfungen: 81 Integrationstests gegen Miniflare D1, 8 Kalendertests, 2 Prüfungen für Punktevorschläge und Wunschideen sowie 9 Prüfungen für Wochenvorschau, Suche und Aufgabenkopien und 4 Prüfungen für Kurzstart und Vorlagen. Die 13 neuen API-Prüfungen decken vollständige Sicherung, Vorschau, Wiederherstellung, Rücksprungpunkt, parallele Anfragen, Berechtigungen, veraltete Clients sowie das echte Anlegen aller 45 Vorlagen ab. Sie prüfen Persistenz, Konto- und Crew-Isolation, gleichzeitige Änderungen, Punkte, Einlösungen, Kalendergrenzen, Kinderprofile, Rollenübergabe, Austritt, Widerruf von Zugängen, geschützte Schreibanfragen und Kompatibilität mit bestehenden Crew-Dokumenten. Hinzu kommen Stationsausbau, Questboni bei gleichzeitigen Aktionen, nachträgliche Korrekturen und Wochenwechsel, Sparziele, Freischaltungen, persönliche Ziele, frühe oder pausierte Abschlüsse, Freigaben, Rücknahmen, gleichzeitige Einlösungen, Monatsenden, Schaltjahre, Sommerzeit und Aufgabenwechsel. Die neuen Prüfungen decken außerdem Bereichsrechte, Namens- und Mengenlimits, Checklistenänderungen und parallele Schritte, unveränderliche Kinderfreigaben, Kopien ohne Altzustand und einen Ablauf von Crew-Gründung/Beitritt über Teilschritte und Questbonus bis zur Wunscheinlösung und zum Export ab.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Die neuen Komponenten wurden bei 360 und 510 Pixeln Inhaltsbreite mit ausdrücklich gekennzeichneten, temporären Beispieldaten geprüft: Wochenwechsel/Zuständigkeit, Suche, Checklisten, Duplizieren, Vorlagen und Bereiche. Solche Prüfseiten werden nicht veröffentlicht. Vollständige Anmeldung auf der veröffentlichten Website und reale Android-/iPhone-Geräte bleiben gesonderte Praxistests.
+Browserprüfungen erfolgen über die verwaltete Vorschau. Der lokale Modus simuliert keine ChatGPT-Anmeldung. Für 0.7 ließ sich die Vorschau starten, der bereitgestellte Browser erreichte sie jedoch nicht (Verbindung abgelehnt; anschließende Browser-Sicherheitsblockade). Die neue Oberfläche ist daher noch nicht visuell im Browser geprüft. Vollständige Anmeldung auf der veröffentlichten Website sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen sind kein Ersatz für diese Gerätetests.

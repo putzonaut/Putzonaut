@@ -6,5 +6,5 @@ export function duplicateDraft(task:Task,today=localDay(new Date())):TaskDraft{
 }
 export function templateDraft(key:string):TaskDraft{
  const t=TASK_TEMPLATES.find(t=>t.key===key);if(!t)throw new Error('Unbekannte Vorlage');
- return {title:t.title,room:t.room,icon:t.icon,minutes:t.minutes,xp:t.xp,stars:t.stars,cadence:t.cadence,steps:[]};
+ return {title:t.title,room:t.room,icon:t.icon,minutes:t.minutes,xp:t.xp,stars:t.stars,cadence:t.cadence,steps:(t.steps??[]).map(title=>({title}))};
 }

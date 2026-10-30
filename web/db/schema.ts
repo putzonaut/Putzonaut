@@ -9,3 +9,13 @@ export const memberships=sqliteTable('memberships',{
 export const events=sqliteTable('events',{
  id:text('id').primaryKey(),householdId:text('household_id').notNull().references(()=>households.id),memberId:text('member_id').notNull(),kind:text('kind').notNull(),createdAt:text('created_at').notNull(),requestKey:text('request_key'),payload:text('payload').notNull(),
 },t=>[index('events_household_time').on(t.householdId,t.createdAt),uniqueIndex('events_request').on(t.memberId,t.requestKey)]);
+
+// One rollback point per crew, replaced atomically with each restoration.
+export const crewRecovery=sqliteTable('crew_recovery',{
+ householdId:text('household_id').primaryKey().references(()=>households.id),
+ document:text('document').notNull(),sourceRevision:integer('source_revision').notNull(),createdAt:text('created_at').notNull(),
+});
+export const crewRecoveryEvents=sqliteTable('crew_recovery_events',{
+ householdId:text('household_id').notNull().references(()=>households.id),
+ eventId:text('event_id').notNull(),payload:text('payload').notNull(),
+},t=>[uniqueIndex('crew_recovery_event').on(t.householdId,t.eventId)]);

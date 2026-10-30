@@ -1,9 +1,11 @@
 'use client';
 import {useState} from 'react';
-import {Bath,Bed,Box,Car,Check,ChevronRight,House,Leaf,Monitor,PawPrint,Pencil,Plus,Sofa,Sun,Utensils,Wrench} from 'lucide-react';
+import {Bath,Bed,Box,Car,Check,ChevronRight,House,Leaf,Monitor,PawPrint,Pencil,Plus,Search,Sofa,Sun,Utensils,Wrench} from 'lucide-react';
 import type {Area,AreaIcon as AreaIconName} from '../shared/workspace';
 import {AREA_ICONS} from '../shared/workspace';
-import {TASK_TEMPLATES} from '../shared/setup';
+import {TASK_TEMPLATES,TEMPLATE_CATEGORIES} from '../shared/setup';
+import {matchesMission} from '../shared/workspace';
+import {scheduleLabel} from '../shared/planning';
 import {templateDraft} from './drafts';
 import type {State,TaskDraft} from './types';
 const icons={home:House,kitchen:Utensils,sofa:Sofa,bath:Bath,bed:Bed,leaf:Leaf,sun:Sun,paw:PawPrint,car:Car,tools:Wrench,desk:Monitor,box:Box};
@@ -17,5 +19,13 @@ export function AreaForm({area,busy,onSubmit,onArchive}:{area?:Area;busy:boolean
  return <><div className="sheet-illustration"><AreaIcon name={icon} size={45}/></div><h2>{area?'Bereich bearbeiten':'Ein neuer Bereich'}</h2><form onSubmit={e=>{e.preventDefault();onSubmit({name:String(new FormData(e.currentTarget).get('name')),icon});}}><label>Name des Bereichs<input name="name" required minLength={1} maxLength={40} defaultValue={area?.name} placeholder="Zum Beispiel: Balkon"/></label><fieldset className="planning-fieldset"><legend>Passendes Symbol</legend><div className="area-icon-picker">{AREA_ICONS.map(value=><button type="button" key={value} aria-label={iconNames[value]} title={iconNames[value]} aria-pressed={icon===value} className={icon===value?'selected':''} onClick={()=>setIcon(value)}><AreaIcon name={value} size={24}/></button>)}</div><p>{iconNames[icon]}</p></fieldset><button className="button primary" disabled={busy}>Bereich speichern</button>{onArchive&&<button className="text-button danger-text centered" type="button" disabled={busy} onClick={onArchive}>Bereich entfernen</button>}</form></>;
 }
 export function TaskLibrary({state,busy,onChoose}:{state:State;busy:boolean;onChoose:(t:TaskDraft)=>void}){
- return <><div className="sheet-illustration"><Box size={45}/></div><h2>Eine Mission aus der Vorlage</h2><p>Wähle eine Aufgabe und passe Bereich, Rhythmus, Teilschritte und Punkte vor dem Speichern an.</p><div className="template-list">{TASK_TEMPLATES.map(t=>{const exists=state.tasks.some(x=>x.title===t.title);const a=state.areas.find(a=>a.name===t.room);return <button key={t.key} disabled={busy} onClick={()=>onChoose(templateDraft(t.key))}><span className="area-symbol"><AreaIcon name={a?.icon} size={25}/></span><span><strong>{t.title}</strong><small>{t.room} · {t.minutes} Min. · {t.stars} Sterne</small>{exists&&<em><Check size={12}/>Schon vorhanden · weitere Kopie möglich</em>}</span><ChevronRight size={17}/></button>;})}</div></>;
+ const [query,setQuery]=useState(''),[category,setCategory]=useState(''),[limit,setLimit]=useState(8);
+ const templates=TASK_TEMPLATES.filter(t=>(!category||t.category===category)&&matchesMission({...t,steps:(t.steps??[]).map(title=>({title}))},query));
+ return <><div className="sheet-illustration"><Box size={45}/></div><h2>Was passt zu eurem Zuhause?</h2><p>Eine kleine Aufgabe genügt. Wähle eine Vorlage und passe sie an euren Alltag an.</p>
+ <div className="template-filters"><div className="mission-search"><Search size={18}/><input type="search" aria-label="Vorlagen durchsuchen" maxLength={100} value={query} placeholder="Zum Beispiel: Wäsche oder Spiegel" onChange={e=>{setQuery(e.target.value);setLimit(8);}}/></div><label>Bereich der Vorlagen<select value={category} onChange={e=>{setCategory(e.target.value);setLimit(8);}}><option value="">Alle Tätigkeiten</option>{TEMPLATE_CATEGORIES.map(c=><option key={c.id} value={c.id}>{c.label}</option>)}</select></label></div>
+ <p className="search-count" role="status">{templates.length} passende {templates.length===1?'Vorlage':'Vorlagen'} · Es wird nur angelegt, was du auswählst.</p>
+ <div className="template-list">{templates.slice(0,limit).map(t=>{const exists=state.tasks.some(x=>x.title.toLocaleLowerCase('de-DE')===t.title.toLocaleLowerCase('de-DE'));const a=state.areas.find(a=>a.name===t.room);return <button key={t.key} disabled={busy} onClick={()=>onChoose(templateDraft(t.key))}><span className="area-symbol"><AreaIcon name={a?.icon} size={25}/></span><span><strong>{t.title}</strong><small>{t.minutes} Min. · {scheduleLabel(t)} · {t.stars} Sterne</small>{exists&&<em><Check size={12}/>Schon vorhanden · weitere Kopie möglich</em>}</span><ChevronRight size={17}/></button>;})}</div>
+ {templates.length>limit&&<button className="button secondary" onClick={()=>setLimit(n=>n+8)}>Weitere Vorlagen ansehen</button>}
+ {!templates.length&&<div className="empty"><Search size={27}/><h3>Noch keine passende Vorlage?</h3><p>Ändere den Suchbegriff oder wähle einen anderen Bereich. Eigene Missionen kannst du jederzeit erstellen.</p></div>}
+ </>;
 }

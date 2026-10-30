@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import {backupRoute} from './backups.ts';
+import {BACKUP_MAX_BYTES} from './backup-schema.ts';
+import {APP_VERSION} from '../src/version.ts';
 import {areaChange} from './areas.ts';
 import {ensureAreas} from '../shared/workspace.ts';
 import {gameChange} from './game.ts';
@@ -13,17 +16,17 @@ import type { HistoryEvent, Household, Member } from './domain.ts';
 export type Identity={userId:string;fullName?:string|null};
 const origin='https://putzonaut-test.denny-subke.chatgpt.site';
 const json=(value:unknown,status=200)=>Response.json(value,{status,headers:{'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer'}});
-async function readBody(request:Request){
+async function readBody(request:Request,limit=16384){
  if(!request.headers.get('content-type')?.toLowerCase().startsWith('application/json'))throw new AppError(415,'Bitte sende die Anfrage erneut aus Putzonaut.');
  const reader=request.body?.getReader();if(!reader)return {};const chunks:Uint8Array[]=[];let length=0;
- while(true){const item=await reader.read();if(item.done)break;length+=item.value.length;if(length>16384){await reader.cancel();throw new AppError(413,'Die Eingabe ist zu groß.');}chunks.push(item.value);}
+ while(true){const item=await reader.read();if(item.done)break;length+=item.value.length;if(length>limit){await reader.cancel();throw new AppError(413,'Die Eingabe ist zu groß.');}chunks.push(item.value);}
  const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  try{return JSON.parse(new TextDecoder().decode(bytes));}catch{throw new AppError(400,'Die Eingabe konnte nicht gelesen werden.');}
 }
 export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{now?:()=>Date;development?:boolean}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
-  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:'0.6.0'});}
+  if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:APP_VERSION});}
   if(!identity)return json({error:'Bitte melde dich mit deinem ChatGPT-Konto an.'},401);
   if(!['GET','HEAD'].includes(method)){
    const allowed=options.development?url.origin:origin;
@@ -31,7 +34,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const now=(options.now??(()=>new Date()))();const accountId=identity.userId;
   if(route==='/bootstrap'&&method==='GET'){const row=await repo.forAccount(accountId);return json({needsSetup:!row,signedIn:true,suggestedName:identity.fullName?.split(' ')[0]??''});}
-  const body=['POST','PATCH','DELETE'].includes(method)?await readBody(request):{};
+  const body=['POST','PATCH','DELETE'].includes(method)?await readBody(request,['/backups/preview','/backups/restore'].includes(route)?BACKUP_MAX_BYTES+4096:16384):{};
   if(route==='/auth/setup'&&method==='POST'){
    const v=z.object({name:nameSchema,householdName:z.string().trim().min(2).max(60),starterTasks:z.boolean().default(true),kind:z.enum(['family','couple','shared','solo']).default('family'),taskTemplates:z.array(z.string().refine(key=>TASK_TEMPLATES.some(t=>t.key===key))).max(6).optional()}).parse(body);
    const h=newHousehold(accountId,v.name,v.householdName,v.starterTasks,now,v.kind,v.taskTemplates);await repo.create(h);return json({ok:true},201);
@@ -45,8 +48,10 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
    const v=z.object({name:nameSchema,invite:z.string().regex(/^[0-9a-f-]{36}\.[0-9a-f]{64}$/)}).parse(body);const [householdId,token]=v.invite.split('.');const hash=await digest(token);
    return json(await repo.join(householdId,accountId,now,h=>{const invitation=h.invites.find(i=>i.hash===hash&&!i.usedAt&&i.expiresAt>now.toISOString());if(!invitation)throw new AppError(410,'Diese Einladung ist abgelaufen oder wurde schon benutzt.');if(activeMembers(h).length>=12)throw new AppError(409,'Eure Crew hat bereits zwölf Mitglieder.');const joined=newMember(accountId,v.name,'member',now);h.members.push(joined);invitation.usedAt=now.toISOString();return joined.id;}),201);
   }
-  const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id};
+  const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id,restoreEpoch:h.restoreEpoch};
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
+  if(!['GET','HEAD'].includes(method)&&(request.headers.get('X-Putzonaut-Epoch')??'')!==(h.restoreEpoch??''))throw new AppError(409,'Eure Crew wurde wiederhergestellt. Bitte lade den aktuellen Stand, bevor du etwas änderst.');
+  const backupResponse=await backupRoute(route,method,body,repo,accountId,profileId,row,now);if(backupResponse)return backupResponse;
   if(route==='/state'&&method==='GET'){if(!h.areas||!h.game?.weeks[weekKey(now)]){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
   if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0 · 30. Oktober 2026
+
+- Kurzstart mit 5, 10 oder 20 Minuten und bis zu drei tatsächlich verfügbaren Missionen; eigene Zuständigkeiten werden berücksichtigt.
+- Aufgeräumte Basis mit einer klaren nächsten Handlung, kompakter Levelanzeige und nachgeordnetem Stationsfortschritt.
+- 45 editierbare Haushaltsvorlagen in sieben Kategorien mit Suche und portionsweiser Anzeige; weiterhin sechs Startervorlagen beim Einrichten.
+- Vollständige Crew-Sicherung einschließlich Logbuch, Vorschau vor Wiederherstellung und automatischer Rücksprungpunkt.
+- Wiederherstellung nur für dieselbe bestehende Crew bei unveränderten Mitgliedern, Rollen und Kinderbegleitungen; aktuelle Zugänge bleiben erhalten und offene Einladungen werden widerrufen.
+- Atomare Wiederherstellung mit Versionsprüfung, Validierung und Sperre veralteter Browseranfragen. Additive Datenbankmigration für zwei Rücksprungtabellen.
+- Versionsanzeige weiterhin nur im Profil; API-Gesundheitsstatus verwendet dieselbe Versionsquelle.
+- 104 automatisierte Tests. Typprüfung und Build gehören zur Veröffentlichung. Die visuelle Browser- und reale Geräteprüfung bleibt wegen der nicht erreichbaren Vorschau offen.
+
+## 0.6.1 · 30. Oktober 2026
+
+- Profilbild im Kopfbereich wieder sicher rund begrenzt; freigeschaltete Abzeichen bleiben außen sichtbar.
+- Versionsnummer im Profil, einheitlich aus der Paketversion.
+- Feste Größe für den Profilknopf und Zeilenumbruch bei wenig Platz oder großen Sterneständen.
+
 ## 0.6.0 · 30. Oktober 2026
 
 - Sieben-Tage-Plan mit offenen und kommenden Runden, Tagesauswahl und geplanter Zuständigkeit.
