@@ -1,3 +1,4 @@
+import {everydayChange} from './everyday.ts';
 import { z } from 'zod';
 import {backupRoute} from './backups.ts';
 import {BACKUP_MAX_BYTES} from './backup-schema.ts';
@@ -54,6 +55,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
    return json(await repo.join(householdId,accountId,now,h=>{const invitation=h.invites.find(i=>i.hash===hash&&!i.usedAt&&i.expiresAt>now.toISOString());if(!invitation)throw new AppError(410,'Diese Einladung ist abgelaufen oder wurde schon benutzt.');if(activeMembers(h).length>=12)throw new AppError(409,'Eure Crew hat bereits zwölf Mitglieder.');const joined=newMember(accountId,v.name,'member',now);h.members.push(joined);invitation.usedAt=now.toISOString();return joined.id;}),201);
   }
   const row=await repo.forAccount(accountId);if(!row)throw new AppError(404,'Richte zuerst deine Crew ein.');const h=JSON.parse(row.document) as Household;const viewer=member(h,accountId);const profileId=request.headers.get('X-Putzonaut-Profile');const actor=profile(h,accountId,profileId);const expected={householdId:h.id,memberId:viewer.id,restoreEpoch:h.restoreEpoch};
+  if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Viewer')&&request.headers.get('X-Putzonaut-Viewer')!==viewer.id)throw new AppError(409,'Dein angemeldetes Profil hat sich geändert. Bitte lade den aktuellen Stand.');
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
   if(!['GET','HEAD'].includes(method)&&(request.headers.get('X-Putzonaut-Epoch')??'')!==(h.restoreEpoch??''))throw new AppError(409,'Eure Crew wurde wiederhergestellt. Bitte lade den aktuellen Stand, bevor du etwas änderst.');
   const backupResponse=await backupRoute(route,method,body,repo,accountId,profileId,row,now);if(backupResponse)return backupResponse;
@@ -77,6 +79,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const result=await repo.mutate<unknown>(accountId,now,async house=>{
    const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const everyday=everydayChange(route,method,body,house,user,now);if(everyday)return everyday;
    const round=roundChange(route,method,body,house,user,now);if(round)return round;
    const wish=await crewWishChange(route,method,body,house,user,member(house,accountId),now,repo);if(wish)return wish;
    const area=areaChange(route,method,body,house,user);if(area)return area;

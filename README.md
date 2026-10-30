@@ -2,11 +2,13 @@
 
 **Dein Haushalt. Eure Mission.** Haushaltsaufgaben als gemeinsame Missionen für Familien, Paare, WGs und Einzelhaushalte.
 
-## Aktuelle Web-App 0.12.0
+## Aktuelle Web-App 0.13.0
 
-[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.12.md)
+[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.13.md)
 
 Die aktive Entwicklung liegt in `web/`. Die App stellt den nächsten kleinen Einsatz in den Mittelpunkt: 5, 10 oder 20 Minuten wählen, eine passende offene Mission finden und loslegen. Die Vorlagenbibliothek umfasst 45 anpassbare Tätigkeiten in sieben Kategorien; beim Einrichten bleibt die Auswahl auf sechs Startervorlagen beschränkt.
+
+Version 0.13 ergänzt einen kompakten Wochenrückblick, freiwillige Erinnerungen in der geöffneten App, ausdrücklich angenommene Übernahmen und Tausche für einzelne Aufgabenrunden sowie passende Alltagsroutinen. Aufgaben bleiben auf dem Gerät lesbar und Abschlüsse können offline vorgemerkt werden; Punkte gibt es erst nach bestätigtem Abgleich. Veraltete Runden und geänderte Aufgaben werden zur Prüfung markiert. Die vier Hauptreiter bleiben erhalten. Erinnerungen bei geschlossener App werden noch nicht unterstützt.
 
 Version 0.12 ergänzt Harry Putzer (75 Missionen), Albert Reinstein (je fünf Missionen in fünf Kategorien) und Clean Elisabeth (zwölf persönliche Zielwochen) mit eigenen illustrierten Medaillen. Die Sammlung umfasst jetzt zwölf Meilensteine und zehn besondere Abzeichen. Bestehende Freischalthürden steigen überwiegend um 12,5–20 %; bereits verdiente Erfolge und Ausrüstung bleiben erhalten. Komet kostet 350 Sterne, Sonnenheld benötigt Level 9; spätere Stationsausbauten benötigen 6, 9 und 14 erfolgreiche Crew-Wochen. Bereits erreichte Stationsmodule behalten ihre alten Voraussetzungen. Küche und Pflanzen zählen nach bestätigter Tätigkeitskategorie. [Vollständige Voraussetzungen und Plausibilitätsprüfung](web/docs/BALANCE-0.12.md) · [Neue Motive und Prompts](web/docs/art-0.12-prompts.md).
 
@@ -18,13 +20,13 @@ Version 0.9 führte zunächst 19 Erfolge mit sieben neu illustrierten Abzeichen,
 
 Integriert ist eine vollständige Crew-Sicherung einschließlich Logbuch, mit geprüfter Vorschau, atomarer Wiederherstellung und automatischem Rücksprungpunkt. Sie funktioniert in derselben bestehenden Crew bei unveränderten Mitgliedern und Berechtigungen. Konten- und Betreiber-Backups bleiben ein gesonderter Schritt vor der öffentlichen Beta. Die vollständigen Grenzen stehen in der Web-Dokumentation.
 
-Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 178 automatisierte Tests prüfen die Anwendung; die visuelle Prüfung der Oberfläche von 0.12 und echte Android-/iPhone-Tests stehen noch aus, weil die bereitgestellte Browser-Vorschau nicht erreichbar war.
+Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 201 automatisierte Tests prüfen die Anwendung. Eine isolierte Browserprüfung mit synthetischen Daten umfasst Rückblick, Erinnerung, Tausch, Routinen und Offline-Abgleich, auch bei 360 Pixel Inhaltsbreite. Authentifizierter Produktionsbetrieb, HTTPS-Offline-Neustart und echte Android-/iPhone-Tests bleiben gesonderte Praxistests.
 
 Die Website bleibt privat und verwendet weiterhin ChatGPT zur Anmeldung. Eine Crew-Einladung ersetzt die Website-Freigabe nicht. Unabhängige Anmeldung, Kontoverwaltung und öffentlicher Start folgen als nächste Phase; Domain, eigener Server und native Apps später.
 
 ## Frühere Docker-/PostgreSQL-Grundlage (0.1.0)
 
-Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.12 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
+Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.13 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
 
 Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. Die Oberfläche verwendet die eigens gestalteten Putzonaut-Illustrationen, selbst gehostete Schriftdateien und echte Bedienelemente.
 

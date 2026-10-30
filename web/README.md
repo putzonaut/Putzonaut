@@ -1,10 +1,24 @@
-# Putzonaut · Web-App 0.12.0
+# Putzonaut · Web-App 0.13.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Alltagshilfe in Version 0.13
+
+Die vier Hauptreiter bleiben **Basis, Missionen, Crew und Beute**. Der nächste kleine Einsatz steht weiterhin im Mittelpunkt.
+
+- **Wochenrückblick:** Eine schließbare Karte auf der Basis zeigt die bestätigten Missionen der vergangenen Kalenderwoche und das damalige persönliche Ziel. Leere Wochen erzeugen keine Karte; Korrekturen werden berücksichtigt. Ein Link führt zur vorhandenen Statistik.
+- **Freiwillige Erinnerung:** Unter Profil → Deine Erinnerung eine Uhrzeit wählen. Ein kleiner Hinweis erscheint einmal täglich auf der sichtbaren Basis, wenn eine eigene oder freie Mission offen ist. Es gilt Berlin einschließlich Zeitumstellung. **Nur bei geöffneter App mit Verbindung; keine Push-Nachricht bei geschlossener App.** Der aktuelle Sites-Betrieb stellt keinen nachgewiesenen zeitgesteuerten Versand bereit. Es werden keine zusätzlichen Zeitdienste eingerichtet.
+- **Übernahme und Tausch:** Im Detail einer eigenen zugeteilten Mission um Übernahme bitten oder eine andere zugeteilte Mission zum Tausch auswählen. Die andere Person muss ausdrücklich zustimmen. Nur die aktuelle Runde wechselt; künftige Termine und Rotation bleiben erhalten. Anfragen liegen einklappbar unter Missionen. Veränderte, erledigte oder archivierte Aufgaben machen alte Anfragen ungültig.
+- **Passende Alltagsroutinen:** „Besuch kommt“, „Feierabend schaffen“ und „Küche nach dem Kochen“ ergänzen die vorhandenen Vorschläge. Höchstens drei passende bestehende Missionen; keine duplizierten Aufgaben oder zusätzlichen Punkte.
+- **Offline vormerken:** Nach einem verbundenen Aufruf bleiben der letzte Aufgabenstand, lokale Häkchen und bis zu 50 vorgemerkte Abschlüsse auf diesem Gerät. Erst der bestätigte Abgleich vergibt Punkte. Wiederholte Übertragung zählt einmal; veraltete Runden, geänderte Aufgaben und Wiederherstellungen werden zur Prüfung markiert. Kinderfreigaben bleiben erforderlich. Unter Profil → Offline auf diesem Gerät sind Bereitschaft, Grenzen und das Ausschalten mit Löschen erreichbar.
+
+Der Offline-Start benötigt einen Browser mit Service-Worker-Unterstützung auf der HTTPS-Website und einen erfolgreich vorbereiteten Cache. Die lokale Sicherung ist gerätebezogen, enthält keine Zugangsdaten und ersetzt keinen Crew-Backup. Eine abgelaufene Anmeldung sperrt die lokale Anzeige bis zum erneuten bestätigten Login; Vormerkungen bleiben für denselben Zugang erhalten. Explizites Abmelden entfernt lokale Daten und nennt noch offene Vormerkungen. Bei Konto- oder Crewwechsel wird der alte Gerätestand verworfen. Browser können lokale Daten selbst löschen. Synchronisierung läuft bei geöffneter sichtbarer App, nicht als Hintergrundversand.
+
+[Prüfstand und verbleibende Gerätetests](docs/QA-0.13.md). Neue Profil- und Übergabefelder sind in Sicherungen enthalten; ältere Sicherungen bleiben kompatibel. Keine SQL-Migration.
 
 ## Neue Abzeichen und feinere Freischaltungen in Version 0.12
 
@@ -75,7 +89,7 @@ Einladungslinks oder Codes können vor dem Beitritt geprüft werden. Sie gelten 
 - XP, Level, Sterne, dauerhaft freigeschaltete Outfits und gemeinsame Wochenziele.
 - Eigene Wünsche, bestätigtes Einlösen und Markieren erfüllter Belohnungen.
 - Logbuch mit älteren Einträgen und nachvollziehbaren Änderungen der Crew.
-- Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt.
+- Synchronisierung alle 15 Sekunden, beim Zurückkehren und nach eigenen Änderungen. Offline werden keine Änderungen bestätigt; seit 0.13 können Abschlüsse lokal vorgemerkt werden.
 - Vollständige Crew-Sicherung mit Profilen, Punkten, Aufgaben, offenen Freigaben, Wünschen, Raumstation und dem gesamten Logbuch. Wiederherstellung im Profil mit Vorschau und automatischem Rücksprungpunkt; genaue Grenzen unten. Der bisherige Export-Endpunkt (Format 5) bleibt für vorhandene Nutzer verfügbar, ist aber nicht importierbar.
 
 ## Wunschideen und besondere Abzeichen in Version 0.9
@@ -200,6 +214,6 @@ npm test
 npm run build
 ```
 
-178 automatisierte Prüfungen: 151 Integrationsfälle gegen Miniflare D1 und 27 Prüfungen für gemeinsame Regeln und Projektassets. Neue Fälle prüfen die drei zusätzlichen Abzeichen, genaue Schwellen, Bestandsschutz, eindeutige Kategorien und die Übernahme bestehender Stationen einschließlich Korrekturen und Sicherungen. Bisherige Statistik-, Aufgaben-, Rechte- und Buchungsprüfungen bleiben erhalten.
+201 automatisierte Prüfungen decken Profilrechte, Kalendergrenzen, Aufgabenrunden, Punkte, Sicherungen, Rückblicke, Erinnerungen, Übergaben und Offline-Abgleiche ab. Typprüfung und Produktionsbuild gehören zur Freigabe.
 
-Browserprüfungen erfolgen über die verwaltete Vorschau. Für 0.12 startet sie, aber der bereitgestellte Browser erreicht die exakte Adresse weiterhin nicht (`ERR_CONNECTION_REFUSED`). Die drei neuen Abzeichenbilder wurden separat visuell geprüft. Die App-Oberfläche sowie reale Android-/iPhone-Geräte bleiben gesonderte Praxistests. Automatisierte API-Prüfungen ersetzen diese Gerätetests nicht.
+Die verwaltete Vorschau ist für 0.13 erreichbar. Einstieg und eine ausdrücklich gekennzeichnete isolierte UI-Prüfansicht mit synthetischen Daten wurden im Browser geprüft: Wochenrückblick und Erinnerung bei 360 Pixel Inhaltsbreite, Offline-Vormerkung ohne Punkte, automatischer Abgleich, Tauschdialog, einklappbare Anfragen und neue Routinevorschläge. Authentifizierter Produktionsbetrieb, HTTPS-Offline-Neustart und echte Android-/iPhone-Tests sind damit nicht ersetzt; sie bleiben gesonderte Praxistests. Die temporäre Prüfansicht ist nicht Teil des Produktionspakets.

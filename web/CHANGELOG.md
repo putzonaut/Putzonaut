@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0 · 30. Oktober 2026
+
+- Kompakter, schließbarer Wochenrückblick mit bestätigten Missionen und dem tatsächlichen Ziel der Vorwoche.
+- Freiwillige tägliche Erinnerung auf der sichtbaren Basis zur gewählten Berliner Uhrzeit, nur bei offenen eigenen oder freien Missionen. Kein Push bei geschlossener App; diese Hosting-Grenze wird in der Oberfläche erklärt.
+- Übernahme- und Tauschanfragen mit ausdrücklicher Annahme für genau eine Aufgabenrunde. Künftige Rotation bleibt bestehen; gleichzeitige oder veraltete Annahmen vergeben keine zweite Zuständigkeit.
+- Alltagsroutinen „Besuch kommt“, „Feierabend schaffen“ und „Küche nach dem Kochen“ aus höchstens drei vorhandenen Missionen.
+- Generische Offline-Oberfläche, letzter Gerätestand und atomar gespeicherte Vormerkungen. XP und Sterne erst nach bestätigtem Abgleich; wiederholte Übertragung, Kinderfreigaben, geänderte Aufgaben, Profilwechsel und Wiederherstellungen sind abgesichert. Keine authentifizierten API-Antworten im Service-Worker-Cache.
+- Vier Hauptreiter bleiben erhalten. Einstellungen im Profil und Details direkt an der Aufgabe; neue Felder bleiben mit bisherigen Sicherungen kompatibel.
+- 201 automatisierte Prüfungen, Typprüfung und Produktionsbuild. Isolierte Browserprüfung mit Testdaten einschließlich 360 Pixel Inhaltsbreite; authentifizierte Produktion, HTTPS-Offline-Neustart und reale Mobilgeräte sind gesondert zu prüfen.
+
 ## 0.12.0 · 30. Oktober 2026
 
 - Drei neue illustrierte Abzeichen: Harry Putzer für 75 Missionen, Albert Reinstein für je fünf Missionen in fünf frei gewählten Kategorien und Clean Elisabeth für zwölf persönliche Zielwochen. Zehn besondere Abzeichen und weiterhin zwölf getrennte Meilensteine.

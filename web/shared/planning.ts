@@ -2,7 +2,7 @@
 export type Cadence = 'once'|'daily'|'weekly'|'weekdays'|'interval'|'monthly';
 export type Schedule = {startDate?:string;weekdays?:number[];intervalWeeks?:number;monthDay?:number};
 export type Pause = {from:string;until:string|null};
-export type PlannedTask = {cadence:string;dueDate?:string|null;schedule?:Schedule;createdOn?:string;pause?:Pause|null;skipThrough?:string|null;rotationIds?:string[];rotationStart?:string;assignedTo?:string|null;completion?:{occurrenceKey:string;status?:string}|null};
+export type PlannedTask = {roundAssignment?:{occurrenceKey:string;memberId:string};cadence:string;dueDate?:string|null;schedule?:Schedule;createdOn?:string;pause?:Pause|null;skipThrough?:string|null;rotationIds?:string[];rotationStart?:string;assignedTo?:string|null;completion?:{occurrenceKey:string;status?:string}|null};
 export const dayDate=(day:string)=>new Date(`${day}T12:00:00Z`);
 export const iso=(date:Date)=>date.toISOString().slice(0,10);
 export function localDay(date:Date){const parts=new Intl.DateTimeFormat('en',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);const p=(type:string)=>parts.find(p=>p.type===type)!.value;return `${p('year')}-${p('month')}-${p('day')}`;}
@@ -33,7 +33,7 @@ function next(t:PlannedTask,after:string,start:string):string|null{
  if(t.cadence==='weekdays'){for(let i=1;i<=7;i++){const d=addDays(after,i);if(t.schedule?.weekdays?.includes(weekday(d)))return d;}return null;}
  return addDays(after,1);
 }
-export function assignment(t:PlannedTask,day:string,activeIds:string[]){const ids=(t.rotationIds??[]).filter(id=>activeIds.includes(id));if(!ids.length)return t.assignedTo&&activeIds.includes(t.assignedTo)?t.assignedTo:null;const weeks=Math.floor(dayDiff(monday(day),monday(t.rotationStart||t.schedule?.startDate||t.createdOn||day))/7);return ids[((weeks%ids.length)+ids.length)%ids.length];}
+export function assignment(t:PlannedTask,day:string,activeIds:string[]){if(t.roundAssignment&&activeIds.includes(t.roundAssignment.memberId)&&plan(t,day,t.createdOn??day).occurrenceKey===t.roundAssignment.occurrenceKey)return t.roundAssignment.memberId;const ids=(t.rotationIds??[]).filter(id=>activeIds.includes(id));if(!ids.length)return t.assignedTo&&activeIds.includes(t.assignedTo)?t.assignedTo:null;const weeks=Math.floor(dayDiff(monday(day),monday(t.rotationStart||t.schedule?.startDate||t.createdOn||day))/7);return ids[((weeks%ids.length)+ids.length)%ids.length];}
 export function plan(t:PlannedTask,today:string,fallback:string){
  const start=t.schedule?.startDate||t.createdOn||fallback;const lower=t.cadence==='weekly'?monday(start):start;
  const paused=isPaused(t,today);let floor=t.skipThrough||'';

@@ -17,6 +17,13 @@ export function roomSummaries(areas:Area[],tasks:Task[],user:Pick<User,'id'>){re
  return {area,total:all.length,open:open.length,pending,paused,next:availableMissions(open,user)[0],label:!all.length?'Noch keine Missionen':open.length?`${open.length} ${open.length===1?'Aufgabe steht an':'Aufgaben stehen an'}`:pending?'Wartet auf Bestätigung':paused===all.length?'Missionen pausieren':'Alles aktuell'};
 });}
 export function routineIdeas(tasks:Task[]):Omit<Routine,'id'>[]{
- const kitchen=tasks.filter(t=>t.category==='kitchen'||t.room==='Küche'),tidy=tasks.filter(t=>t.category==='tidy'),fresh=tasks.filter(t=>t.category==='bath'||t.category==='laundry');
- return [{title:'Küche nach dem Essen',taskIds:kitchen.slice(0,3).map(t=>t.id)},{title:'Abends kurz klar Schiff',taskIds:[...new Set([...tidy.slice(0,2),...kitchen.slice(0,1)].map(t=>t.id))]},{title:'Sonntags frisch starten',taskIds:fresh.slice(0,3).map(t=>t.id)}].filter(r=>r.taskIds.length);
+ const select=(category:string)=>tasks.filter(t=>t.category===category).sort((a,b)=>a.minutes-b.minutes);
+ const kitchen=select('kitchen'),tidy=select('tidy'),bath=select('bath'),laundry=select('laundry');
+ const ids=(items:Task[])=>[...new Set(items.map(t=>t.id))].slice(0,3);
+ return [
+  {title:'Besuch kommt',taskIds:ids([...tidy.slice(0,1),...bath.slice(0,1),...kitchen.slice(0,1)])},
+  {title:'Feierabend schaffen',taskIds:ids([...tidy.slice(0,1),...kitchen.slice(0,1),...laundry.slice(0,1)])},
+  {title:'Küche nach dem Kochen',taskIds:ids([...kitchen.filter(t=>/geschirr|spül|arbeits|herd|tisch/i.test(t.title)),...kitchen])},
+  {title:'Sonntags frisch starten',taskIds:ids([...bath,...laundry])},
+ ].filter(r=>r.taskIds.length);
 }

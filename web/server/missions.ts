@@ -1,3 +1,4 @@
+import {clearHandovers} from './everyday.ts';
 import {evidenceCategory} from '../shared/categories.ts';
 import {z} from 'zod';
 import {activeMembers,admin,AppError,canManageChild,canUndo,reopenTask,taskSchema} from './domain.ts';
@@ -37,19 +38,20 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   if(scheduleChanged||JSON.stringify(t.steps??[])!==JSON.stringify(v.steps))t.checklistVersion=(t.checklistVersion??0)+1;
   if(t.checklist){if(scheduleChanged)t.checklist=null;else t.checklist.doneIds=t.checklist.doneIds.filter(id=>v.steps.some(s=>s.id===id&&s.title===t.steps?.find(old=>old.id===id)?.title));}
   if(JSON.stringify(v.rotationIds??[])!==JSON.stringify(t.rotationIds??[]))t.rotationStart=monday(today);
-  Object.assign(t,v);if(t.completion&&t.completion.occurrenceKey===old.occurrenceKey){const next=planning(t);if(next.occurrenceKey)t.completion.occurrenceKey=next.occurrenceKey;}
+  if(scheduleChanged||v.assignedTo!==t.assignedTo||JSON.stringify(v.rotationIds)!==JSON.stringify(t.rotationIds))delete t.roundAssignment;
+  t.revision=(t.revision??0)+1;clearHandovers(h,t.id);Object.assign(t,v);if(t.completion&&t.completion.occurrenceKey===old.occurrenceKey){const next=planning(t);if(next.occurrenceKey)t.completion.occurrenceKey=next.occurrenceKey;}
   return {result:{ok:true}};
  }
- if(/^\/tasks\/[^/]+$/.test(route)&&method==='DELETE'){admin(user);task();h.tasks=h.tasks.filter(t=>t.id!==id);return {result:{ok:true}};}
+ if(/^\/tasks\/[^/]+$/.test(route)&&method==='DELETE'){admin(user);task();clearHandovers(h,id);h.tasks=h.tasks.filter(t=>t.id!==id);return {result:{ok:true}};}
  if(/^\/tasks\/[^/]+\/pause$/.test(route)&&method==='POST'){
   admin(user);const t=task();const v=z.object({from:z.string(),until:z.string().nullable()}).parse(body);
   if(!validDay(v.from)||v.from<today||(v.until&&(!validDay(v.until)||v.until<v.from)))throw new AppError(400,'Wähle einen Zeitraum ab heute. Das Ende darf nicht vor dem Beginn liegen.');
   // Remember an expired/active pause before replacing it, so skipped rounds stay skipped.
   if(t.pause&&t.pause.from<=today){const end=t.pause.until&&t.pause.until<today?t.pause.until:addDays(today,-1);t.skipThrough=[t.skipThrough||'',end].sort().at(-1);}
-  t.pause=v;return {result:{ok:true},event:event('pause',`${t.title}: Pause ab ${v.from}${v.until?' bis '+v.until:''}`)};
+  t.pause=v;t.revision=(t.revision??0)+1;clearHandovers(h,t.id);return {result:{ok:true},event:event('pause',`${t.title}: Pause ab ${v.from}${v.until?' bis '+v.until:''}`)};
  }
  if(/^\/tasks\/[^/]+\/resume$/.test(route)&&method==='POST'){
-  admin(user);const t=task();if(t.pause&&t.pause.from<=today){const end=t.pause.until&&t.pause.until<today?t.pause.until:addDays(today,-1);t.skipThrough=[t.skipThrough||'',end].sort().at(-1);}t.pause=null;
+  admin(user);const t=task();if(t.pause&&t.pause.from<=today){const end=t.pause.until&&t.pause.until<today?t.pause.until:addDays(today,-1);t.skipThrough=[t.skipThrough||'',end].sort().at(-1);}t.pause=null;t.revision=(t.revision??0)+1;clearHandovers(h,t.id);
   return {result:{ok:true},event:event('pause',`${t.title}: Pause beendet`)};
  }
  if(/^\/tasks\/[^/]+\/checklist$/.test(route)&&method==='PATCH'){
@@ -64,18 +66,25 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   return {result:{ok:true}};
  }
  if(/^\/tasks\/[^/]+\/complete$/.test(route)&&method==='POST'){
-  const v=z.object({occurrenceKey:z.string().max(20),checklistVersion:z.number().int().min(0).optional()}).parse(body);const t=task(),p=planning(t);const assigned=assignment(t,today,ids);
+  const v=z.object({occurrenceKey:z.string().max(20),checklistVersion:z.number().int().min(0).optional(),requestKey:z.string().uuid().optional(),taskVersion:z.number().int().min(0).optional(),checkedStepIds:z.array(z.string().uuid()).max(12).optional()}).parse(body);
+  if(v.requestKey&&(v.taskVersion===undefined||v.checklistVersion===undefined))throw new AppError(400,'Die Vormerkung ist unvollständig. Bitte öffne die Mission neu.');
+  const operation=JSON.stringify(['completion',id,v.occurrenceKey,v.taskVersion,v.checklistVersion,[...(v.checkedStepIds??[])].sort()]);
+  if(v.requestKey){const old=await repo.existingRequest(user.id,v.requestKey);if(old){if(old.operation!==operation)throw new AppError(409,'Diese Vormerkung gehört zu einem anderen Abschluss.');return {result:{id:old.id,createdAt:old.createdAt,title:old.title,pending:old.kind==='submitted',xp:old.kind==='submitted'?0:old.xp,stars:old.kind==='submitted'?0:old.stars,canUndo:false,replayed:true}};}}
+  const t=task(),p=planning(t);const assigned=assignment(t,today,ids);
+  if(v.taskVersion!==undefined&&v.taskVersion!==(t.revision??0))throw new AppError(409,'Die Mission wurde inzwischen verändert. Bitte prüfe die Vormerkung.');
   if(assigned&&assigned!==user.id&&user.role!=='admin')throw new AppError(403,'Diese Mission ist einem anderen Crewmitglied zugeteilt.');
   if(p.status==='paused'||p.status==='upcoming')throw new AppError(409,p.status==='paused'?'Diese Mission pausiert gerade.':'Diese Mission ist noch nicht dran.');
   if(v.occurrenceKey!==p.occurrenceKey)throw new AppError(409,'Eine neue Aufgabenrunde hat begonnen. Bitte lade die Missionen neu.');
   if(t.completion?.occurrenceKey===p.occurrenceKey)throw new AppError(409,'Diese Runde wurde bereits gemeldet oder erledigt.');
   if(((t.steps?.length??0)>0||v.checklistVersion!==undefined)&&v.checklistVersion!==(t.checklistVersion??0))throw new AppError(409,'Die Checkliste wurde verändert. Bitte lade die Mission neu.');
+  if(v.checkedStepIds){if(new Set(v.checkedStepIds).size!==v.checkedStepIds.length||v.checkedStepIds.some(id=>!t.steps?.some(s=>s.id===id)))throw new AppError(409,'Die vorgemerkten Teilschritte passen nicht mehr.');
+   const existing=t.checklist?.occurrenceKey===p.occurrenceKey?t.checklist.doneIds:[];t.checklist={occurrenceKey:p.occurrenceKey,doneIds:[...new Set([...existing,...v.checkedStepIds])]};}
   const checked=t.checklist?.occurrenceKey===p.occurrenceKey?t.checklist.doneIds:[];
   if((t.steps??[]).some(s=>!checked.includes(s.id)))throw new AppError(409,'Erledige zuerst alle Teilschritte dieser Runde.');
   const pending=user.kind==='child'&&!!t.approvalForChildren;
   if(pending&&(h.pendingCompletions?.length??0)>=200)throw new AppError(409,'Bitte lasst zuerst offene Missionen bestätigen.');
-  const e=event(pending?'submitted':'completion',t.title,{xp:t.xp,stars:t.stars,taskId:t.id,occurrenceKey:p.occurrenceKey,approvalRequired:pending,category:t.category??evidenceCategory(t),room:t.room,icon:t.icon,steps:(t.steps??[]).map(s=>({...s}))});
-  t.completion={steps:e.steps,id:e.id,status:pending?'pending':'approved',occurrenceKey:p.occurrenceKey,userId:user.id,user_name:user.name,created_at:now.toISOString(),xp:t.xp,stars:t.stars};
+  const e=event(pending?'submitted':'completion',t.title,{...(v.requestKey?{requestKey:v.requestKey,operation}:{}),xp:t.xp,stars:t.stars,taskId:t.id,occurrenceKey:p.occurrenceKey,approvalRequired:pending,category:t.category??evidenceCategory(t),room:t.room,icon:t.icon,steps:(t.steps??[]).map(s=>({...s}))});
+  clearHandovers(h,t.id);t.completion={steps:e.steps,id:e.id,status:pending?'pending':'approved',occurrenceKey:p.occurrenceKey,userId:user.id,user_name:user.name,created_at:now.toISOString(),xp:t.xp,stars:t.stars};
   if(pending){(h.pendingCompletions??=[]).push(e as PendingCompletion);}else{user.xp+=t.xp;user.stars+=t.stars;user.weekCount++;user.completedCount++;}
   return {result:{id:e.id,createdAt:e.createdAt,canUndo:!pending,title:t.title,xp:pending?0:t.xp,stars:pending?0:t.stars,pending},event:e};
  }
