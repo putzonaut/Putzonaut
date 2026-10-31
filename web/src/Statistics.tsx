@@ -1,4 +1,6 @@
 'use client';
+import {momentScope} from '../shared/moments';
+import {useViewState} from './view-memory';
 import {useEffect,useState} from 'react';
 import {ArrowLeft,ArrowRight,CalendarDays,ChartNoAxesCombined,Check,LoaderCircle,RefreshCw,Rocket,Star,Target,Zap} from 'lucide-react';
 import {STATISTIC_COLORS,STATISTIC_RANGES} from '../shared/statistics';
@@ -57,7 +59,7 @@ function GoalChart({data}:{data:Statistics}){
 }
 
 export default function StatisticsPage({state,load,onBack,onStart}:{state:State;load:(path:string,options?:RequestInit)=>Promise<Statistics>;onBack:()=>void;onStart:()=>void}){
- const [days,setDays]=useState<StatisticRange>(30),[retry,setRetry]=useState(0),[result,setResult]=useState<{key:string;data:Statistics}|null>(null),[problem,setProblem]=useState<{key:string;message:string}|null>(null);
+ const [days,setDays]=useViewState<StatisticRange>(momentScope(state),'statistics-days',30,v=>v===7||v===90?v:30),[retry,setRetry]=useState(0),[result,setResult]=useState<{key:string;data:Statistics}|null>(null),[problem,setProblem]=useState<{key:string;message:string}|null>(null);
  const day=localDay(new Date(state.syncedAt)),key=[state.household.id,state.user.id,state.restoreEpoch,state.revision,day,days,retry].join(':'),data=result?.key===key?result.data:null,error=problem?.key===key?problem.message:null;
  useEffect(()=>{
   const controller=new AbortController();let active=true;

@@ -1,5 +1,6 @@
 'use client';
-import {useState} from 'react';
+import {momentScope} from '../shared/moments';
+import {useViewState} from './view-memory';
 import {Award,Check,ChevronRight,LockKeyhole,Sparkles,Star} from 'lucide-react';
 import {ACHIEVEMENTS,achievementHint,nextAchievements,specialBadgeArt} from '../shared/game';
 import type {Outfit,State} from './types';
@@ -18,7 +19,7 @@ export function NextMilestone({state,onOpen,onProfile}:{state:State;onOpen:(outf
 }
 
 export function OutfitLocker({state,onOpen}:{state:State;onOpen:(outfit:Outfit)=>void}){
- const [tab,setTab]=useState<'mine'|'discover'>('mine');
+ const [tab,setTab]=useViewState<'mine'|'discover'>(momentScope(state),'outfits','mine',v=>v==='discover'?'discover':'mine');
  const owned=state.outfits.filter(o=>o.unlocked),discover=state.outfits.filter(o=>!o.unlocked),visible=tab==='mine'?owned:discover;
  return <section className="outfit-locker" aria-label="Dein Spind">
   <div className="locker-tabs" role="group" aria-label="Anzüge anzeigen"><button aria-pressed={tab==='mine'} onClick={()=>setTab('mine')}>Meine Anzüge <span>{owned.length}</span></button><button aria-pressed={tab==='discover'} onClick={()=>setTab('discover')}>Entdecken <span>{discover.length}</span></button></div>

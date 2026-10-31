@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.13.0
+# Putzonaut · Web-App 0.20.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -6,12 +6,123 @@ Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Pa
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
 
+## Flexibler im Alltag · Version 0.20.0
+
+- **Schon erledigt!** erfasst zusätzliche spontane Aufgaben mit Titel, Dauer, Bereich und Aufwand. Die einmalige Mission erhält die üblichen Punkte; Kinderaufgaben warten immer auf Bestätigung. Gleichnamige offene Missionen verweisen auf die vorhandene Aufgabe und ihre Checkliste.
+- **Heute passt nicht** verschiebt eine offene Aufgabenrunde auf morgen, das Wochenende oder ein eigenes Datum. Zuständigkeit und bisherige Häkchen bleiben an der Runde. Überlappende Termine werden zusammengefasst; danach gilt der bisherige Rhythmus. Das Verschieben selbst vergibt keine Punkte.
+- **Update-Hinweis:** Eine neue Version lässt sich bewusst laden oder auf später verschieben. Offene Formulare, laufende Putzrunden, Speichervorgänge und vorgemerkte Abschlüsse sperren den Neustart. Andere offene Tabs werden nicht neu geladen.
+
+[Prüfstand](docs/QA-0.20.md). Die Startsequenz bleibt bei insgesamt drei Sekunden.
+
+## Kleine Raumlandung beim Start · Version 0.19.4
+
+Beim frischen Öffnen schwebt der bekannte Putzonaut mit zwei leuchtenden Schubdüsen auf eine kleine Landeplattform. Eine Druckwelle, Staubwölkchen und wenige Partikel begleiten die federnde Landung; Sterne und eine Umlaufbahn rahmen die Szene ein. Danach erscheinen die Buchstaben des Logos nacheinander und das Visier glänzt kurz auf. Die Daten laden gleichzeitig; der Einstieg dauert insgesamt 3 Sekunden inklusive Ausblendung und wiederholt sich nicht beim Wechsel zwischen Ansichten oder beim Zurückkehren aus dem Hintergrund. Bei längerer Ladezeit bleibt das Motiv ruhig, Fehler und Wiederholen bleiben erreichbar. Die Profileinstellung wird für den nächsten Start auf diesem Gerät gemerkt; die Geräteoption für reduzierte Bewegung gilt zusätzlich. Online- und Offline-Einstieg verwenden denselben Ablauf.
+
+[Prüfstand](docs/QA-0.19.md).
+
+## Kleiner Visier-Wischer · Version 0.18.3
+
+Tippe den Astronauten im Tagesabschluss oder in deiner Putzrunde an: Ein kleines Tuch wischt über das Visier, danach blitzt ein Glanzstern auf. Die Reaktion dauert 1,2 Sekunden und lässt sich auch mit Enter oder Leertaste auslösen. Bei ausgeschalteten Animationen oder reduzierter Gerätebewegung erscheint ausschließlich ein ruhiger Glanzstern.
+
+## Saubere Astronauten-Pose · Version 0.18.2
+
+Der kleine blaue Strich über dem sitzenden Astronauten im Tagesabschluss ist entfernt. Der sichtbare Ausschnitt blendet den Rest der benachbarten Pose aus; Größe, Position und Figur bleiben erhalten.
+
+## Klarere Inhalte und erreichbare Startziele · Version 0.18.1
+
+- Einrichtung und Profil erklären XP als Erfahrungspunkte für Level und Sterne als Guthaben für Wünsche und bestimmte Anzüge. Das Crew-Wochenziel wird sprachlich dem Stationsfortschritt zugeordnet; Wünsche werden unter Beute eingelöst.
+- Die sechs Startvorlagen bleiben auswählbar. Vorausgewählt sind nur Spülmaschine einräumen und Müll rausbringen; ein Start ohne Vorlagen ist weiterhin möglich.
+- Neue Crews erhalten ein zur Auswahl passendes Wochenziel. In der ersten, eventuell kurzen Woche wird es zusätzlich anteilig nach den verbleibenden Berliner Kalendertagen begrenzt. Beispiel: alle sechs Vorlagen am Freitag → 11 statt 24 Missionen bis Sonntag, danach 24 pro voller Woche. Bei nur einer wöchentlichen Vorlage bleibt das Ziel bei einer Mission. Ohne Vorlagen beginnt es mit der ersten selbst angelegten Mission; ein leeres Ziel erzeugt keinen Stationsfortschritt.
+- Die Badvorlage benennt Waschbecken, Toilette und Badspiegel und enthält drei passende Schritte. Die Kühlschrankvorlage beschreibt alle Fächer und Ablagen.
+- Vier Vorlagen verwenden jetzt dieselbe Punkteempfehlung wie neue eigene Aufgaben. Gespeicherte Missionen, manuelle Punkte, Guthaben und bestehende Crew-Ziele werden nicht nachträglich verändert.
+
+Die Freischalthürden, vier Hauptreiter und ausschließlich elterlich verwalteten Kinderprofile bleiben erhalten. [Prüfstand](docs/QA-0.18.1.md).
+
+## Weniger Eingaben verlieren · Version 0.18.0
+
+- Missionensuche, Filter, Wochenplantag, weitere Listenansichten und Scrollpositionen bleiben beim Bereichswechsel erhalten. Browser-Zurück schließt zuerst offene Details. Die letzte Hauptansicht wird innerhalb der Browsersitzung wiederhergestellt.
+- Ungespeicherte neue und bearbeitete Missionen lassen sich als Entwurf fortsetzen. Auch Kurzeingabe, unvollständige Zahlenfelder, eigene Punkte, Teilschritte und Notizen bleiben erhalten. Nur das Aufklappen von Optionen erzeugt keinen leeren Entwurf.
+- Speichern und Mission erledigen bleiben am unteren Dialogrand erreichbar; Schließen bleibt oben griffbereit. Die sichtbare Bildschirmhöhe wird bei eingeblendeter Tastatur berücksichtigt. Speicherfehler bleiben sichtbar und erhalten den Entwurf.
+- Die Basis zeigt die Anzahl offener eigener und freier Missionen mit geschätztem Zeitbedarf. Bereits bestätigte eigene Teamanteile und vorgemerkte Abschlüsse werden nicht erneut als offen gezählt.
+- Nach einem bestätigten Abschluss erscheint der verbleibende Sternebedarf zum bereits gewählten Wunsch in der vorhandenen Erfolgsmeldung. Es entsteht kein zusätzlicher Dialog.
+
+Ansichten und Entwürfe sind nach Konto, Crew, Profil und Wiederherstellungsstand getrennt. Entwürfe gelten sieben Tage, werden nach erfolgreichem Speichern entfernt und beim Abmelden gelöscht. Geänderte Missionsversionen werden vor dem Fortsetzen erkannt. Bei gesperrtem Browserspeicher bleibt nur der Arbeitsspeicher dieser geöffneten App verfügbar. Vier Hauptreiter und ausschließlich elterlich verwaltete Kinderprofile bleiben erhalten. [Prüfstand](docs/QA-0.18.md).
+
+## Kleine Erfolgsmomente · Version 0.17.0
+
+- Nach einem bestätigten Abschluss fliegen wenige Sterne zum sichtbaren Guthaben; der Zähler läuft zum tatsächlichen neuen Stand. Ein kurzes Häkchen lässt die erledigte Karte verschwinden, verbleibende Missionen rücken nach. Die kompakte Meldung mit Rückgängig bleibt erreichbar.
+- Der Starter-Putzonaut hat passende Bereitschafts-, Winke- und Ruheposen. Andere ausgerüstete Anzüge bleiben sichtbar und reagieren mit einer kurzen Bewegung ihres vorhandenen Porträts.
+- Nur frisch freigeschaltete Stationsmodule werden kurz beleuchtet, sobald der Ausbau ins Blickfeld kommt. Danach bleibt die Ansicht ruhig.
+- „Für heute geschafft!“ ersetzt den Rundenstart, sobald die eigenen und freien fälligen Missionen erledigt sind. Die Karte zeigt heutige bestätigte Missionen, XP und Missionssterne aus der vorhandenen Statistik. Offene gemeinsame Missionen, Freigaben, Offline-Vormerkungen, Auszeiten und fehlende Verbindung schließen den Tagesabschluss aus. Die letzte Putzrunde bleibt über die Karte erreichbar.
+- Effekte laufen kurz, blockieren keine Bedienelemente und beachten sowohl die Profileinstellung als auch die Gerätepräferenz für reduzierte Bewegung. Vormerkungen und wiederholte Abschlussantworten lösen keine Punkteanimation aus.
+
+Vier Hauptreiter und ausschließlich durch Eltern verwaltete Kinderprofile bleiben erhalten. Kein neuer Menüpunkt, keine Änderung der Punkte- oder Freischaltregeln. [Prüfstand](docs/QA-0.17.md).
+
+## Einfach starten und Erfolge direkt sehen · Version 0.16.0
+
+- **Basis:** 5, 10 oder 20 Minuten wählen und die Putzrunde starten. Die zuletzt gewählte Dauer bleibt pro Profil und Crew auf diesem Gerät gespeichert. „Wenig Energie“ und „Besuch kommt“ liegen unter „Runde anpassen“; Ziele und Raumstation bleiben auf der Basis.
+- **Missionen → Jetzt offen:** Heute fällige und überfällige Aufgaben stehen zusammen, die ältesten überfälligen zuerst. Einfache eigene oder freie Missionen lassen sich direkt am Häkchen erledigen. Der Titel öffnet die Details; Checklisten und gemeinsame Aufgaben behalten ihren vollständigen Ablauf. Rücknahmen bleiben möglich.
+- **Neue Mission / Bearbeiten:** Name, Bereich, Dauer, Rhythmus und Zuständigkeit stehen zuerst. Unter „Weitere Optionen“ bleiben Checkliste, Notiz, Symbol, Kategorie, Rotation und eigene Punkte verfügbar. Neue leere Missionen erhalten den vorhandenen Punktvorschlag passend zu Dauer und Aufwand. Bestehende Aufgaben und Vorlagen behalten ihre festgelegten Punkte, auch wenn die Optionen eingeklappt bleiben.
+- **Abschluss:** Eine kompakte Meldung mit Putzonaut, Sternen, XP, Levelbalken und „Rückgängig“ lässt die aktuelle Ansicht stehen. Levelaufstiege, neue eigene Erfolge, Stationsausbauten und eigene Questboni öffnen weiterhin die große Erfolgsansicht. Offline-Vormerkungen vergeben weiterhin erst nach bestätigtem Abgleich Punkte.
+
+Die vier Hauptreiter, Spielregeln, vorhandenen Daten und Freischaltschwellen bleiben erhalten. Kinderprofile werden ausschließlich von Eltern verwaltet. Keine neue Kinderoberfläche, Datenbankmigration, Geräteaktivierung oder Änderung am Push-Zeitplan.
+
+[Prüfstand und Geräteabgrenzung](docs/QA-0.16.md).
+
+## Weniger Eingaben, mehr Alltagshilfe · Version 0.15.0
+
+Kinder verwenden die App **nicht selbst**. Ein angemeldetes Elternteil erfasst ihre Leistungen und verwaltet ihre Profile. Es gibt keine Kinderoberfläche und keinen Kinderzugang. Die vier Hauptreiter bleiben Basis, Missionen, Crew und Beute; neue Details sind freiwillig und überwiegend eingeklappt.
+
+- **Mission erstellen → Mit einem Satz starten:** etwa „Staubsaugen, jeden Samstag, 10 Minuten“. Erkannte Angaben werden vor dem Speichern im normalen Formular geprüft. Die lokale Erkennung versteht feste deutsche Zeitangaben; unerkannte Wörter bleiben zur Kontrolle stehen.
+- **Wiederholung → Nach Erledigung:** 1–365 Tage ab bestätigtem Abschluss. Eine verspätete Mission bleibt eine einzelne offene Runde; erst ihr Abschluss setzt den nächsten Termin. Bei erforderlicher Kinderfreigabe zählt der Freigabetag. Pausen erzeugen keinen Rückstau, Rücknahmen öffnen die ursprüngliche Runde.
+- **Mission → So geht’s:** kurze Hinweise und ein optionales Referenzfoto. Der Captain pflegt diese Angaben. Bilder werden vor dem Upload verkleinert und ohne Originalmetadaten gespeichert; Abruf nur innerhalb der angemeldeten Crew. Fotos benötigen eine Verbindung.
+- **Crew / Logbuch → Danke sagen:** einmal pro Person und bestätigtem fremden Abschluss. Kein zusätzlicher Punktestand; beim verwalteten Kinderprofil stammt der Dank weiterhin vom angemeldeten Elternteil.
+- **Nach ausgewählten Abschlüssen → Passte die Zeit?:** freiwillig „Ging schneller“, „Passte“ oder „Dauerte länger“. Erst nach mindestens drei unterschiedlichen Runden erscheint ein konkreter Vorschlag; der Captain bestätigt oder behält die bisherige Dauer. XP und Sterne ändern sich dadurch nicht. Rücknahmen entfernen die betreffende Rückmeldung.
+- **Profil → Deine Erinnerung → Auch wenn die App geschlossen ist:** optional pro Gerät aktivieren und ein tägliches Stundenfenster wählen. Ein stündlicher Cloud-Auftrag prüft offene eigene, freie und betreute Kinderaufgaben. Höchstens ein Versandversuch täglich je Gerät, in Berliner Zeit; Auszeiten werden berücksichtigt. Der Sperrbildschirm zeigt einen allgemeinen Hinweis ohne Namen oder Missionsdetails. Bis zu drei Geräte pro Erwachsenenprofil. Zum Ausschalten dieselbe Einstellung verwenden; explizites Abmelden widerruft die Geräteanmeldung. Unterstützte iPhones benötigen die zum Home-Bildschirm hinzugefügte App. Eine erfolgreiche Annahme durch den Push-Dienst beweist noch keine Zustellung am Endgerät.
+- **Basis → Ausbau ansehen → Trophäenregal:** bis zu drei bereits verdiente besondere Abzeichen aus der Crew ausstellen. Der Captain wählt sie aus, ohne Sternenkosten.
+
+Notizen, Rückmeldungen, Dank und Trophäen sind in Crew-Sicherungen enthalten. Fotoverweise bleiben für eine Wiederherstellung derselben Crew erhalten; die Bilddateien liegen getrennt im privaten Objektspeicher und sind nicht in der JSON-Sicherung enthalten. Geräteendpunkte und Versandgeheimnisse gehören nicht in Crew-Sicherungen. Die neue SQL-Migration ergänzt ausschließlich die Tabellen für Geräteanmeldungen und Versandstatus.
+
+[Prüfstand und offene Gerätetests](docs/QA-0.15.md) · [Betrieb der Push-Erinnerungen](docs/PUSH-OPERATIONS.md)
+
+## Einfach zusammen anpacken · Version 0.14.0
+
+Die vier Hauptreiter bleiben **Basis, Missionen, Crew und Beute**. Die neuen Möglichkeiten erscheinen an der passenden Stelle und sind freiwillig:
+
+- **Basis → Wenig Energie:** ein bis drei verfügbare eigene oder freie Missionen mit jeweils höchstens fünf Minuten und maximal zehn Minuten Gesamtzeit. Aufwendige Aufgaben entfallen. Es wird nichts verschoben oder automatisch erledigt.
+- **Basis → Besuch kommt:** die bestehende Putzrunde priorisiert passende vorhandene Aufgaben für Eingang, Gäste-WC und Wohnbereich. 5, 10 oder 20 Minuten bilden das gesamte Zeitbudget. Unpassende Aufgaben werden nicht zum Auffüllen ergänzt. Die gespeicherte Besuchsroutine bleibt ebenfalls erhalten.
+- **Mission bearbeiten → Wer übernimmt?:** neben der festen Wochenreihenfolge lässt sich „Fair nach Aufwand und Verfügbarkeit“ wählen. Der Captain wählt geeignete Personen aus. Neue Runden berücksichtigen deren offene Einteilung sowie den seit diesem Update erfassten bestätigten Aufwand der laufenden Woche (Dauer × Aufwandfaktor). Gleichstände bevorzugen eine andere Person als zuletzt. Eine bestehende Einteilung springt nicht mit jedem Abschluss um; Auszeiten oder geänderte Mitglieder können eine Neuzuteilung auslösen. Künftige faire Zuständigkeiten bleiben im Wochenplan zunächst offen. Die bisherige Wochenreihenfolge bleibt der Standard und überspringt Auszeiten, ohne die ursprüngliche Reihenfolge zu verschieben.
+- **Mission → Zu zweit erledigen:** ein verfügbares Crewmitglied auswählen, die festen Anteile prüfen und gemeinsam starten. XP und Sterne werden hälftig geteilt; der startenden Person fällt ein unteilbarer Rest zu. Beide bestätigen ihren Teil, erforderliche Kinderfreigaben gelten weiterhin. Erst dann werden beide Anteile atomar gebucht. Jede Person erhält eine bestätigte Beteiligung für Statistik, eigene Ziele und die gemeinsame Wochenzählung; die normalen Missionssterne und XP werden insgesamt nur einmal vergeben. Bestehende Questboni gelten unverändert pro beteiligtem Profil. Auflösen vergibt keine Punkte. Eine Rücknahme im Logbuch korrigiert beide Anteile, Fortschritte und gegebenenfalls Questboni gemeinsam. Gemeinsame Bestätigungen benötigen eine Verbindung; normale Offline-Vormerkungen bleiben erhalten.
+- **Crew / Profil → Auszeit:** für das eigene bzw. berechtigt begleitete Profil, durch den Captain auch für die ganze Crew. Beginn und optionales Ende wählen oder manuell zurückkehren. Feste wiederkehrende Aufgaben pausieren, verfügbare Personen übernehmen rotierende Aufgaben. Sind alle gewählten Personen weg, ruht die Aufgabe. Verpasste wiederkehrende Runden werden nicht nachgeholt, einmalige Aufgaben bleiben erhalten. Neue Abschlüsse und Erinnerungen pausieren für das abwesende Profil. Laufende gemeinsame Runden werden bei Beginn ohne Punkte aufgelöst. Bereits verdiente Sterne und Erfolge bleiben bestehen; Wochenziele werden nicht künstlich erfüllt oder verkleinert.
+- **Vorlagen → Mitdenken & organisieren:** sechs neue Vorschläge und vier passende bestehende Vorlagen, etwa Mahlzeiten planen, Termine abstimmen oder eine Wartung organisieren. Insgesamt 51 Vorlagen, weiterhin sechs beim Einstieg. Vorhandene Tätigkeitskategorien und deren Zählung bleiben unverändert.
+- **Basis → Ausbau ansehen → Wohnkapsel gestalten:** der Captain wählt Pflanzen, Möbel, Ausblick und Helfer für die gemeinsame Vorschau. Acht Dekorationen, davon drei sofort verfügbar. Mondblume, Bücherinsel und Robi benötigen 10, 25 bzw. 50 bestätigte Crew-Beteiligungen; Polarlicht eine erreichte Zielwoche, die goldene Kehrmaschine ein Kehrminator-Abzeichen in der Crew. Keine Sternenkosten oder Käufe. Noch gesperrte Gegenstände zeigen ihre Voraussetzung. Korrekturen wirken auf zählerbasierte Freischaltungen; bereits verdiente Abzeichen bleiben erhalten.
+
+Bestehende Aufgaben und Wünsche werden nicht automatisch umkonfiguriert. Die neuen Daten sind in Sicherungen enthalten; ältere Sicherungen und lokale Offline-Stände bleiben lesbar. Keine SQL-Migration erforderlich. [Prüfstand und Grenzen](docs/QA-0.14.md).
+
+## Mehr Wunsch-Symbole in Version 0.13.2
+
+Persönliche und gemeinsame Wünsche haben jetzt **24 statt vier Symbole**: unter anderem Gaming, Lesen, Pizza, Kaffee, Schwimmen, Radfahren, Camping, Wellness und Ausflüge. Beim Anlegen oder Bearbeiten öffnet „Symbol“ eine beschriftete Auswahl mit Vorschau. Nach dem Antippen klappt sie wieder zu. Sehr schmale Smartphone-Ansichten zeigen drei Spalten, größere vier.
+
+Wunschkarten, persönliche Sparziele, gemeinsame Wunschdetails und passende Wunschideen verwenden dieselben Motive. Vorhandene Wünsche behalten ihr gespeichertes Symbol; neue Symbole sind in Crew-Sicherungen enthalten. Das Öffnen eines gemeinsamen Wunsches übergibt nun korrekt dessen Kennung, sodass die Sparansicht erreichbar bleibt. Keine Datenbankmigration erforderlich.
+
+[Prüfergebnisse und Grenzen der Browserprüfung](docs/QA-0.13.2.md).
+
+## Nachprüfung und Korrekturen in Version 0.13.1
+
+Der am 30. Oktober um 13:37 Uhr deutscher Zeit veröffentlichte Stand enthielt bereits die vollständige Alltagshilfe aus 0.13.0. Die Wiederaufnahme baut auf genau diesem Repository-Stand auf.
+
+- Vorübergehende Abgleichsfehler (Verbindungsabbruch, Zeitüberschreitung, kurzzeitige Sperre oder Serverfehler) lassen Offline-Abschlüsse vorgemerkt. Ein späterer Versuch verwendet denselben Anfrageschlüssel; Sterne und XP bleiben bis zur Bestätigung unverändert.
+- Eine abgelaufene Anmeldung sperrt die lokale Offline-Anzeige. Vormerkungen bleiben für denselben Zugang erhalten und werden nach erneut bestätigter Anmeldung wieder versucht. Echte Änderungen an Aufgabe, Runde, Crew oder Wiederherstellung bleiben prüfpflichtige Konflikte.
+- Schmale Ansichten nutzen die tatsächlich verfügbare Breite; lange Missionsnamen in Tauschanfragen und Dialogtexten werden umgebrochen. Auch das Zeitfeld der Erinnerung bleibt innerhalb des Dialogs.
+
+[Wiederaufnahme, Prüfergebnisse und offene Gerätetests](docs/QA-0.13.1.md). Vier Hauptreiter, bestehende Daten und Freischaltschwellen bleiben erhalten; keine SQL-Migration.
+
 ## Alltagshilfe in Version 0.13
 
 Die vier Hauptreiter bleiben **Basis, Missionen, Crew und Beute**. Der nächste kleine Einsatz steht weiterhin im Mittelpunkt.
 
 - **Wochenrückblick:** Eine schließbare Karte auf der Basis zeigt die bestätigten Missionen der vergangenen Kalenderwoche und das damalige persönliche Ziel. Leere Wochen erzeugen keine Karte; Korrekturen werden berücksichtigt. Ein Link führt zur vorhandenen Statistik.
-- **Freiwillige Erinnerung:** Unter Profil → Deine Erinnerung eine Uhrzeit wählen. Ein kleiner Hinweis erscheint einmal täglich auf der sichtbaren Basis, wenn eine eigene oder freie Mission offen ist. Es gilt Berlin einschließlich Zeitumstellung. **Nur bei geöffneter App mit Verbindung; keine Push-Nachricht bei geschlossener App.** Der aktuelle Sites-Betrieb stellt keinen nachgewiesenen zeitgesteuerten Versand bereit. Es werden keine zusätzlichen Zeitdienste eingerichtet.
+- **Freiwillige Erinnerung:** Unter Profil → Deine Erinnerung eine Uhrzeit wählen. Ein kleiner Hinweis erscheint einmal täglich auf der sichtbaren Basis, wenn eine eigene oder freie Mission offen ist. Es gilt Berlin einschließlich Zeitumstellung. Damals nur bei geöffneter App mit Verbindung. Seit 0.15 ergänzt die gesondert aktivierbare Geräteerinnerung den Hintergrundversand.
 - **Übernahme und Tausch:** Im Detail einer eigenen zugeteilten Mission um Übernahme bitten oder eine andere zugeteilte Mission zum Tausch auswählen. Die andere Person muss ausdrücklich zustimmen. Nur die aktuelle Runde wechselt; künftige Termine und Rotation bleiben erhalten. Anfragen liegen einklappbar unter Missionen. Veränderte, erledigte oder archivierte Aufgaben machen alte Anfragen ungültig.
 - **Passende Alltagsroutinen:** „Besuch kommt“, „Feierabend schaffen“ und „Küche nach dem Kochen“ ergänzen die vorhandenen Vorschläge. Höchstens drei passende bestehende Missionen; keine duplizierten Aufgaben oder zusätzlichen Punkte.
 - **Offline vormerken:** Nach einem verbundenen Aufruf bleiben der letzte Aufgabenstand, lokale Häkchen und bis zu 50 vorgemerkte Abschlüsse auf diesem Gerät. Erst der bestätigte Abgleich vergibt Punkte. Wiederholte Übertragung zählt einmal; veraltete Runden, geänderte Aufgaben und Wiederherstellungen werden zur Prüfung markiert. Kinderfreigaben bleiben erforderlich. Unter Profil → Offline auf diesem Gerät sind Bereitschaft, Grenzen und das Ausschalten mit Löschen erreichbar.
@@ -214,6 +325,6 @@ npm test
 npm run build
 ```
 
-201 automatisierte Prüfungen decken Profilrechte, Kalendergrenzen, Aufgabenrunden, Punkte, Sicherungen, Rückblicke, Erinnerungen, Übergaben und Offline-Abgleiche ab. Typprüfung und Produktionsbuild gehören zur Freigabe.
+Die automatisierten Prüfungen decken Profilrechte, Kalendergrenzen, Aufgabenrunden, Punkte, Sicherungen, Rückblicke, Erinnerungen, Übergaben und Offline-Abgleiche ab. Typprüfung und Produktionsbuild gehören zur Freigabe.
 
 Die verwaltete Vorschau ist für 0.13 erreichbar. Einstieg und eine ausdrücklich gekennzeichnete isolierte UI-Prüfansicht mit synthetischen Daten wurden im Browser geprüft: Wochenrückblick und Erinnerung bei 360 Pixel Inhaltsbreite, Offline-Vormerkung ohne Punkte, automatischer Abgleich, Tauschdialog, einklappbare Anfragen und neue Routinevorschläge. Authentifizierter Produktionsbetrieb, HTTPS-Offline-Neustart und echte Android-/iPhone-Tests sind damit nicht ersetzt; sie bleiben gesonderte Praxistests. Die temporäre Prüfansicht ist nicht Teil des Produktionspakets.

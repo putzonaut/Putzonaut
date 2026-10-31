@@ -1,3 +1,4 @@
+import {taskPlan} from './life.ts';
 import {ensureCareer,updateCareer} from './career.ts';
 import type {Household,Member,HistoryEvent} from './domain.ts';
 import type {Repository} from './repository.ts';
@@ -13,7 +14,7 @@ export function questEligible(h:Household,key:string){
   if(completedThisWeek)return true;
   // A partial-week pause must not hide an otherwise available round. Completed
   // monthly/interval rounds from an older week cannot contribute again.
-  for(let day=0;day<7;day++){const p=plan(t,addDays(key,day),fallback);if(p.occurrenceKey&&p.status!=='paused'&&p.status!=='done')return true;}
+  for(let day=0;day<7;day++){const p=taskPlan(h,t,addDays(key,day));if(p.occurrenceKey&&p.status!=='paused'&&p.status!=='done')return true;}
   return false;
  });
 }

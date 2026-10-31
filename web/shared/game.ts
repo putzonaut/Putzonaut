@@ -1,4 +1,5 @@
 export {REWARD_IDEAS} from './rewards.ts';
+export const POINTS_EXPLANATION='XP (Erfahrungspunkte) erhöhen dein Level. Sterne kannst du für Wünsche und bestimmte Anzüge ausgeben.';
 export type Difficulty='easy'|'normal'|'hard';
 export const DIFFICULTIES=[{id:'easy',label:'Leicht',factor:.75},{id:'normal',label:'Normal',factor:1},{id:'hard',label:'Aufwendig',factor:1.5}] as const;
 export function suggestedPoints(minutes:number,difficulty:Difficulty='normal'){

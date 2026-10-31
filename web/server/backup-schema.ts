@@ -16,9 +16,11 @@ const short=z.string().max(400);
 const step=z.object({id,title:z.string().min(1).max(80)}).strict();
 const steps=z.array(step).max(12).refine(s=>new Set(s.map(x=>x.id)).size===s.length);
 const occurrence=z.string().max(20).refine(s=>s==='once'||validDay(s));
+const away=z.object({from:day,until:day.nullable()}).strict().refine(p=>!p.until||p.until>=p.from);
+const team=z.object({id,occurrenceKey:occurrence,createdBy:id,shares:z.array(z.object({userId:id,name:short,xp:count,stars:count,confirmed:z.boolean(),approved:z.boolean(),needsApproval:z.boolean()}).strict()).length(2)}).strict().refine(t=>t.shares[0].userId!==t.shares[1].userId&&t.shares.some(s=>s.userId===t.createdBy));
 const starChange=z.object({userId:id,name:short,stars:count}).strict();
 const cleaningRound=z.object({id,version:count,title:z.string().min(2).max(60),createdAt:stamp,minutes:z.number().int().min(1).max(540),elapsedMs:z.number().min(0).max(1e13),runningSince:stamp.nullable(),timerEnabled:z.boolean(),finishedAt:stamp.nullable(),entries:z.array(z.object({taskId:id,occurrenceKey:occurrence,title:short,minutes:z.number().int().min(1).max(180),outcome:z.enum(['open','done','pending','crew','skipped']),eventId:id.optional(),xp:count,stars:count}).strict()).min(1).max(3)}).strict().refine(r=>new Set(r.entries.map(e=>e.taskId)).size===r.entries.length&&(!r.runningSince||r.timerEnabled&&!r.finishedAt));
-const person=z.object({
+const person=z.object({away:away.nullable().optional(),effortWeeks:z.record(day,z.number().min(0).max(1e9)).optional(),
  recapDismissedWeek:day.optional(),reminder:z.object({enabled:z.boolean(),time:z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),seenDay:day.optional()}).strict().optional(),
  animations:z.boolean().optional(),round:cleaningRound.nullable().optional(),
  id,kind:z.enum(['account','child']).optional(),guardianId:id.nullable().optional(),removedAt:stamp.nullable().optional(),
@@ -31,18 +33,18 @@ const person=z.object({
  achievements:z.array(z.string().max(40)).max(50).optional(),gameStats:z.object({kitchen:count,plants:count}).strict().optional(),
 }).strict();
 const redemption=z.object({shared:z.boolean().optional(),contributors:z.array(starChange).max(1000).optional(),id,user_id:id,reward_id:id,request_key:id,title:short,cost:count,user_name:short,created_at:stamp,fulfilled_at:stamp.nullable()}).strict();
-const event=z.object({
+const event=z.object({minutes:z.number().int().min(1).max(180).optional(),completionId:id.optional(),rating:z.number().int().min(-1).max(1).optional(),teamId:id.optional(),teamEventIds:z.array(id).length(2).refine(ids=>new Set(ids).size===2).optional(),effort:z.number().min(0).max(1000).optional(),
  operation:z.string().max(1000).optional(),wishId:id.optional(),starChanges:z.array(starChange).max(1000).optional(),
  id,kind:z.string().min(1).max(40),userId:id,name:short,title:short,createdAt:stamp,
  xp:signedCount.optional(),stars:signedCount.optional(),rewardId:id.optional(),
- requestKey:z.string().max(80).refine(s=>z.string().uuid().safeParse(s).success||/^undo:[0-9a-f-]{36}$/.test(s)).optional(),
+ requestKey:z.string().max(80).refine(s=>z.string().uuid().safeParse(s).success||/^(?:undo|thanks|duration):[0-9a-f-]{36}$/.test(s)).optional(),
  redemption:redemption.optional(),recordedBy:id.optional(),recordedByName:short.optional(),taskId:id.optional(),occurrenceKey:occurrence.optional(),
  category:z.enum(CATEGORY_IDS).optional(),approvalRequired:z.boolean().optional(),steps:steps.optional(),room:short.optional(),icon:z.string().max(30).optional(),
  progressTracked:z.boolean().optional(),originalCreatedAt:stamp.optional(),reverses:id.optional(),
  bonusChanges:z.array(z.object({userId:id,name:short,stars:signedCount,week:day}).strict()).max(1000).optional(),
 }).strict();
 const pending=event.extend({taskId:id,occurrenceKey:occurrence,xp:count,stars:count});
-const task=taskSchema.extend({
+const task=taskSchema.extend({postponement:z.object({occurrenceKey:occurrence,from:day,until:day}).strict().optional(),knowledgePhoto:id.optional(),reopenedDue:day.optional(),durationDismissed:z.string().max(500).optional(),durationSamples:z.array(z.object({eventId:id,roundId:id,userId:id,minutes:z.number().int().min(1).max(180),rating:z.union([z.literal(-1),z.literal(0),z.literal(1)]),at:stamp}).strict()).max(12).optional(),team:team.optional(),balancedAssignment:z.object({occurrenceKey:occurrence,memberId:id}).strict().optional(),
  revision:count.optional(),roundAssignment:z.object({occurrenceKey:occurrence,memberId:id}).strict().optional(),handover:z.object({id,occurrenceKey:occurrence,fromId:id,createdAt:stamp,taskVersion:count,swapTaskId:id.optional(),swapOccurrenceKey:occurrence.optional(),swapVersion:count.optional(),toId:id.optional()}).strict().refine(r=>!r.swapTaskId?!r.swapOccurrenceKey&&r.swapVersion===undefined&&!r.toId:!!r.swapOccurrenceKey&&r.swapVersion!==undefined&&!!r.toId).optional(),
  id,steps:steps.optional(),checklistVersion:count.optional(),
  checklist:z.object({occurrenceKey:occurrence,doneIds:z.array(id).max(12)}).strict().nullable().optional(),
@@ -54,14 +56,16 @@ const task=taskSchema.extend({
  if(t.dueDate&&!validDay(t.dueDate)||t.schedule?.startDate&&!validDay(t.schedule.startDate))bad('Ungültiges Datum');
  if(t.cadence==='weekdays'&&!t.schedule?.weekdays?.length)bad('Fehlende Wochentage');
  if(t.cadence==='interval'&&(!t.schedule?.startDate||!t.schedule.intervalWeeks))bad('Fehlender Rhythmus');
+ if(t.cadence==='after'&&!t.schedule?.intervalDays)bad('Fehlender Abstand nach Erledigung');
  if(t.cadence==='monthly'&&!t.schedule?.monthDay)bad('Fehlender Monatstag');
  if(t.pause?.until&&t.pause.until<t.pause.from)bad('Ungültige Pause');
+ if(t.postponement&&((t.cadence==='once')!==(t.postponement.occurrenceKey==='once')))bad('Ungültige verschobene Runde');
  if(t.checklist?.doneIds.some(i=>!t.steps?.some(s=>s.id===i)))bad('Unbekannter Teilschritt');
  if(new Set(t.rotationIds??[]).size!==(t.rotationIds??[]).length)bad('Doppelte Zuständigkeit');
 });
 const quest=z.object({title:short,tasks:z.array(z.object({id,title:short}).strict()).max(5),doneIds:z.array(id).max(5),contributors:z.array(id).max(1000),everRewarded:z.boolean(),credits:z.record(id,z.boolean())}).strict();
 const game=z.object({legacyStationStage:z.number().int().min(0).max(6).optional(),since:stamp,weeks:z.record(day,z.object({key:day,goal:z.number().int().min(1).max(500),count,quest:quest.nullable()}).strict()),questTemplate:z.object({title:short,taskIds:z.array(id).max(5)}).strict().nullable()}).strict();
-const crew=z.object({
+const crew=z.object({trophies:z.array(z.object({memberId:id,achievementId:z.string().max(40)}).strict()).max(3).optional(),away:away.nullable().optional(),stationStyle:z.object({plant:z.string().max(40).optional(),furniture:z.string().max(40).optional(),window:z.string().max(40).optional(),companion:z.string().max(40).optional()}).strict().optional(),
  routines:z.array(z.object({id,title:z.string().min(2).max(60),taskIds:z.array(id).min(1).max(3).refine(ids=>new Set(ids).size===ids.length)}).strict()).max(12).optional(),
  crewWish:rewardSchema.extend({id,contributions:z.record(id,count)}).strict().refine(w=>Object.values(w.contributions).reduce((a,b)=>a+b,0)<=w.cost).nullable().optional(),
  schema:z.literal(1),id,name:z.string().min(2).max(60),kind:z.enum(['family','couple','shared','solo']).optional(),
@@ -81,12 +85,17 @@ function checkReferences(data:BackupPayload){
  const h=data.crew,ids=new Set(h.members.map(m=>m.id));
  const unique=(values:string[])=>new Set(values).size===values.length;
  const validMember=(value?:string|null)=>!value||ids.has(value);
+ if((h.trophies??[]).some(t=>!validMember(t.memberId))||!unique((h.trophies??[]).map(t=>t.memberId+':'+t.achievementId)))throw new AppError(400,'Das Trophäenregal passt nicht zur Crew.');
+ if(h.tasks.some(t=>t.durationSamples?.some(s=>!validMember(s.userId)||!data.history.some(e=>e.id===s.eventId&&e.kind==='completion'&&e.taskId===t.id))))throw new AppError(400,'Die Zeiteinschätzungen passen nicht zum Logbuch.');
+ if(data.history.some(e=>e.completionId&&!data.history.some(c=>c.id===e.completionId&&c.kind==='completion')))throw new AppError(400,'Eine Rückmeldung passt nicht zum Logbuch.');
  const redemptions=[...h.redemptions,...data.history.flatMap(e=>e.redemption?[e.redemption]:[])];
  if(!unique((h.routines??[]).map(r=>r.id))||h.crewWish&&Object.keys(h.crewWish.contributions).some(id=>!h.members.some(m=>m.id===id&&!m.removedAt))||redemptions.some(r=>r.contributors?.some(c=>!validMember(c.userId))||r.shared&&(!r.contributors?.length||!unique(r.contributors.map(c=>c.userId))||r.contributors.reduce((n,c)=>n+c.stars,0)!==r.cost))||data.history.some(e=>e.starChanges?.some(c=>!validMember(c.userId))))throw new AppError(400,'Die gemeinsame Wunschkasse passt nicht zur Crew.');
  if(!unique(h.members.map(x=>x.id))||!unique(h.tasks.map(x=>x.id))||!unique(h.rewards.map(x=>x.id))||!unique(h.redemptions.map(x=>x.id))||!unique((h.areas??[]).map(x=>x.id))||!unique(data.history.map(x=>x.id)))throw new AppError(400,'Die Sicherung enthält doppelte Einträge.');
- if(!h.members.every(m=>validMember(m.guardianId))||!h.tasks.every(t=>validMember(t.assignedTo)&&(t.rotationIds??[]).every(validMember)&&validMember(t.completion?.userId)&&validMember(t.roundAssignment?.memberId)&&validMember(t.handover?.fromId)&&validMember(t.handover?.toId)))throw new AppError(400,'Die Sicherung enthält unbekannte Profile.');
+ if(!h.members.every(m=>validMember(m.guardianId))||!h.tasks.every(t=>validMember(t.assignedTo)&&(t.rotationIds??[]).every(validMember)&&validMember(t.completion?.userId)&&validMember(t.roundAssignment?.memberId)&&validMember(t.balancedAssignment?.memberId)&&validMember(t.handover?.fromId)&&validMember(t.handover?.toId)))throw new AppError(400,'Die Sicherung enthält unbekannte Profile.');
  if(!h.redemptions.every(r=>validMember(r.user_id))||![...data.history,...(h.pendingCompletions??[])].every(e=>validMember(e.userId)&&validMember(e.recordedBy)&&(e.bonusChanges??[]).every(b=>validMember(b.userId))))throw new AppError(400,'Das Logbuch passt nicht zu dieser Crew.');
  if(h.tasks.some(t=>t.handover?.swapTaskId&&(!h.tasks.some(o=>o.id===t.handover!.swapTaskId)||t.handover.swapTaskId===t.id||t.handover.fromId===t.handover.toId)))throw new AppError(400,'Eine Tauschanfrage passt nicht zu den Missionen.');
+ if(h.tasks.some(t=>t.team&&(t.team.shares.some(s=>!validMember(s.userId))||t.team.shares.reduce((n,s)=>n+s.xp,0)!==t.xp||t.team.shares.reduce((n,s)=>n+s.stars,0)!==t.stars))||data.history.some(e=>e.teamEventIds?.some(id=>!data.history.some(x=>x.id===id&&x.teamId===e.teamId))))throw new AppError(400,'Die gemeinsamen Missionen passen nicht zur Sicherung.');
+ for(const e of data.history){if(e.kind==='completion'&&e.teamId){const peers=data.history.filter(x=>e.teamEventIds?.includes(x.id));if(peers.length!==2||!e.teamEventIds?.includes(e.id)||new Set(peers.map(x=>x.userId)).size!==2||peers.some(x=>x.kind!=='completion'||x.taskId!==e.taskId||x.occurrenceKey!==e.occurrenceKey||x.teamId!==e.teamId||x.createdAt!==e.createdAt||JSON.stringify(x.teamEventIds)!==JSON.stringify(e.teamEventIds)))throw new AppError(400,'Die gemeinsamen Buchungen passen nicht zusammen.');}}
  const requests=data.history.filter(e=>e.requestKey).map(e=>e.userId+':'+e.requestKey);
  if(!unique(requests))throw new AppError(400,'Die Sicherung enthält doppelte Buchungen.');
  if(h.game&&Object.entries(h.game.weeks).some(([key,w])=>key!==w.key||w.quest&&[...w.quest.contributors,...Object.keys(w.quest.credits)].some(i=>!ids.has(i))))throw new AppError(400,'Der Wochenfortschritt passt nicht zur Crew.');

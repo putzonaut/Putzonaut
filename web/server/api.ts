@@ -1,3 +1,10 @@
+import {pushRoute} from './push.ts';
+import type {PushConfig} from './push.ts';
+import {photoRoute} from './photos.ts';
+import type {PhotoBucket} from './photos.ts';
+import {comfortChange} from './comfort.ts';
+import {teamChange} from './team.ts';
+import {lifeChange,needsLifeUpdate} from './life.ts';
 import {everydayChange} from './everyday.ts';
 import { z } from 'zod';
 import {backupRoute} from './backups.ts';
@@ -29,7 +36,7 @@ async function readBody(request:Request,limit=16384){
  const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  try{return JSON.parse(new TextDecoder().decode(bytes));}catch{throw new AppError(400,'Die Eingabe konnte nicht gelesen werden.');}
 }
-export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{now?:()=>Date;development?:boolean}={}){
+export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{push?:PushConfig;bucket?:PhotoBucket;now?:()=>Date;development?:boolean}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
   if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:APP_VERSION});}
@@ -40,7 +47,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const now=(options.now??(()=>new Date()))();const accountId=identity.userId;
   if(route==='/bootstrap'&&method==='GET'){const row=await repo.forAccount(accountId);return json({needsSetup:!row,signedIn:true,suggestedName:identity.fullName?.split(' ')[0]??''});}
-  const body=['POST','PATCH','DELETE'].includes(method)?await readBody(request,['/backups/preview','/backups/restore'].includes(route)?BACKUP_MAX_BYTES+4096:16384):{};
+  const body=['POST','PATCH','DELETE'].includes(method)?await readBody(request,['/backups/preview','/backups/restore'].includes(route)?BACKUP_MAX_BYTES+4096:/^\/tasks\/[^/]+\/photo$/.test(route)?360000:16384):{};
   if(route==='/auth/setup'&&method==='POST'){
    const v=z.object({name:nameSchema,householdName:z.string().trim().min(2).max(60),starterTasks:z.boolean().default(true),kind:z.enum(['family','couple','shared','solo']).default('family'),taskTemplates:z.array(z.string().refine(key=>TASK_TEMPLATES.some(t=>t.key===key))).max(6).optional()}).parse(body);
    const h=newHousehold(accountId,v.name,v.householdName,v.starterTasks,now,v.kind,v.taskTemplates);await repo.create(h);return json({ok:true},201);
@@ -59,11 +66,13 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
   if(!['GET','HEAD'].includes(method)&&(request.headers.get('X-Putzonaut-Epoch')??'')!==(h.restoreEpoch??''))throw new AppError(409,'Eure Crew wurde wiederhergestellt. Bitte lade den aktuellen Stand, bevor du etwas änderst.');
   const backupResponse=await backupRoute(route,method,body,repo,accountId,profileId,row,now);if(backupResponse)return backupResponse;
+  const push=await pushRoute(route,method,body,h,viewer,repo,options.push??{},now);if(push)return push;
+  const photo=await photoRoute(route,method,body,h,accountId,profileId,repo,options.bucket,now);if(photo)return photo;
   if(route==='/statistics'&&method==='GET'){const days=z.coerce.number().refine(n=>[7,30,90].includes(n)).parse(url.searchParams.get('days')??30) as StatisticRange;return json(await statisticsView(repo,accountId,profileId,h.id,actor.id,days,now));}
-  if(route==='/state'&&method==='GET'){if(!h.areas||!h.game?.weeks[weekKey(now)]||h.game.legacyStationStage===undefined||h.members.some(m=>!m.career)||hasUnclaimedAchievements(h)){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
-  if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e)})),nextOffset:events.length>50?offset+50:null});}
+  if(route==='/state'&&method==='GET'){if(needsLifeUpdate(h,now)||!h.areas||!h.game?.weeks[weekKey(now)]||h.game.legacyStationStage===undefined||h.members.some(m=>!m.career)||hasUnclaimedAchievements(h)){await repo.mutate(accountId,now,()=>({result:null}),expected);const fresh=await repo.forAccount(accountId);if(!fresh)throw new AppError(404,'Deine Crew-Mitgliedschaft hat sich geändert.');return json(view(JSON.parse(fresh.document),accountId,now,await repo.history(fresh.id,0,50),fresh.revision,profileId));}return json(view(h,accountId,now,await repo.history(h.id,0,50),row.revision,profileId));}
+  if(route==='/history'&&method==='GET'){const offset=z.coerce.number().int().min(0).max(100000).parse(url.searchParams.get('offset')??0);const events=await repo.history(h.id,offset,51);return json({items:events.slice(0,50).map(e=>({...e,canUndo:canUndo(h,actor,e),canThank:e.kind==='completion'&&!e.reversed&&e.userId!==viewer.id})),nextOffset:events.length>50?offset+50:null});}
   if(route==='/export'&&method==='GET'){
-   admin(actor);ensureAreas(h);const snapshot={format:'putzonaut-export',version:5,areas:h.areas,exportedAt:now.toISOString(),household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,routines:h.routines??[],crewWish:h.crewWish??null,rewards:h.rewards,redemptions:h.redemptions};
+   admin(actor);ensureAreas(h);const snapshot={format:'putzonaut-export',version:5,areas:h.areas,exportedAt:now.toISOString(),away:h.away??null,stationStyle:h.stationStyle??{},trophies:h.trophies??[],household:{id:h.id,name:h.name,kind:h.kind??'family',goalTitle:h.goalTitle,weekGoal:h.weekGoal,timezone:h.timezone,weekKey:h.weekKey},members:h.members.map(({accountId:_,...m})=>m),tasks:h.tasks,pendingCompletions:h.pendingCompletions??[],game:h.game??null,routines:h.routines??[],crewWish:h.crewWish??null,rewards:h.rewards,redemptions:h.redemptions};
    return new Response(JSON.stringify(snapshot,null,2),{headers:{'Content-Type':'application/json; charset=utf-8','Content-Disposition':`attachment; filename="putzonaut-${now.toISOString().slice(0,10)}.json"`,'Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff'}});
   }
   if(route==='/invitations'&&method==='GET'){admin(actor);return json({items:h.invites.filter(i=>!i.usedAt&&i.expiresAt>now.toISOString()).map(({hash:_,...i})=>i)});}
@@ -79,6 +88,9 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   }
   const result=await repo.mutate<unknown>(accountId,now,async house=>{
    const user=profile(house,accountId,profileId);const requireAdmin=()=>admin(user);
+   const comfort=await comfortChange(route,method,body,house,user,viewer,now,repo);if(comfort)return comfort;
+   const team=await teamChange(route,method,body,house,user,viewer,now,repo);if(team)return team;
+   const life=lifeChange(route,method,body,house,user,now);if(life)return life;
    const everyday=everydayChange(route,method,body,house,user,now);if(everyday)return everyday;
    const round=roundChange(route,method,body,house,user,now);if(round)return round;
    const wish=await crewWishChange(route,method,body,house,user,member(house,accountId),now,repo);if(wish)return wish;

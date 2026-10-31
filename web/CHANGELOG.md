@@ -1,5 +1,126 @@
 # Changelog
 
+## 0.20.0 · 31. Oktober 2026
+
+- Nachtrag bei gleicher Versionsnummer: zwölf weitere Missionssymbole (Besen, Sprühflasche, Fenster, Bett, Sofa, Kühlschrank, Kochen, Einkauf, Haustiere, Dusche, Toilette und Werkzeug), insgesamt 19. Einheitliche Auswahl, Anzeige und automatische Kategoriezuordnung; neue Symbole werden auch in Backups erhalten. Offline-Dateien erhalten bei Inhaltsänderungen einen eigenen Cache.
+
+- Spontane bereits erledigte Aufgaben mit Standardpunkten direkt erfassen; atomare, wiederholbare Anfragen verhindern doppelte Buchungen. Kinderfreigaben, Logbuch und Rücknahme verwenden den bestehenden Abschlussweg.
+- Einzelne offene Aufgabenrunden auf morgen, das Wochenende oder ein eigenes Datum verschieben. Runde, Checkliste und Zuständigkeit bleiben erhalten; überlappende Wiederholungen werden zusammengefasst. Veraltete Offline-Abschlüsse werden zurückgewiesen.
+- Dezenter Hinweis auf neue App-Versionen mit „Jetzt aktualisieren“ und „Später“. Kein automatischer Neustart; offene Eingaben, aktive Putzrunden, laufende Schreibvorgänge und Offline-Vormerkungen sind geschützt.
+- Service-Worker-Wechsel erst nach ausdrücklicher Aktualisierung; vorhandene Asset-Caches schützen weitere offene Tabs. Größere Schließen-Schaltflächen und erreichbare Formularaktionen auf schmalen Bildschirmen.
+
+## 0.19.4 · 31. Oktober 2026
+
+- Die gesamte Startsequenz gleichmäßig auf drei Sekunden verlängert: 2,7 Sekunden für Anflug, Landung und Logo plus 0,3 Sekunden Ausblendung. Alle Effektdauern und Verzögerungen sind im gleichen Verhältnis angepasst.
+
+## 0.19.3 · 31. Oktober 2026
+
+- Umfangreichere Startsequenz: diagonaler Anflug mit Schubdüsen, federnde Landung auf einer leuchtenden Plattform, Druckwelle, Staub und einzelne Partikel.
+- Sterne und Umlaufbahn ergänzen die Szene; die Logo-Buchstaben erscheinen nacheinander, gefolgt von einem Helmglanz.
+- Gesamtdauer weiterhin 2,5 Sekunden. Ruhiger Ladezustand, reduzierte Bewegung und sofortige Fehleranzeige bleiben erhalten; bei niedrigen Bildschirmen wird die Szene kompakter.
+
+## 0.19.2 · 31. Oktober 2026
+
+- Startanimation gleichmäßig auf insgesamt 2,5 Sekunden verlängert: 2,25 Sekunden für die Landungsfolge plus 0,25 Sekunden Ausblendung.
+
+## 0.19.1 · 31. Oktober 2026
+
+- Startanimation auf insgesamt zwei Sekunden verlängert: 1,8 Sekunden für Landung, Staubwölkchen und Helmglanz, anschließend 0,2 Sekunden Ausblendung.
+- Reduzierte Bewegung und sofortige Fehleranzeige bleiben erhalten.
+
+## 0.19.0 · 31. Oktober 2026
+
+- Kurzer Startbildschirm: Der bekannte Putzonaut landet sanft vor dem Logo, begleitet von zwei Staubwölkchen und einem Helmglanz.
+- App und Daten laden parallel. Die Einblendung endet nach etwa einer Sekunde; langsames Laden bleibt ruhig, Fehler und Wiederholen werden direkt zugänglich.
+- Einmal pro neu geladenem App-Dokument, ohne Wiederholung bei interner Navigation oder Rückkehr aus dem Hintergrund. Online- und Offline-Einstieg teilen den Ablauf.
+- Profileinstellung für den nächsten Gerätestart gemerkt; reduzierte Bewegung und ausgeblendete Tabs unterbinden die Animation.
+
+## 0.18.3 · 31. Oktober 2026
+
+- Antippen des Putzonauten im Tagesabschluss oder in der Putzrunde putzt kurz das Visier; anschließend erscheint ein kleiner Glanzstern.
+- Per Tastatur bedienbar; wiederholte Eingaben reihen keine Effekte aneinander. Reduzierte Bewegung zeigt nur einen ruhigen Glanzstern.
+- Vorhandene Anzüge und der korrigierte Ausschnitt der Ruhepose bleiben erhalten. Paketversion aktualisiert den Offline-Cache.
+
+## 0.18.2 · 31. Oktober 2026
+
+- Blauen Bildrest oberhalb des sitzenden Starter-Astronauten im Tagesabschluss ausgeblendet. Der Ausschnitt behält die vollständige Figur sowie ihre Größe, Position und Animation bei.
+- Paketversion für die Aktualisierung des Offline-Caches erhöht.
+
+## 0.18.1 · 31. Oktober 2026
+
+- Kurze Erklärung von XP und Sternen in Einrichtung und Profil; Crew-Ziel und Wünsche klarer voneinander abgegrenzt.
+- Zwei statt sechs vorausgewählte Startmissionen; alle sechs bleiben verfügbar.
+- Neue Crew-Ziele berücksichtigen ausgewählte Wiederholungen und die verbleibenden Tage der ersten Woche. Vorschau und gespeicherter Wert verwenden dieselbe Berechnung; bestehende Ziele bleiben erhalten.
+- Konkrete Badvorlage mit drei Schritten und zum Titel passende Kühlschrank-Checkliste.
+- Vier Vorlagenpunkte an die vorhandene Dauer-/Aufwandsformel angeglichen; keine rückwirkende Änderung gespeicherter Aufgaben oder Guthaben.
+- 276 Tests, Typprüfung, Produktionsbuild und mobile Browserprüfung. Siehe `docs/QA-0.18.1.md`.
+- Keine zusätzlichen Funktionen oder Menüs; Freischalthürden und Elternverwaltung bleiben erhalten. Erinnerungsautomatik bleibt deaktiviert.
+
+## 0.18.0 · 31. Oktober 2026
+
+- Ansichten, Suche, Filter und Scrollpositionen merken; Browser-Zurück schließt zuerst offene Details.
+- Missionsentwürfe einschließlich Kurzeingabe, unvollständiger Felder und eigener Punkte fortsetzen; getrennt nach Konto, Crew und Profil, mit Ablauf und Versionsprüfung.
+- Erreichbare Hauptaktionen und Schließen-Schaltfläche in Dialogen, angepasste Höhe bei Bildschirmtastatur sowie sichtbare Speicherfehler.
+- Kompakte Übersicht offener Missionen und Zeitbedarf auf der Basis.
+- Sterneabstand zum gewählten Wunsch direkt in der vorhandenen Abschlussmeldung, ausschließlich nach bestätigten Punkten.
+- 272 erfolgreiche Tests, Typprüfung und Produktionsbuild; mobile Browserprüfung einschließlich Entwurfswiederherstellung und Speicherfehler. Siehe `docs/QA-0.18.md`.
+- Vier Hauptreiter, Spielregeln, Elternverwaltung und bestehende Daten bleiben erhalten. Keine Push-, Automations-, Freigabe- oder Datenbankänderung durch diese Version.
+
+## 0.17.0 · 30. Oktober 2026
+
+- Kurzer Sterneflug zum sichtbaren Guthaben und Zähleranstieg nach bestätigten Abschlüssen, einschließlich des eigenen bestätigten Teamanteils. Kein Vorgriff auf vorgemerkte Punkte.
+- Gezeichnetes Häkchen, dezentes Verschwinden der erledigten Missionskarte und nachrückende Liste; Rückgängig bleibt verfügbar.
+- Neue Starter-Putzonaut-Posen für Bereitschaft, Winken und Tagesruhe; vorhandene freigeschaltete Anzüge bleiben erhalten.
+- Einmalige Hervorhebung ausschließlich neuer Stationsmodule beim Sichtbarwerden.
+- Tagesabschluss mit tatsächlichen heutigen Werten aus der Statistik; Schutz vor falschem Abschluss bei offenen Aufgaben, Freigaben, Vormerkungen und Auszeiten.
+- Vorhandene Bewegungsreduktion für alle Effekte; keine zusätzlichen Menüs, Datenbankänderungen oder Push-Konfigurationsänderungen.
+- 266 erfolgreiche Tests; mobile Browserprüfung und Typprüfung. Siehe `docs/QA-0.17.md`.
+
+## 0.16.0 · 30. Oktober 2026
+
+- Klarer Basis-Einstieg mit 5/10/20 Minuten und gerätebezogen gemerkter Dauer; besondere Rundenmodi unter „Runde anpassen“.
+- Gemeinsame Liste für heute fällige und überfällige Missionen. Direktes Abhaken für einfache eigene oder freie Aufgaben; Details, Checklisten, gemeinsame Missionen und Rücknahme bleiben erhalten.
+- Kürzere Missionsformulare mit zusätzlichen Angaben unter „Weitere Optionen“. Bestehende Punkte, Notizen, Schritte und Verteilungen bleiben beim Speichern erhalten; neue leere Missionen nutzen die vorhandene Punkteempfehlung.
+- Kompakte Erfolgsmeldung in der aktuellen Ansicht mit Sternen, XP, Levelbalken und Rücknahme. Große Feieransicht für Levelaufstieg, eigene Erfolge, Stationsausbau und Questbonus.
+- Vier Hauptreiter, vorhandene Daten, Spielregeln und ausschließlich elterlich verwaltete Kinderprofile beibehalten. Keine Server-, Datenbank-, Freigabe- oder Push-Konfigurationsänderungen.
+- 260 erfolgreiche Tests; Typprüfung und Produktionsbuild. Reale lokale API-/Datenbankabläufe und Handybreiten 320/360/390/430 geprüft. Siehe `docs/QA-0.16.md`.
+
+## 0.15.0 · 30. Oktober 2026
+
+- Missionen aus einem kurzen Satz vorbereiten; Wiederholungen nach dem tatsächlichen bestätigten Abschluss.
+- Einklappbare Missionshinweise mit optionalem, crewgeschütztem Referenzfoto.
+- Ein persönliches Dankeschön ohne Zusatzpunkte; freiwillige Zeitrückmeldungen und ausdrücklich bestätigte Dauervorschläge.
+- Optionaler Web Push mit allgemeinem Tageshinweis, eigener Geräteanmeldung und stündlichem Cloud-Versandlauf. Neue D1-Tabellen und privater R2-Bildspeicher; Geheimnisse ausschließlich in der Laufzeitkonfiguration.
+- Bis zu drei verdiente Crew-Abzeichen im Trophäenregal der Wohnkapsel.
+- Kinderprofile bleiben vollständig durch Eltern bedient. Keine Kinderoberfläche, kein Kinderkonto; passende Beschriftungen für die Erfassung durch Erwachsene.
+- Vier Hauptreiter bleiben erhalten. Versionsanzeige und Offline-Cache werden aus der Paketversion erzeugt.
+- 254 erfolgreiche automatisierte Prüfungen; Handyansichten und zentrale Abläufe mit isolierten Beispieldaten geprüft. Siehe `docs/QA-0.15.md` und `docs/PUSH-OPERATIONS.md`.
+
+## 0.14.0 · 30. Oktober 2026
+
+- Schonmodus und zeitlich begrenzte Besuchsrunde direkt im vorhandenen Basis-Einstieg; jeweils bis zu drei passende bestehende Missionen.
+- Freiwillige faire Rotation nach geplantem und erfasstem Aufwand, geeigneten Crewmitgliedern und Auszeiten. Stabile aktuelle Einteilung; feste Wochenwechsel bleiben erhalten.
+- Gemeinsame Missionen für zwei Profile mit sichtbaren festen XP-/Sternenanteilen, getrennten Bestätigungen und Kinderfreigaben. Atomare Buchung, Schutz vor doppelten Bestätigungen, gemeinsame Rücknahme und korrekte Questboni.
+- Persönliche und Crew-Auszeiten mit Enddatum oder manueller Rückkehr, ohne nachzuholende wiederkehrende Runden.
+- Sechs neue Vorlagen für unsichtbare Planungsarbeit; zehn passende Ideen unter „Mitdenken & organisieren“, insgesamt 51 Vorlagen.
+- Gestaltbare Wohnkapsel mit acht Dekorationen in vier Bereichen, sichtbaren Voraussetzungen und ohne Sternenkosten.
+- Vier Hauptreiter beibehalten. Abwärtskompatible Sicherungen und Offline-Stände; Version weiterhin im Profil. Prüfergebnisse in `docs/QA-0.14.md`.
+
+## 0.13.2 · 30. Oktober 2026
+
+- Wunsch-Symbole von vier auf 24 erweitert. Gemeinsame, beschriftete Auswahl mit Vorschau für persönliche und Crew-Wünsche; drei Spalten auf sehr schmalen Smartphones, sonst vier.
+- Einheitliche Motive auf Wunschkarten, in Sparzielen und gemeinsamen Wunschdetails sowie passendere Symbole für vorhandene Wunschideen. Gespeicherte Wünsche behalten ihre Motive; Sicherungen unterstützen alte und neue Symbolkennungen.
+- Fehlende Wunschkennung beim Öffnen der gemeinsamen Sparansicht ergänzt; aktive Crew-Wünsche werden wieder korrekt geöffnet.
+- 213 erfolgreiche Tests einschließlich Anlegen aller 24 Symbole, Bearbeiten, gemeinsamem Wunsch und Sicherungsexport/-validierung. Typprüfung, Produktionsbuild und Browserprüfung dokumentiert in `docs/QA-0.13.2.md`.
+
+## 0.13.1 · 30. Oktober 2026
+
+- Unterbrochenen Arbeitslauf mit Repository- und Veröffentlichungshistorie abgeglichen: Alle vorgesehenen 0.13-Funktionen waren bereits im veröffentlichten Commit `4289f029a7f4a2a96e0f95a54a50f3aaacfed7d2` gespeichert.
+- Offline-Abschlüsse bleiben bei Netzwerkfehlern, HTTP 408/425/429 und Serverfehlern vorgemerkt. Der Abgleich pausiert, statt die übrige Warteschlange sofort weiterzusenden. Derselbe Anfrageschlüssel schützt spätere Versuche vor doppelten Punkten.
+- HTTP 401 sperrt die lokale Offline-Anzeige, ohne die Vormerkungen als dauerhafte Konflikte auszusortieren. Nach erneuter Anmeldung desselben Zugangs ist der Abgleich wieder möglich. Sachliche Konflikte bleiben sichtbar.
+- Keine erzwungene Überbreite auf schmalen Ansichten; lange Missionsnamen in Tauschanfragen und Dialogtexten umbrechen, Zeitfelder bleiben im Dialog.
+- 212 erfolgreiche Tests einschließlich elf neuer Regressionstests für Wiederholungen, Anmeldungsablauf, echte Konflikte, Profil-/Crewgrenzen und verlorene Antworten; Typprüfung und Produktionsbuild erfolgreich. Browser-Layoutprüfung bei 320, 360, 390 und 430 Pixeln. Prüfstand und verbleibende Geräteprüfungen stehen in `docs/QA-0.13.1.md`.
+
 ## 0.13.0 · 30. Oktober 2026
 
 - Kompakter, schließbarer Wochenrückblick mit bestätigten Missionen und dem tatsächlichen Ziel der Vorwoche.

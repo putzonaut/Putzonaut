@@ -1,9 +1,10 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {appendIntent,cacheSnapshot,completionBody,draftKey,intentFor,replayProblem,sameDeviceScope} from '../shared/offline';
+import {appendIntent,cacheSnapshot,completionBody,draftKey,intentFor,sameDeviceScope} from '../shared/offline';
 import type {CompletionIntent,DeviceData} from '../shared/offline';
 import type {State,Task} from './types';
 import {clearDevice,deviceUpdate,offlineEnabled,offlineUnlocked,lockOffline,unlockOffline,readDevice,setOfflineEnabled} from './offline-store';
-import {api,ApiError} from './api';
+import {api} from './api';
+import {submitQueuedCompletion,replayQueuedCompletions} from './offline-sync';
 import {createRequestId} from './id';
 
 export function useOffline(){
@@ -16,7 +17,7 @@ export function useOffline(){
  const enable=async(s:State)=>{setOfflineEnabled(true);setEnabled(true);await save(s);};
  useEffect(()=>{
   if(!enabled||!data)return;if(!('serviceWorker' in navigator)){setProblem('Dieser Browser unterstützt den Offline-Start hier nicht. Vormerkungen in der geöffneten App bleiben möglich.');return;}
-  let active=true;void navigator.serviceWorker.register('/sw.js',{scope:'/'}).then(async()=>{await navigator.serviceWorker.ready;const response=await caches.match('/offline/index.html');if(active)setReady(!!response);}).catch(()=>{if(active)setProblem('Der Offline-Start konnte noch nicht vorbereitet werden. Öffne die App einmal mit Internet.');});
+  let active=true;void navigator.serviceWorker.register('/sw.js',{scope:'/',updateViaCache:'none'}).then(async()=>{await navigator.serviceWorker.ready;const response=await caches.match('/offline/index.html');if(active)setReady(!!response);}).catch(()=>{if(active)setProblem('Der Offline-Start konnte noch nicht vorbereitet werden. Öffne die App einmal mit Internet.');});
   return()=>{active=false;};
  },[enabled,!!data]);
  const queue=async(s:State,t:Task,checked:string[])=>{
@@ -29,13 +30,13 @@ export function useOffline(){
  const checked=(s:State,t:Task)=>data&&sameDeviceScope(data.snapshot,s)&&data.snapshot.restoreEpoch===s.restoreEpoch?data.drafts[draftKey(s,t)]??t.checklist?.doneIds??[]:t.checklist?.doneIds??[];
  const step=async(s:State,t:Task,id:string,done:boolean)=>{if(!offlineEnabled())throw new Error('Aktiviere zuerst „Offline auf diesem Gerät“ im Profil.');await deviceUpdate(d=>{if(!d||!sameDeviceScope(d.snapshot,s)||d.snapshot.restoreEpoch!==s.restoreEpoch)throw new Error('Der Offline-Stand ist nicht mehr aktuell. Bitte öffne die App mit Internet.');const key=draftKey(s,t),ids=new Set(d.drafts[key]??t.checklist?.doneIds??[]);if(done)ids.add(id);else ids.delete(id);d.drafts[key]=[...ids];return {data:d,result:undefined};});await read();};
  const send=async(q:CompletionIntent,s:State)=>{
-  const issue=replayProblem(q,s);if(issue)throw new ApiError(409,issue);
   return api<any>(`/tasks/${q.taskId}/complete`,{method:'POST',headers:{'X-Putzonaut-Viewer':q.viewerId,'X-Putzonaut-Household':q.householdId,'X-Putzonaut-Epoch':q.restoreEpoch,'X-Putzonaut-Profile':q.profileId},body:JSON.stringify(completionBody(q))});
  };
- const submit=async(q:CompletionIntent,s:State)=>{try{const result=await send(q,s);await remove(q.requestKey);return result;}catch(e){if(e instanceof ApiError&&e.status>0&&e.status<500)await mark(q,e.message);throw e;}};
+ const ports={send,remove,mark,lock:lockOffline};
+ const submit=(q:CompletionIntent,s:State)=>submitQueuedCompletion(q,s,ports);
  const flush=async(s:State)=>{
-  if(syncing.current||!navigator.onLine||document.visibilityState!=='visible')return 0;syncing.current=true;let count=0;
-  try{const d=await readDevice();for(const q of d?.queue??[]){if(q.status!=='pending')continue;const issue=replayProblem(q,s);if(issue){await mark(q,issue);continue;}try{await submit(q,s);count++;}catch(e){if(!(e instanceof ApiError)||e.status===0||e.status>=500)break;}}return count;}
+  if(syncing.current||!offlineUnlocked()||!navigator.onLine||document.visibilityState!=='visible')return 0;syncing.current=true;
+  try{const d=await readDevice();return await replayQueuedCompletions(d?.queue??[],s,ports);}
   finally{syncing.current=false;}
  };
  return {data,enabled,ready,problem,unlocked:offlineUnlocked,lock:lockOffline,read,save,clear,forget,enable,queue,remove,checked,step,submit,flush};

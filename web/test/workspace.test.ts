@@ -33,5 +33,5 @@ test('duplicates carry only editable task settings and get fresh steps, dates an
  const once=duplicateDraft({...t,cadence:'once',dueDate:'2026-01-01'},'2026-11-02');assert.equal(once.dueDate,'2026-11-02');
 });
 test('all existing templates can be reopened as editable drafts without fabricated progress',()=>{
- for(const key of ['vacuum','dishes','laundry','plant','bath','trash']){const d=templateDraft(key);assert.ok(d.title);assert.ok(d.minutes!>0);assert.equal('id' in d,false);assert.equal('completion' in d,false);assert.deepEqual(d.steps,[]);}
+ for(const key of ['vacuum','dishes','laundry','plant','bath','trash']){const d=templateDraft(key);assert.ok(d.title);assert.ok(d.minutes!>0);assert.equal('id' in d,false);assert.equal('completion' in d,false);assert.deepEqual(d.steps,key==='bath'?[{title:'Waschbecken reinigen'},{title:'Toilette reinigen'},{title:'Badspiegel putzen'}]:[]);assert.equal('checklist' in d,false);}
 });

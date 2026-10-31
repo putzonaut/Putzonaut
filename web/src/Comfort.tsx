@@ -1,0 +1,44 @@
+'use client';
+import {useState} from 'react';
+import {BookOpen,Camera,Check,Heart,MessageSquareText,Trophy,Trash2} from 'lucide-react';
+import {sentenceDraft} from '../shared/comfort';
+import type {Trophy as TrophyChoice} from '../shared/comfort';
+import {specialBadgeArt} from '../shared/game';
+import {scheduleLabel} from '../shared/planning';
+import type {Area} from '../shared/workspace';
+import type {State,Task,TaskDraft} from './types';
+
+export function SentenceCapture({areas,busy,onChoose,text,onText,open,onOpen}:{text:string;onText:(text:string)=>void;open:boolean;onOpen:(open:boolean)=>void;areas:Area[];busy:boolean;onChoose:(draft:TaskDraft)=>void}){
+ const [preview,setPreview]=useState<ReturnType<typeof sentenceDraft>>();
+ return <details className="comfort-panel sentence-capture" open={open} onToggle={e=>onOpen(e.currentTarget.open)}><summary><MessageSquareText size={19}/>Mit einem Satz starten</summary><form onSubmit={e=>{e.preventDefault();setPreview(sentenceDraft(text,areas));}}><label>Deine Mission in einem Satz<input value={text} maxLength={240} required onChange={e=>{onText(e.target.value);setPreview(undefined);}} placeholder="Staubsaugen, jeden Samstag, 10 Minuten"/></label><button className="button secondary" disabled={busy||text.trim().length<2}>Vorschau anzeigen</button></form>{preview&&<div className="sentence-preview" role="status"><strong>{preview.draft.title||'Bitte ergänze den Missionsnamen.'}</strong><p>{preview.draft.minutes} Minuten · {scheduleLabel({cadence:preview.draft.cadence!,schedule:preview.draft.schedule})}</p>{preview.notes.map(n=><p className="game-note" key={n}>{n}</p>)}<p className="game-note">Im Formular kannst du alle Angaben prüfen und ändern.</p><button className="button primary" disabled={busy||!preview.draft.title||preview.draft.title.length<2||preview.draft.title.length>80} onClick={()=>onChoose(preview.draft)}>Angaben übernehmen</button></div>}</details>;
+}
+export function ThanksButton({item,viewerId,busy,onThank}:{item:{thanks?:{userId:string;name:string}[];canThank?:boolean};viewerId:string;busy:boolean;onThank:()=>void}){
+ const sent=item.thanks?.some(t=>t.userId===viewerId);
+ return <div className="thanks-control">{item.canThank&&<button className="text-button" aria-pressed={!!sent} disabled={busy||sent} onClick={onThank}><Heart size={16} fill={sent?'currentColor':'none'}/>{sent?'Danke gesagt':'Danke sagen'}</button>}{!!item.thanks?.length&&<small>Danke von {item.thanks.map(t=>t.name).join(', ')}</small>}</div>;
+}
+export function DurationFeedback({minutes,busy,onVote}:{minutes:number;busy:boolean;onVote:(rating:-1|0|1)=>Promise<void>}){
+ const [done,setDone]=useState(false),[voting,setVoting]=useState(false),[error,setError]=useState('');
+ return <details className="comfort-panel"><summary>Passten die {minutes} Minuten?</summary>{done?<p role="status"><Check size={16}/>Danke für deine Einschätzung.</p>:<><p>Freiwillig: Mit mehreren Rückmeldungen wird die Zeitplanung genauer.</p><div className="duration-votes">{([[-1,'Ging schneller'],[0,'Passte'],[1,'Dauerte länger']] as const).map(([rating,label])=><button key={rating} className="button secondary small" disabled={busy||voting} onClick={async()=>{setVoting(true);setError('');try{await onVote(rating);setDone(true);}catch(err){setError((err as Error).message);}finally{setVoting(false);}}}>{label}</button>)}</div>{error&&<p role="alert">{error}</p>}</>}</details>;
+}
+export function DurationProposal({task,busy,onAction}:{task:Task;busy:boolean;onAction:(action:'accept'|'dismiss',key:string)=>void}){
+ const p=task.durationSuggestion;if(!p)return null;
+ return <section className="duration-proposal"><strong>Die Zeit könnte besser passen</strong><p>Rückmeldungen aus {p.rounds} Einsätzen sprechen für etwa {p.minutes} statt {task.minutes} Minuten.</p><div><button className="button secondary small" disabled={busy||!!task.team} onClick={()=>onAction('accept',p.key)}>{p.minutes} Minuten übernehmen</button><button className="text-button" disabled={busy} onClick={()=>onAction('dismiss',p.key)}>Bisherige Dauer behalten</button></div><small>XP und Sterne bleiben gleich.</small></section>;
+}
+async function preparePhoto(file:File){
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>12*1024*1024)throw new Error('Bitte wähle ein JPEG-, PNG- oder WebP-Foto bis 12 MB.');
+ const url=URL.createObjectURL(file);try{
+  const img=new Image();img.src=url;await img.decode();let edge=1200;let output='';
+  for(let i=0;i<5;i++){const scale=Math.min(1,edge/Math.max(img.width,img.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));const ctx=canvas.getContext('2d');if(!ctx)throw new Error('Das Foto konnte nicht vorbereitet werden.');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(img,0,0,canvas.width,canvas.height);output=canvas.toDataURL('image/jpeg',.78).split(',')[1];if(output.length<=340000)return {data:output,mime:'image/jpeg'};edge=Math.round(edge*.72);}
+  throw new Error('Bitte wähle ein kleineres Foto.');
+ }finally{URL.revokeObjectURL(url);}
+}
+export function MissionKnowledge({task,admin,busy,offline,onUpload,onRemove}:{task:Task;admin:boolean;busy:boolean;offline:boolean;onUpload:(value:{data:string;mime:string;version:number})=>Promise<void>;onRemove:()=>void}){
+ const [working,setWorking]=useState(false),[error,setError]=useState(''),[failed,setFailed]=useState(false);
+ if(!task.knowledge&&!task.knowledgePhoto&&!admin)return null;
+ return <details className="comfort-panel mission-knowledge"><summary><BookOpen size={18}/>So geht’s{!task.knowledge&&!task.knowledgePhoto?' · Hinweise ergänzen':''}</summary>{task.knowledge?<p className="knowledge-note">{task.knowledge}</p>:admin?<p>Eine kurze Notiz kannst du unter „Mission bearbeiten“ ergänzen.</p>:null}{task.knowledgePhoto&&(offline||failed?<p>Das Foto ist gerade nicht verfügbar. Öffne die Mission mit Verbindung erneut.</p>:<img src={`/api/knowledge-photos/${task.knowledgePhoto}`} alt={`Hinweisfoto zu ${task.title}`} onError={()=>setFailed(true)}/>)}{admin&&<div className="knowledge-actions"><label className={`button secondary small ${busy||working||offline?'disabled':''}`}><Camera size={17}/>{working?'Foto wird vorbereitet …':task.knowledgePhoto?'Foto ersetzen':'Foto hinzufügen'}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy||working||offline} onChange={async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;setWorking(true);setError('');try{const photo=await preparePhoto(file);await onUpload({...photo,version:task.revision??0});setFailed(false);}catch(err){setError((err as Error).message);}finally{setWorking(false);}}}/></label>{task.knowledgePhoto&&<button className="text-button" disabled={busy||working||offline} onClick={onRemove}><Trash2 size={15}/>Foto entfernen</button>}<small>Ein Hinweisfoto pro Mission. Fotos werden verkleinert; die ursprünglichen Metadaten werden entfernt.</small></div>}{error&&<p role="alert">{error}</p>}</details>;
+}
+export function TrophyShelf({state,busy,onSave}:{state:State;busy:boolean;onSave:(items:TrophyChoice[])=>void}){
+ const [editing,setEditing]=useState(false);const data=state.trophies??{choices:[],selected:[]};const selected=data.selected;
+ const change=(item:TrophyChoice)=>{const has=selected.some(s=>s.memberId===item.memberId&&s.achievementId===item.achievementId);onSave((has?selected.filter(s=>s.memberId!==item.memberId||s.achievementId!==item.achievementId):[...selected,item]).map(({memberId,achievementId})=>({memberId,achievementId})));};
+ return <section className="trophy-shelf"><h3><Trophy size={20}/>Euer Trophäenregal</h3><p>Bis zu drei verdiente Abzeichen bekommen hier einen Ehrenplatz.</p><div className="trophy-display">{[0,1,2].map(i=>{const t=selected[i];return <div key={i}>{t?<><img src={specialBadgeArt(t.achievementId)!} alt={t.name}/><strong>{t.name}</strong><small>{t.memberName}</small></>:<><Trophy size={32}/><small>Ein Platz für euren nächsten Erfolg</small></>}</div>;})}</div>{state.user.role==='admin'&&<button className="text-button centered" aria-expanded={editing} onClick={()=>setEditing(!editing)}>{editing?'Auswahl schließen':'Abzeichen ausstellen'}</button>}{editing&&<div className="trophy-choices">{!data.choices.length?<p>Verdient ein besonderes Abzeichen. Anschließend könnt ihr es hier ausstellen.</p>:data.choices.map(t=>{const active=selected.some(s=>s.memberId===t.memberId&&s.achievementId===t.achievementId);return <button key={t.memberId+t.achievementId} aria-pressed={active} disabled={busy||!active&&selected.length>=3} onClick={()=>change(t)}><img src={specialBadgeArt(t.achievementId)!} alt=""/><span><strong>{t.name}</strong><small>{t.memberName}</small></span>{active&&<Check size={18}/>}</button>;})}</div>}</section>;
+}

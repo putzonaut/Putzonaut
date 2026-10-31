@@ -1,13 +1,15 @@
 import {z} from 'zod';
+import {taskPlan,taskOwner} from './life.ts';
+import {awayOn} from '../shared/life.ts';
 import {AppError,activeMembers} from './domain.ts';
 import type {Household,Member,Task,HistoryEvent} from './domain.ts';
 import {assignment,plan,localDay} from '../shared/planning.ts';
 import {previousWeek,reminderDefaults,reminderDue,recapFor} from '../shared/everyday.ts';
 import type {HandoverView} from '../shared/everyday.ts';
 
-function current(h:Household,t:Task,now:Date){const day=localDay(now);return {...plan(t,day,localDay(new Date(h.createdAt))),owner:assignment(t,day,activeMembers(h).map(m=>m.id))};}
+function current(h:Household,t:Task,now:Date){const day=localDay(now);return {...taskPlan(h,t,day),owner:taskOwner(h,t,day)};}
 export function validHandover(h:Household,t:Task,now:Date){
- const r=t.handover;if(!r)return false;const p=current(h,t,now),ids=activeMembers(h).map(m=>m.id);
+ const r=t.handover;if(!r||t.team)return false;const p=current(h,t,now),ids=activeMembers(h).map(m=>m.id);
  if(!ids.includes(r.fromId)||r.toId&&!ids.includes(r.toId)||!['today','overdue'].includes(p.status)||p.occurrenceKey!==r.occurrenceKey||p.owner!==r.fromId||(t.revision??0)!==r.taskVersion)return false;
  if(r.swapTaskId){const other=h.tasks.find(x=>x.id===r.swapTaskId);if(!other)return false;const q=current(h,other,now);if(!['today','overdue'].includes(q.status)||q.owner!==r.toId||q.occurrenceKey!==r.swapOccurrenceKey||(other.revision??0)!==r.swapVersion)return false;}
  return true;
@@ -19,7 +21,7 @@ export function handoverViews(h:Household,m:Member,now:Date):HandoverView[]{retu
 export function clearHandovers(h:Household,taskId:string){for(const t of h.tasks)if(t.id===taskId||t.handover?.swapTaskId===taskId)delete t.handover;}
 export function everydayView(h:Household,m:Member,now:Date){
  const hasOpenMission=h.tasks.some(t=>{const p=current(h,t,now);return ['today','overdue'].includes(p.status)&&(!p.owner||p.owner===m.id);});
- return {recap:recapFor(m.career?.weeks,m.recapDismissedWeek,now),reminder:{...(m.reminder??reminderDefaults),due:reminderDue(m.reminder,hasOpenMission,now)},handovers:handoverViews(h,m,now)};
+ return {recap:recapFor(m.career?.weeks,m.recapDismissedWeek,now),reminder:{...(m.reminder??reminderDefaults),due:reminderDue(m.reminder,hasOpenMission&&!awayOn(m.away,localDay(now))&&!awayOn(h.away,localDay(now)),now)},handovers:handoverViews(h,m,now)};
 }
 export function everydayChange(route:string,method:string,body:unknown,h:Household,m:Member,now:Date):{result:unknown;event?:HistoryEvent}|null{
  if(route==='/profile/recap'&&method==='PATCH'){const {week}=z.object({week:z.string()}).parse(body);if(week!==previousWeek(now))throw new AppError(409,'Eine neue Woche hat begonnen. Bitte lade den Rückblick neu.');m.recapDismissedWeek=week;return {result:{ok:true}};}
@@ -30,7 +32,7 @@ export function everydayChange(route:string,method:string,body:unknown,h:Househo
   m.reminder={...(m.reminder??reminderDefaults),seenDay:day};return {result:{show:true,day}};
  }
  if(!/^\/tasks\/[^/]+\/handover(?:\/[^/]+)?$/.test(route))return null;
- const t=h.tasks.find(t=>t.id===route.split('/')[2]);if(!t)throw new AppError(404,'Diese Mission gibt es nicht mehr.');const p=current(h,t,now);
+ const t=h.tasks.find(t=>t.id===route.split('/')[2]);if(!t)throw new AppError(404,'Diese Mission gibt es nicht mehr.');const p=current(h,t,now);if(t.team||awayOn(m.away,localDay(now)))throw new AppError(409,'Diese Runde kann gerade nicht übergeben werden.');
  if(route.split('/').length===4&&method==='POST'){
   const v=z.object({occurrenceKey:z.string(),taskVersion:z.number().int().min(0),swapTaskId:z.string().uuid().optional()}).strict().parse(body);
   if(!['today','overdue'].includes(p.status)||p.occurrenceKey!==v.occurrenceKey||(t.revision??0)!==v.taskVersion)throw new AppError(409,'Die Aufgabenrunde hat sich geändert. Bitte öffne sie erneut.');

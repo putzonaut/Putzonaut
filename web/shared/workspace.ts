@@ -20,15 +20,15 @@ export type PlannedRound={taskId:string;occurrenceKey:string;dueDate:string|null
 export type WeekPlan={from:string;through:string;days:{date:string;rounds:PlannedRound[]}[]};
 /** A forecast, not a completion history: each still-open round appears once,
  * on its first available day in the seven-day window. */
-export function createWeekPlan(tasks:(PlannedTask&{id:string})[],today:string,fallback:string,activeIds:string[]):WeekPlan{
+export function createWeekPlan(tasks:(PlannedTask&{id:string})[],today:string,fallback:string,activeIds:string[],resolve?:{plan:(t:PlannedTask,day:string)=>ReturnType<typeof plan>;owner:(t:PlannedTask,day:string)=>string|null}):WeekPlan{
  const days=Array.from({length:7},(_,i)=>({date:addDays(today,i),rounds:[] as PlannedRound[]}));
  for(const t of tasks){
   const seen=new Set<string>();
   for(const [i,day] of days.entries()){
-   const p=plan(t,day.date,fallback);
-   if(!p.occurrenceKey||p.status==='paused'||p.status==='done'||seen.has(p.occurrenceKey))continue;
+   const p=resolve?resolve.plan(t,day.date):plan(t,day.date,fallback);
+   if(!p.occurrenceKey||p.status==='paused'||p.status==='upcoming'||p.status==='done'||seen.has(p.occurrenceKey))continue;
    seen.add(p.occurrenceKey);
-   day.rounds.push({taskId:t.id,occurrenceKey:p.occurrenceKey,dueDate:p.effectiveDueDate,assignedTo:assignment(t,day.date,activeIds),status:p.status==='pending'?'pending':p.overdue?'overdue':'open',availableNow:i===0&&p.status!=='pending'});
+   day.rounds.push({taskId:t.id,occurrenceKey:p.occurrenceKey,dueDate:p.effectiveDueDate,assignedTo:resolve?resolve.owner(t,day.date):assignment(t,day.date,activeIds),status:p.status==='pending'?'pending':p.overdue?'overdue':'open',availableNow:i===0&&p.status!=='pending'});
   }
  }
  return {from:today,through:days[6].date,days};

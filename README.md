@@ -2,31 +2,29 @@
 
 **Dein Haushalt. Eure Mission.** Haushaltsaufgaben als gemeinsame Missionen für Familien, Paare, WGs und Einzelhaushalte.
 
-## Aktuelle Web-App 0.13.0
+## Aktuelle Web-App 0.20.0
 
-[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.13.md)
+[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.20.md) · [GitHub-Abgleich](docs/SYNC-0.20.0.md)
 
-Die aktive Entwicklung liegt in `web/`. Die App stellt den nächsten kleinen Einsatz in den Mittelpunkt: 5, 10 oder 20 Minuten wählen, eine passende offene Mission finden und loslegen. Die Vorlagenbibliothek umfasst 45 anpassbare Tätigkeiten in sieben Kategorien; beim Einrichten bleibt die Auswahl auf sechs Startervorlagen beschränkt.
+Die aktive Entwicklung liegt in `web/`. Dieser Ordner enthält den vollständigen veröffentlichten Stand 0.20.0 einschließlich des Nachtrags mit zwölf zusätzlichen Missionssymbolen. Die Versionsnummer steht unten im Profil.
 
-Version 0.13 ergänzt einen kompakten Wochenrückblick, freiwillige Erinnerungen in der geöffneten App, ausdrücklich angenommene Übernahmen und Tausche für einzelne Aufgabenrunden sowie passende Alltagsroutinen. Aufgaben bleiben auf dem Gerät lesbar und Abschlüsse können offline vorgemerkt werden; Punkte gibt es erst nach bestätigtem Abgleich. Veraltete Runden und geänderte Aufgaben werden zur Prüfung markiert. Die vier Hauptreiter bleiben erhalten. Erinnerungen bei geschlossener App werden noch nicht unterstützt.
+- **Einfach loslegen:** 5, 10 oder 20 Minuten wählen, passende offene Missionen finden und eine Putzrunde starten. 51 anpassbare Vorlagen, Wochenplan, Bereiche, Checklisten, Routinen und Aufgabentausch helfen im Alltag.
+- **Flexibel bleiben:** Spontane Aufgaben über „Schon erledigt!“ erfassen und einzelne Aufgabenrunden über „Heute passt nicht“ verschieben. Bestehende Häkchen, Zuständigkeiten und Wiederholungen werden berücksichtigt.
+- **Gemeinsam Fortschritte sehen:** bestätigte XP und Sterne, Raumstation, Wochenquests, zwölf Meilensteine, zehn besondere Abzeichen und individuelle Anzüge. Kinderprofile werden ausschließlich durch Erwachsene verwaltet; erforderliche Freigaben bleiben erhalten.
+- **Wünsche gestalten:** 24 Wunsch-Symbole, persönliche Sparziele und gemeinsame Crew-Wünsche. Missionen verfügen über 19 Symbole einschließlich Besen, Fenster, Bett, Einkauf und Haustieren.
+- **Kleine Erfolgsmomente:** Sterneflug, animiertes Abhaken, passende Putzonaut-Posen, Visier-Wischer und eine dreisekündige Startsequenz. Reduzierte Bewegung wird berücksichtigt.
+- **Eingaben bewahren:** Missionsentwürfe, Ansichten und Scrollpositionen bleiben erhalten. Offline-Abschlüsse werden vorgemerkt; Punkte gibt es erst nach bestätigtem Abgleich. Ein Update-Hinweis schützt offene Eingaben, laufende Putzrunden und ungesendete Abschlüsse.
+- **Überblick behalten:** Wochenrückblick, persönliche Statistiken und eine Crew-Sicherung mit Vorschau, atomarer Wiederherstellung und Rücksprungpunkt.
 
-Version 0.12 ergänzt Harry Putzer (75 Missionen), Albert Reinstein (je fünf Missionen in fünf Kategorien) und Clean Elisabeth (zwölf persönliche Zielwochen) mit eigenen illustrierten Medaillen. Die Sammlung umfasst jetzt zwölf Meilensteine und zehn besondere Abzeichen. Bestehende Freischalthürden steigen überwiegend um 12,5–20 %; bereits verdiente Erfolge und Ausrüstung bleiben erhalten. Komet kostet 350 Sterne, Sonnenheld benötigt Level 9; spätere Stationsausbauten benötigen 6, 9 und 14 erfolgreiche Crew-Wochen. Bereits erreichte Stationsmodule behalten ihre alten Voraussetzungen. Küche und Pflanzen zählen nach bestätigter Tätigkeitskategorie. [Vollständige Voraussetzungen und Plausibilitätsprüfung](web/docs/BALANCE-0.12.md) · [Neue Motive und Prompts](web/docs/art-0.12-prompts.md).
+Die vier Hauptreiter bleiben Basis, Missionen, Crew und Beute. Erinnerungen in der geöffneten App sind verfügbar. Optionaler Web Push ist vorbereitet und benötigt eine gesonderte Geräteaktivierung sowie die konfigurierte Versandautomatik; der technische Umfang und Betriebszustand sind in [PUSH-OPERATIONS.md](web/docs/PUSH-OPERATIONS.md) beschrieben. Eine Zustellung auf echten Geräten ist gesondert zu prüfen.
 
-Version 0.11 trennte zwölf kompakte Meilensteine und sieben illustrierte Abzeichen in eigene Sammlungen. Eine einzelne nächste Zielkarte ersetzt den bisherigen Ziele-Reiter; Details und Tragefunktion öffnen beim Antippen. Unter Profil → Deine Statistik zeigen Kennzahlen sowie interaktive Balken- und Ringdiagramme den eigenen Einsatz für 7, 30 oder 90 Tage. Hinzu kommt ein Wochenzielvergleich über sechs Kalenderwochen. Bestätigte Logbucheinträge, Rücknahmen, Kinderfreigaben und historische Zielwerte werden berücksichtigt; fehlende frühere Ziele werden nicht geschätzt.
-
-Version 0.10 ergänzt geführte Putzrunden mit insgesamt 5, 10 oder 20 Minuten, einem optionalen pausierbaren Timer und einer gespeicherten Zusammenfassung. Wiederverwendbare Routinen und Raumkarten liegen unter Missionen. In einem gemeinsamen Crew-Wunsch können Profile freiwillig Sterne zusammenlegen, eigene Beiträge zurücknehmen und gemeinsam sparen; der Captain löst den vollen Topf einmalig ein. Kleine abschaltbare Animationen begleiten Start, Abschluss und Fortschritt. Die vier Hauptreiter bleiben bestehen. Alle neuen Daten sind mit Sicherungen, Kinderfreigaben und Rücknahmen kompatibel.
-
-Version 0.9 führte zunächst 19 Erfolge mit sieben neu illustrierten Abzeichen, zehn individuell illustrierte Anzüge und sechs Stationsausbauten ein. Franz Beckenkehrer, Kehrminator, Jürgen Cleansman, Helene Wischer, George Cleaney, Otto von Wischmark und Roberto Blanko belohnen bestätigte Leistungen. Abzeichen lassen sich direkt tragen. Je Haushaltsart gibt es jetzt 16 anpassbare Wunschideen mit Suche und Sternefilter. [Abzeichengalerie und Prompts](web/docs/art-0.9-prompts.md). Die Basis zeigt genau ein nächstes Ziel. Der Spind trennt eigene Anzüge und noch erreichbare Belohnungen; die aktuelle Profilübersicht zeigt genau eine nächste Zielkarte. Bestätigte historische Leistungen zählen soweit belegbar mit, persönliche Zielwochen werden ab 0.8 gespeichert und dürfen durch Pausen getrennt sein.
-
-Integriert ist eine vollständige Crew-Sicherung einschließlich Logbuch, mit geprüfter Vorschau, atomarer Wiederherstellung und automatischem Rücksprungpunkt. Sie funktioniert in derselben bestehenden Crew bei unveränderten Mitgliedern und Berechtigungen. Konten- und Betreiber-Backups bleiben ein gesonderter Schritt vor der öffentlichen Beta. Die vollständigen Grenzen stehen in der Web-Dokumentation.
-
-Wochenplan, Bereiche, Checklisten, Rotation, begleitete Kinderprofile, Freigaben, Rücknahmen, Raumstation, Wochenquests und Belohnungen bleiben integriert. Version 0.6.1 mit dem begrenzten Profilbild und der Versionsnummer ausschließlich unten im Profil ist ebenfalls enthalten. 201 automatisierte Tests prüfen die Anwendung. Eine isolierte Browserprüfung mit synthetischen Daten umfasst Rückblick, Erinnerung, Tausch, Routinen und Offline-Abgleich, auch bei 360 Pixel Inhaltsbreite. Authentifizierter Produktionsbetrieb, HTTPS-Offline-Neustart und echte Android-/iPhone-Tests bleiben gesonderte Praxistests.
+Der Abgleich vom 31. Oktober 2026 überträgt alle 218 App-Dateien aus dem veröffentlichten Quellstand `d990867dde56f87812be331b4cebf6b743f7c7f5` unverändert nach `web/`. Alle **298 automatisierten Tests**, die Typprüfung und der Produktions-/Offline-Build waren erfolgreich. Der Dateibaum wurde anhand der Git-Prüfsumme vollständig abgeglichen. Details und verbleibende Geräteprüfungen stehen im [Abgleichprotokoll](docs/SYNC-0.20.0.md).
 
 Die Website bleibt privat und verwendet weiterhin ChatGPT zur Anmeldung. Eine Crew-Einladung ersetzt die Website-Freigabe nicht. Unabhängige Anmeldung, Kontoverwaltung und öffentlicher Start folgen als nächste Phase; Domain, eigener Server und native Apps später.
 
 ## Frühere Docker-/PostgreSQL-Grundlage (0.1.0)
 
-Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.13 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
+Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.20.0 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
 
 Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. Die Oberfläche verwendet die eigens gestalteten Putzonaut-Illustrationen, selbst gehostete Schriftdateien und echte Bedienelemente.
 

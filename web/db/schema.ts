@@ -19,3 +19,10 @@ export const crewRecoveryEvents=sqliteTable('crew_recovery_events',{
  householdId:text('household_id').notNull().references(()=>households.id),
  eventId:text('event_id').notNull(),payload:text('payload').notNull(),
 },t=>[uniqueIndex('crew_recovery_event').on(t.householdId,t.eventId)]);
+
+// Device subscriptions are operational credentials, never part of crew backups.
+export const pushDevices=sqliteTable('push_devices',{
+ id:text('id').primaryKey(),householdId:text('household_id').notNull().references(()=>households.id),memberId:text('member_id').notNull(),
+ endpoint:text('endpoint').notNull(),hour:integer('hour').notNull(),lastDay:text('last_day'),lastStatus:text('last_status'),updatedAt:text('updated_at').notNull(),
+},t=>[index('push_member').on(t.memberId)]);
+export const pushState=sqliteTable('push_state',{key:text('key').primaryKey(),value:text('value').notNull()});

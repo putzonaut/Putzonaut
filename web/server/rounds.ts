@@ -1,11 +1,13 @@
 import {z} from 'zod';
+import {taskPlan,taskOwner} from './life.ts';
+import {awayOn,visitorPriority} from '../shared/life.ts';
 import {admin,AppError} from './domain.ts';
 import type {Household,Member,HistoryEvent,Task} from './domain.ts';
 import {assignment,localDay,plan} from '../shared/planning.ts';
 import {elapsedRound} from '../shared/rounds.ts';
 import type {RoundView} from '../shared/rounds.ts';
 
-function available(h:Household,m:Member,t:Task,now:Date){const day=localDay(now),p=plan(t,day,localDay(new Date(h.createdAt))),assigned=assignment(t,day,h.members.filter(m=>!m.removedAt).map(m=>m.id));return ['today','overdue'].includes(p.status)&&(!assigned||assigned===m.id)?p.occurrenceKey:null;}
+function available(h:Household,m:Member,t:Task,now:Date){const day=localDay(now),p=taskPlan(h,t,day),assigned=taskOwner(h,t,day);if(awayOn(m.away,day)||awayOn(h.away,day)||t.team)return null;return ['today','overdue'].includes(p.status)&&(!assigned||assigned===m.id)?p.occurrenceKey:null;}
 export function roundView(h:Household,m:Member,now:Date):RoundView|null{
  if(!m.round)return null;return {...m.round,entries:m.round.entries.map(e=>{const t=h.tasks.find(t=>t.id===e.taskId);return {...e,available:!!t&&available(h,m,t,now)===e.occurrenceKey};})};
 }
@@ -16,7 +18,7 @@ export function updateRounds(h:Household,e:HistoryEvent|undefined){
   for(const entry of r.entries){
    if(e.kind==='correction'&&entry.eventId===e.reverses){Object.assign(entry,{outcome:'open',xp:0,stars:0,eventId:undefined});changed=true;continue;}
    if(e.taskId!==entry.taskId||e.occurrenceKey!==entry.occurrenceKey||entry.outcome==='skipped')continue;
-   if(e.kind==='completion'){Object.assign(entry,{outcome:e.userId===m.id?'done':'crew',eventId:e.id,xp:e.userId===m.id?e.xp??0:0,stars:e.userId===m.id?e.stars??0:0});changed=true;}
+   if(e.kind==='completion'){if(e.teamId&&entry.outcome==='done'&&e.userId!==m.id)continue;Object.assign(entry,{outcome:e.userId===m.id?'done':'crew',eventId:e.id,xp:e.userId===m.id?e.xp??0:0,stars:e.userId===m.id?e.stars??0:0});changed=true;}
    if(e.kind==='submitted'){Object.assign(entry,{outcome:'pending',eventId:e.id,xp:0,stars:0});changed=true;}
    if(e.kind==='rejected'&&entry.outcome==='pending'){Object.assign(entry,{outcome:'open',eventId:undefined,xp:0,stars:0});changed=true;}
   }
@@ -38,13 +40,14 @@ export function roundChange(route:string,method:string,body:unknown,h:Household,
  }
  if(route==='/rounds'&&method==='POST'){
   if(m.round&&!m.round.finishedAt)throw new AppError(409,'Deine Putzrunde läuft noch. Setze sie fort oder beende sie.');
-  const v=z.object({taskIds:z.array(z.string().uuid()).min(1).max(3).optional(),minutes:z.union([z.literal(5),z.literal(10),z.literal(20)]).optional(),routineId:z.string().uuid().optional()}).parse(body);
+  const v=z.object({taskIds:z.array(z.string().uuid()).min(1).max(3).optional(),minutes:z.union([z.literal(5),z.literal(10),z.literal(20)]).optional(),routineId:z.string().uuid().optional(),mode:z.enum(['normal','gentle','visitors']).optional()}).parse(body);
   const routine=v.routineId?h.routines?.find(r=>r.id===v.routineId):null;if(v.routineId&&!routine)throw new AppError(404,'Diese Routine gibt es nicht mehr.');
   const taskIds=routine?routine.taskIds.filter(id=>{const t=h.tasks.find(t=>t.id===id);return t&&available(h,m,t,now);}):v.taskIds;
   if(!taskIds?.length||new Set(taskIds).size!==taskIds.length)throw new AppError(409,'Gerade ist keine passende Mission offen.');
   const tasks=taskIds.map(id=>h.tasks.find(t=>t.id===id));if(tasks.some(t=>!t||!available(h,m,t,now)))throw new AppError(409,'Die Auswahl hat sich geändert. Bitte starte die Runde neu.');
+  if(v.mode==='gentle'&&tasks.some(t=>t!.minutes>5||t!.difficulty==='hard')||v.mode==='gentle'&&tasks.reduce((n,t)=>n+t!.minutes,0)>10)throw new AppError(400,'Für den Schonmodus passen nur leichte, kurze Missionen.');if(v.mode==='visitors'&&tasks.some(t=>visitorPriority(t!)>=9))throw new AppError(400,'Wähle passende Missionen für den Besuch.');
   const minutes=tasks.reduce((n,t)=>n+t!.minutes,0);if(!routine&&(!v.minutes||minutes>v.minutes))throw new AppError(400,'Die Missionen passen nicht in dein Zeitbudget.');
-  m.round={id:crypto.randomUUID(),version:1,title:routine?.title??'Deine kleine Putzrunde',createdAt:now.toISOString(),minutes:routine?minutes:v.minutes!,entries:tasks.map(t=>({taskId:t!.id,occurrenceKey:available(h,m,t!,now)!,title:t!.title,minutes:t!.minutes,outcome:'open',xp:0,stars:0})),elapsedMs:0,runningSince:null,timerEnabled:false,finishedAt:null};return {result:{id:m.round.id}};
+  m.round={id:crypto.randomUUID(),version:1,title:routine?.title??(v.mode==='gentle'?'Heute nur das Nötigste':v.mode==='visitors'?'Besuch im Anflug!':'Deine kleine Putzrunde'),createdAt:now.toISOString(),minutes:routine?minutes:v.minutes!,entries:tasks.map(t=>({taskId:t!.id,occurrenceKey:available(h,m,t!,now)!,title:t!.title,minutes:t!.minutes,outcome:'open',xp:0,stars:0})),elapsedMs:0,runningSince:null,timerEnabled:false,finishedAt:null};return {result:{id:m.round.id}};
  }
  if(/^\/rounds\/[^/]+$/.test(route)&&method==='PATCH'){
   const v=z.object({version:z.number().int(),action:z.enum(['pause','resume','enable','disable','finish','skip']),taskId:z.string().uuid().optional()}).parse(body),r=m.round;

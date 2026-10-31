@@ -4,6 +4,8 @@ import {readFile,readdir} from 'node:fs/promises';
 import {Miniflare} from 'miniflare';
 import {handleApi} from '../server/api.ts';
 import {Repository} from '../server/repository.ts';
+import {parseBackup} from '../server/backup-schema.ts';
+import {REWARD_ICON_IDS} from '../shared/reward-icons.ts';
 import {REWARD_IDEAS,rewardIdeas} from '../shared/rewards.ts';
 import {SPECIAL_BADGES,achievementHint} from '../shared/game.ts';
 import {weekKey} from '../shared/planning.ts';
@@ -29,6 +31,21 @@ async function seed(u:string,fn:(h:any)=>void){const h=await raw(u);fn(h);await 
 async function task(u:string,category:string,extra:Record<string,unknown>={}){const r=await call(u,'/tasks','POST',{title:'Eine passende Mission',category,room:'Haushalt',icon:'sparkles',minutes:5,xp:20,stars:5,cadence:'once',...extra});assert.equal(r.status,200,JSON.stringify(r.body));return r.body.id;}
 async function complete(u:string,id:string,headers:Record<string,string>={}){const s=await state(u,headers),t=s.tasks.find((t:any)=>t.id===id);return call(u,`/tasks/${id}/complete`,'POST',{occurrenceKey:t.occurrenceKey,checklistVersion:t.checklist.version},headers);}
 const metric=(s:any,id:string)=>s.game.achievements.find((a:any)=>a.id===id);
+
+test('expanded wish symbols persist through creation, editing, shared wishes and backup round trips',async()=>{
+ const u=await setup();
+ for(const icon of REWARD_ICON_IDS){const r=await call(u,'/rewards','POST',{title:`Wunsch ${icon}`,cost:100,icon});assert.equal(r.status,200,JSON.stringify(r.body));}
+ let s=await state(u);assert.deepEqual(s.rewards.map((r:any)=>r.icon),[...REWARD_ICON_IDS]);
+ const edited=s.rewards.find((r:any)=>r.icon==='gamepad');
+ assert.equal((await call(u,`/rewards/${edited.id}`,'PATCH',{title:'Camping-Wochenende',cost:300,icon:'tent'})).status,200);
+ assert.equal((await call(u,'/crew-wishes','POST',{title:'Gemeinsam schwimmen',cost:500,icon:'swim',requestKey:crypto.randomUUID()})).status,200);
+ s=await state(u);assert.equal(s.rewards.find((r:any)=>r.id===edited.id).icon,'tent');assert.equal(s.crewWish.icon,'swim');
+ const h=await raw(u),exported=await call(u,'/backups');assert.equal(exported.status,200,JSON.stringify(exported.body));
+ const backup=await parseBackup(exported.body);
+ assert.deepEqual(backup.payload.crew.rewards,h.rewards);assert.equal(backup.payload.crew.crewWish?.icon,'swim');
+ assert.equal((await call(u,'/rewards','POST',{title:'Ungültiges Symbol',cost:100,icon:'not-an-icon'})).status,400);
+ assert.equal((await call(u,'/tasks','POST',{title:'Kein Wunsch',room:'Haushalt',category:'tidy',icon:'gamepad',minutes:5,xp:20,stars:5,cadence:'once'})).status,400);
+});
 
 for(const a of SPECIAL_BADGES){
  test(`${a.name}: unlock at the exact confirmed threshold, wear for free, retain after correction`,async()=>{

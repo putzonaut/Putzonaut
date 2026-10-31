@@ -23,10 +23,10 @@ test('personal assignments lead, overdue tasks follow, and equal tasks have a st
  assert.deepEqual(availableMissions(all,{id:'me'}).map(t=>t.id),['mine-new','unassigned-old','a','z']);
  assert.equal(quickMissions(all,{id:'me'},10)[0].title,'mine-new');
 });
-test('all 45 editable templates fit the task contract while onboarding remains six choices',()=>{
- assert.equal(TASK_TEMPLATES.length,45);assert.equal(STARTER_TEMPLATES.length,6);
- assert.equal(new Set(TASK_TEMPLATES.map(t=>t.key)).size,45);
- assert.equal(new Set(TASK_TEMPLATES.map(t=>t.title)).size,45);
+test('all 51 editable templates fit the task contract while onboarding remains six choices',()=>{
+ assert.equal(TASK_TEMPLATES.length,51);assert.equal(STARTER_TEMPLATES.length,6);
+ assert.equal(new Set(TASK_TEMPLATES.map(t=>t.key)).size,51);
+ assert.equal(new Set(TASK_TEMPLATES.map(t=>t.title)).size,51);
  for(const template of TASK_TEMPLATES){const draft=templateDraft(template.key);assert.equal(taskSchema.safeParse(draft).success,true,template.title);assert.ok(TEMPLATE_CATEGORIES.some(c=>c.id===template.category));assert.equal('id' in draft,false);assert.ok((draft.steps??[]).every(s=>!s.id));}
  assert.ok(TASK_TEMPLATES.filter(t=>t.minutes<=5).length>=20);
 });

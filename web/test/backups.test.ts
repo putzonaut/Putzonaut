@@ -97,7 +97,7 @@ test('restore preserves checklists, child approvals, quests, redemptions and for
 });
 test('all library templates can be added to a real crew without changing onboarding or granting points',async()=>{
  const u=await setup();for(const t of TASK_TEMPLATES){const r=await call(u,'/tasks','POST',templateDraft(t.key));assert.equal(r.status,200,t.title+': '+JSON.stringify(r.body));}
- const s=await state(u);assert.equal(s.tasks.length,48);assert.equal(s.user.xp,0);assert.equal(s.user.stars,0);assert.ok(quickMissions(s.tasks,s.user,5).length);
+ const s=await state(u);assert.equal(s.tasks.length,TASK_TEMPLATES.length+3);assert.equal(s.user.xp,0);assert.equal(s.user.stars,0);assert.ok(quickMissions(s.tasks,s.user,5).length);
 });
 
 test('a database constraint failure rolls back the new state, history and safety snapshot together',async()=>{
