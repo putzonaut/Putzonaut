@@ -29,6 +29,10 @@ jobs:
   standalone-docker:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        architecture: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3
@@ -37,5 +41,20 @@ jobs:
         with:
           context: web
           file: web/standalone/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.architecture }}
           push: false
+          load: true
+          tags: putzonaut:ci
+      - name: Start production container and check HTTP boundaries
+        run: |
+          docker run -d --name putzonaut-ci --read-only --tmpfs /tmp:size=64m --mount type=volume,destination=/data --cap-drop ALL --security-opt no-new-privileges:true -e APP_ORIGIN=http://localhost:3080 -e BETTER_AUTH_SECRET=ci-only-not-for-production-8f71146293eb482c9cf97d4f -e SMTP_HOST=mail.example.test -e MAIL_FROM=test@example.test putzonaut:ci
+          ready=0
+          for attempt in $(seq 1 30); do
+            if docker exec putzonaut-ci node -e "fetch('http://localhost:3080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then ready=1; break; fi
+            sleep 2
+          done
+          if [ "$ready" != 1 ]; then docker logs putzonaut-ci; exit 1; fi
+          docker exec putzonaut-ci node --input-type=module -e "const page=await fetch('http://localhost:3080/konto/anmelden');if(!page.ok||!page.headers.get('content-security-policy')?.includes('frame-ancestors'))process.exit(1);const forged=await fetch('http://localhost:3080/api/state',{headers:{'oai-authenticated-user-id':'forged','oai-authenticated-user-email':'forged@example.test'}});if(forged.status!==401)process.exit(1);console.log('Production server and identity boundary passed');"
+      - name: Remove test container and temporary volume
+        if: always()
+        run: docker rm -fv putzonaut-ci || true
