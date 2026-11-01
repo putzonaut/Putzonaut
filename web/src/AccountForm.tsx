@@ -43,8 +43,7 @@ export function AccountForm({mode='anmelden',heading='h2'}:{mode?:Mode;heading?:
    }else if(mode==='passwort-neu'){
     if(!token)throw new Error('Bitte fordere einen neuen Link an.');
     await request('/reset-password',{token,newPassword:password});
-    history.replaceState(null,'',accountPath('anmelden'));setPassword('');setConfirm('');
-    setMessage('Dein Passwort wurde geändert. Melde dich jetzt mit deinem neuen Passwort an.');
+    location.replace(accountPath('anmelden')+'&passwort=geaendert');return;
    }else{
     await request('/sign-in/email',{email:email.trim(),password,rememberMe:remember});
     location.assign(accountReturn());return;
@@ -64,7 +63,9 @@ export function AccountForm({mode='anmelden',heading='h2'}:{mode?:Mode;heading?:
    tokenError?<><p>Fordere einen neuen Link an und öffne die neueste E-Mail von Putzonaut.</p><a className="button primary" href={accountPath(mode==='passwort-neu'?'passwort-vergessen':'anmelden')}>Weiter</a></>:
    <>
     {mode==='passwort-vergessen'&&<p>Wir schicken dir einen Link, mit dem du dein Passwort neu festlegen kannst.</p>}
-    {message?<div className="account-message" role="status"><Mail size={24}/><p>{message}</p></div>:
+    {mode==='anmelden'&&query.get('passwort')==='geaendert'&&<p role="status">Dein Passwort wurde geändert. Melde dich jetzt mit deinem neuen Passwort an.</p>}
+    {message&&<div className="account-message" role="status"><Mail size={24}/><p>{message}</p></div>}
+    {(!message||mode==='anmelden')&&
      <form onSubmit={submit}>
       <fieldset disabled={busy}>
        {mode==='registrieren'&&<label>Dein Name<input name="name" autoComplete="given-name" required minLength={1} maxLength={40} value={name} onChange={e=>setName(e.target.value)}/></label>}
