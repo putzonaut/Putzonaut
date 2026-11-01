@@ -36,13 +36,13 @@ async function readBody(request:Request,limit=16384){
  const bytes=new Uint8Array(length);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.length;}
  try{return JSON.parse(new TextDecoder().decode(bytes));}catch{throw new AppError(400,'Die Eingabe konnte nicht gelesen werden.');}
 }
-export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{push?:PushConfig;bucket?:PhotoBucket;now?:()=>Date;development?:boolean}={}){
+export async function handleApi(request:Request,identity:Identity|null,repo:Repository,options:{push?:PushConfig;bucket?:PhotoBucket;now?:()=>Date;development?:boolean;origin?:string}={}){
  try{
   const url=new URL(request.url);const route=url.pathname.replace(/^\/api/,'');const method=request.method;
   if(route==='/health'&&method==='GET'){await repo.db.prepare('SELECT 1').first();return json({status:'ok',version:APP_VERSION});}
-  if(!identity)return json({error:'Bitte melde dich mit deinem ChatGPT-Konto an.'},401);
+  if(!identity)return json({error:'Bitte melde dich bei Putzonaut an.'},401);
   if(!['GET','HEAD'].includes(method)){
-   const allowed=options.development?url.origin:origin;
+   const allowed=options.origin??(options.development?url.origin:origin);
    if(request.headers.get('origin')!==allowed||request.headers.get('sec-fetch-site')==='cross-site')throw new AppError(403,'Diese Anfrage kommt nicht von Putzonaut. Bitte öffne die App erneut.');
   }
   const now=(options.now??(()=>new Date()))();const accountId=identity.userId;

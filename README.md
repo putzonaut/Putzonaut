@@ -2,11 +2,11 @@
 
 **Dein Haushalt. Eure Mission.** Haushaltsaufgaben als gemeinsame Missionen für Familien, Paare, WGs und Einzelhaushalte.
 
-## Aktuelle Web-App 0.20.0
+## Aktuelle Web-App 0.21.0
 
-[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.20.md) · [GitHub-Abgleich](docs/SYNC-0.20.0.md)
+[Web-App öffnen](https://putzonaut-test.denny-subke.chatgpt.site) · [Funktionsbeschreibung](web/README.md) · [Änderungen](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.21.md) · [GitHub-Abgleich](docs/SYNC-0.20.0.md)
 
-Die aktive Entwicklung liegt in `web/`. Dieser Ordner enthält den vollständigen veröffentlichten Stand 0.20.0 einschließlich des Nachtrags mit zwölf zusätzlichen Missionssymbolen. Die Versionsnummer steht unten im Profil.
+Die aktive Entwicklung liegt in `web/`. Version 0.21.0 ergänzt den vollständigen App-Stand um eigene Putzonaut-Konten und einen eigenständigen Server. Die Versionsnummer steht unten im Profil.
 
 - **Einfach loslegen:** 5, 10 oder 20 Minuten wählen, passende offene Missionen finden und eine Putzrunde starten. 51 anpassbare Vorlagen, Wochenplan, Bereiche, Checklisten, Routinen und Aufgabentausch helfen im Alltag.
 - **Flexibel bleiben:** Spontane Aufgaben über „Schon erledigt!“ erfassen und einzelne Aufgabenrunden über „Heute passt nicht“ verschieben. Bestehende Häkchen, Zuständigkeiten und Wiederholungen werden berücksichtigt.
@@ -20,11 +20,13 @@ Die vier Hauptreiter bleiben Basis, Missionen, Crew und Beute. Erinnerungen in d
 
 Der Abgleich vom 31. Oktober 2026 überträgt alle 218 App-Dateien aus dem veröffentlichten Quellstand `d990867dde56f87812be331b4cebf6b743f7c7f5` unverändert nach `web/`. Alle **298 automatisierten Tests**, die Typprüfung und der Produktions-/Offline-Build waren erfolgreich. Der Dateibaum wurde anhand der Git-Prüfsumme vollständig abgeglichen. Details und verbleibende Geräteprüfungen stehen im [Abgleichprotokoll](docs/SYNC-0.20.0.md).
 
-Die Website bleibt privat und verwendet weiterhin ChatGPT zur Anmeldung. Eine Crew-Einladung ersetzt die Website-Freigabe nicht. Unabhängige Anmeldung, Kontoverwaltung und öffentlicher Start folgen als nächste Phase; Domain, eigener Server und native Apps später.
+Die bestehende Testseite bleibt privat und behält ihre Sites-Anmeldung. Für den eigenen Server verwendet die App jetzt E-Mail und Passwort: Registrierung, E-Mail-Bestätigung, Passwort-Reset und dauerhafte Sitzungen. Dort benötigen Nutzer kein ChatGPT. **Installation und Konfiguration: [web/standalone/README.md](web/standalone/README.md).**
+
+Für den neuen Betrieb `web/standalone/compose.yaml` verwenden. Der Start unter `app.putzonaut.de` benötigt noch den tatsächlichen Serveranschluss, HTTPS und einen eingerichteten Mailversand. Bestehende Sites-Daten werden gesondert mit geprüfter Konto-Zuordnung umgezogen; sie werden nicht automatisch anhand einer E-Mail-Adresse übernommen. [Prüfstand 0.21.0](web/docs/QA-0.21.md).
 
 ## Frühere Docker-/PostgreSQL-Grundlage (0.1.0)
 
-Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.20.0 wird in `web/` entwickelt. Der spätere Umzug ist noch nicht abgeschlossen.
+Die folgenden Angaben betreffen ausschließlich den früheren Stand im Hauptverzeichnis. Die aktuelle Web-App 0.21.0 und ihre neue Docker-Konfiguration liegen in `web/`. Die folgenden alten Startbefehle sind nicht der Einstieg für eine neue Installation.
 
 Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. Die Oberfläche verwendet die eigens gestalteten Putzonaut-Illustrationen, selbst gehostete Schriftdateien und echte Bedienelemente.
 
@@ -39,7 +41,7 @@ Die Anwendung umfasst Basis, Missionen, Erfolgsanzeige, Crew, Beute und Avatar. 
 
 Ein neues System beginnt mit null XP und null Sternen. Die Daten aus den Screenshotentwürfen sind keine echten Familienkonten.
 
-## Entwicklung
+## Entwicklung der alten Grundlage
 
 Voraussetzung: Node.js 24 oder neuer.
 
@@ -57,7 +59,7 @@ npm run build
 
 `test/ui.html` ist eine isolierte Browser-Prüfansicht mit künstlichen Daten im Arbeitsspeicher. Sie verwendet dieselben React-Komponenten, greift nicht auf echte Konten zu und wird nicht in den Produktionsbuild aufgenommen. Authentifizierung, Berechtigungen, Transaktionen und Live-Änderungsereignisse werden separat gegen die Server-API getestet.
 
-## Eigener Server mit Docker
+## Docker der alten Grundlage
 
 Voraussetzungen: Docker mit Compose; zum Erstellen der Konfiguration lokal Node.js. Den Projektordner auf den Zielrechner übertragen oder aus dem privaten Repository klonen.
 

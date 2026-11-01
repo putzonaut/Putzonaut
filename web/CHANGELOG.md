@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.21.0 · 1. November 2026
+
+- Eigene Putzonaut-Konten mit E-Mail und Passwort, verpflichtender E-Mail-Bestätigung, Passwort-Reset, sicherer Abmeldung und optionalem Angemeldetbleiben.
+- Eigenständiger Node-/SQLite-Server und Docker-Build mit vollständiger aktueller Oberfläche, persistenten Crew-Daten und privatem Fotospeicher.
+- Better Auth, begrenzte Anmeldeversuche, servergeprüfte Sitzungen, Origin-Schutz und verschlüsselte SMTP-Warteschlange.
+- Explizites Betreiberwerkzeug zur Zuordnung separat übernommener Altprofile; keine automatische Verknüpfung nach E-Mail.
+- 16 zusätzliche Integrationstests; insgesamt 314 erfolgreiche Tests. Hinweise zu Betrieb, Datentransfer und noch ausstehender Live-Einrichtung in `standalone/README.md`.
+- Die private Sites-Version behält ihre bestehende Anmeldung und Daten. Der eigenständige Build enthält keine ChatGPT-Anmeldepfade.
+
 ## 0.20.0 · 31. Oktober 2026
 
 - Nachtrag bei gleicher Versionsnummer: zwölf weitere Missionssymbole (Besen, Sprühflasche, Fenster, Bett, Sofa, Kühlschrank, Kochen, Einkauf, Haustiere, Dusche, Toilette und Werkzeug), insgesamt 19. Einheitliche Auswahl, Anzeige und automatische Kategoriezuordnung; neue Symbole werden auch in Backups erhalten. Offline-Dateien erhalten bei Inhaltsänderungen einen eigenen Cache.
