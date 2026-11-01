@@ -1,10 +1,16 @@
-# Putzonaut · Web-App 0.20.0
+# Putzonaut · Web-App 0.21.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Eigene Konten · Version 0.21.0
+
+Die aktuelle App kann mit eigenen Putzonaut-Konten betrieben werden: E-Mail und Passwort, Bestätigungslink, Passwort-Reset und widerrufbare Sitzungen. Nutzer benötigen im eigenständigen Betrieb kein ChatGPT. Docker-/Node-Server, SQLite, privater Fotospeicher und SMTP-Anbindung sind im Ordner `standalone/` enthalten.
+
+[Einrichtung und tatsächlicher Umzug](standalone/README.md) · [Prüfstand 0.21](docs/QA-0.21.md). Die bestehende private Testseite behält ihre Sites-Zugangskontrolle. Domain, eigener Server, echte Mailzustellung und Transfer der bisherigen Daten werden separat eingerichtet.
 
 ## Flexibler im Alltag · Version 0.20.0
 
@@ -306,7 +312,7 @@ Die additive Migration `0001_bent_manta.sql` legt nur die zwei Tabellen für den
 
 Die aktuelle Website bleibt eine private Entwicklungsveröffentlichung. Erwachsene melden sich dort über ChatGPT an und benötigen zusätzlich Website-Zugriff. Eine Crew-Einladung ändert diese Freigabe nicht. Einladungen werden nicht automatisch versandt.
 
-Das Produktziel ist eine unabhängig nutzbare Web-App. Eigene Anmeldung ohne ChatGPT, Kontolöschung, Kontowiederherstellung, unabhängige Betreiber-Backups, öffentlicher Betrieb und der Umzug auf eine eigene Domain sind noch vor dem öffentlichen Start umzusetzen. Dafür bleibt die Docker-/PostgreSQL-Grundlage im Hauptverzeichnis erhalten; sie enthält noch nicht die neuen Webfunktionen. Ein öffentlicher Zugang wird durch dieses Update nicht eingerichtet.
+Die eigenständige Web-App mit eigener Anmeldung, E-Mail-Bestätigung und Passwort-Wiederherstellung ist seit 0.21.0 in `standalone/` enthalten. Kontolöschung, der tatsächliche Datenumzug, ein erprobter vollständiger Backup-/Restore-Ablauf, Serveranschluss und echte Mailzustellung bleiben vor dem öffentlichen Start zu erledigen. Die frühere Docker-/PostgreSQL-Grundlage im Hauptverzeichnis bleibt als Altstand erhalten. Ein öffentlicher Zugang wird durch dieses Update nicht eingerichtet.
 
 ## Daten und Berechtigungen
 

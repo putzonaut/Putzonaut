@@ -1,9 +1,11 @@
 import {createRoot} from 'react-dom/client';
 import AppLaunch from './AppLaunch';
+import AccountPage from './AccountForm';
+import {ownAccounts} from './account';
 import '@fontsource/nunito/latin-400.css';
 import '@fontsource/nunito/latin-600.css';
 import '@fontsource/nunito/latin-700.css';
 import '@fontsource/nunito/latin-800.css';
 import '@fontsource/nunito/latin-900.css';
 import './style.css';
-createRoot(document.getElementById('root')!).render(<AppLaunch/>);
+createRoot(document.getElementById('root')!).render(ownAccounts&&location.pathname.startsWith('/konto/')?<AccountPage/>:<AppLaunch/>);
