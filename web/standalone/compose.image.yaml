@@ -1,0 +1,25 @@
+name: putzonaut
+services:
+  putzonaut:
+    image: ${PUTZONAUT_IMAGE:?Set PUTZONAUT_IMAGE in .env}
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    ports:
+      - '127.0.0.1:3080:3080'
+    volumes:
+      - putzonaut-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 30s
+    logging:
+      driver: local
+      options:
+        max-size: '10m'
+        max-file: '3'
+volumes:
+  putzonaut-data:

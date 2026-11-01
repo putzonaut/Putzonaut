@@ -1,0 +1,13 @@
+# Use with compose.image.yaml (or the installed compose.yaml).
+# Inspect the existing cloudflared container to select its actual Docker network.
+services:
+  putzonaut:
+    networks:
+      default: {}
+      tunnel:
+        aliases:
+          - putzonaut-origin
+networks:
+  tunnel:
+    external: true
+    name: ${PUTZONAUT_TUNNEL_NETWORK:?Set the existing cloudflared Docker network in .env}

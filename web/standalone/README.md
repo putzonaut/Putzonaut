@@ -2,9 +2,69 @@
 
 Die aktuelle App aus `web/` läuft als eigenständiger Node-Server mit E-Mail und Passwort. Nutzer benötigen dafür weder ChatGPT noch GitHub. Oberfläche, Missionen, Crew, Kinderprofile, Punkte, Fotos und Offline-Funktionen verwenden denselben Anwendungscode wie die private Sites-Version.
 
-## Start auf einem eigenen Server
+## Installation mit fertigem Docker-Image
 
-Voraussetzung: Docker mit Compose und ein HTTPS-Reverse-Proxy. Dies ist eine normale Docker-Anwendung, noch kein Paket für den Umbrel App Store.
+Die geprüften Images für **amd64 und arm64** liegen unter `ghcr.io/putzonaut/putzonaut`. Auf dem Zielserver sind nur Docker mit Compose und die Konfiguration nötig. Quellcode, Git, Node.js und ein Build auf dem Server sind dafür nicht erforderlich.
+
+Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.21.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
+
+Solange das Container-Paket privat ist, vor dem Download mit einem GitHub-Token anmelden, der ausschließlich die erforderliche Leseberechtigung für Pakete besitzt:
+
+```sh
+docker login ghcr.io -u putzonaut
+```
+
+Den Token an der verdeckten Passwortabfrage eingeben. Ein öffentlich freigegebenes Image kann ohne Anmeldung heruntergeladen werden. Das Repository muss dafür nicht öffentlich werden; das Image selbst enthält jedoch die ausführbare Anwendung. Der Workflow verändert keine Sichtbarkeit.
+
+Die Installationsdateien in einem eigenen Putzonaut-Konfigurationsordner ablegen. Dort:
+
+```sh
+cp .env.example .env
+chmod 600 .env
+openssl rand -hex 48
+```
+
+Den ausgegebenen Zufallswert einmalig als `BETTER_AUTH_SECRET` in `.env` eintragen. Ebenso `SMTP_USER` und `SMTP_PASSWORD` aus Brevo ergänzen. Der Absender ist `Putzonaut <info@putzonaut.de>`. Danach:
+
+```sh
+docker compose pull
+docker compose up -d
+docker compose ps
+```
+
+### Vorhandener Cloudflare-Connector in Docker
+
+Wenn `cloudflared` in einem eigenen Container läuft, muss dieser die App über ein gemeinsames Docker-Netz erreichen. Die Namen der vorhandenen Netzwerke lassen sich ohne Ausgabe von Zugangsdaten anzeigen:
+
+```sh
+docker inspect cloudflared_connector_1 --format '{{range $name, $settings := .NetworkSettings.Networks}}{{println $name}}{{end}}'
+```
+
+Das passende bestehende Netzwerk als `PUTZONAUT_TUNNEL_NETWORK` in `.env` eintragen und mit der mitgelieferten Ergänzung starten:
+
+```sh
+docker compose -f compose.yaml -f compose.tunnel.yaml pull
+docker compose -f compose.yaml -f compose.tunnel.yaml up -d
+```
+
+Die veröffentlichte Route im bestehenden Cloudflare-Tunnel lautet:
+
+| Feld | Wert |
+| --- | --- |
+| Hostname | `app.putzonaut.de` |
+| Service | `http://putzonaut-origin:3080` |
+
+Die Domain und das HTTPS-Zertifikat müssen bei Cloudflare aktiv sein. `APP_ORIGIN` bleibt die öffentliche HTTPS-Adresse. Beim Betrieb ohne Container-Connector leitet der lokale HTTPS-Proxy an `127.0.0.1:3080` weiter.
+
+### Daten und Aktualisierungen
+
+Die App erhält ein eigenes benanntes Docker-Volume für Datenbanken und Fotos. Sie läuft als Benutzer 1000 mit schreibgeschütztem Container-Dateisystem und temporärem `/tmp`. Es werden weder das Host-Rootverzeichnis noch das Homeverzeichnis, der Docker-Socket oder Daten anderer Apps eingebunden. Docker selbst und die Konfigurationsdateien benötigen weiterhin Speicherplatz auf dem Server.
+
+Für Updates zuerst die unten beschriebene Sicherung erstellen, dann `PUTZONAUT_IMAGE` auf den neuen geprüften Digest setzen und denselben Compose-Aufruf mit `pull` und `up -d` wiederholen. Projektname, Compose-Dateien, Datenvolume und ursprüngliches `BETTER_AUTH_SECRET` beibehalten. `docker compose down -v` würde das Datenvolume löschen und gehört nicht zum Update.
+
+## Eigener Build für Entwicklung
+
+Die ursprüngliche `compose.yaml` im Repository bleibt für einen lokalen Build verfügbar:
 
 ```sh
 cd web/standalone
@@ -12,18 +72,11 @@ cp .env.example .env
 chmod 600 .env
 # .env mit APP_ORIGIN, dauerhaftem zufälligem Secret und SMTP-Zugang ausfüllen.
 docker compose up -d --build
-docker compose ps
 ```
 
-Ein Secret erzeugen:
+Dies ist weiterhin eine normale Docker-Anwendung; ein Eintrag im Umbrel App Store ist damit noch nicht veröffentlicht.
 
-```sh
-node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
-```
-
-Der Reverse-Proxy leitet `https://app.putzonaut.de` an `127.0.0.1:3080` weiter. DNS, Zertifikat und die konkrete Verbindung zu Umbrel müssen beim Betreiber eingerichtet werden. Der Containerport ist absichtlich nur am Loopback-Interface veröffentlicht. Bei einem Proxy in einem anderen Container ist ein gemeinsames privates Docker-Netz nötig; der interne App-Port darf nicht direkt aus dem Internet erreichbar sein. Im Proxy müssen mindestens 9 MB Request-Body erlaubt sein, damit Crew-Sicherungen importiert werden können.
-
-`APP_ORIGIN` ist die genaue öffentliche HTTPS-Origin ohne abschließenden Schrägstrich. Host- und Forwarded-Header bestimmen weder die Origin noch die Identität. Für lokale Entwicklung ist HTTP ausschließlich für localhost erlaubt. Standardmäßig gilt die tatsächliche Socket-IP als Client-IP. Nur wenn `TRUSTED_PROXY_IPS` exakt die verbindenden Proxy-Adressen enthält, wird dessen einzelner `X-Real-IP`-Wert akzeptiert. Der Proxy muss diesen Header überschreiben. Keine pauschalen privaten Netze freigeben.
+Der Proxy muss mindestens 9 MB Request-Body erlauben. `APP_ORIGIN` ist die genaue öffentliche HTTPS-Origin ohne abschließenden Schrägstrich. Host- und Forwarded-Header bestimmen weder Origin noch Identität. Standardmäßig gilt die tatsächliche Socket-IP als Client-IP. Nur wenn `TRUSTED_PROXY_IPS` exakt die verbindenden Proxy-Adressen enthält, wird dessen einzelner `X-Real-IP`-Wert akzeptiert. Der Proxy muss diesen Header überschreiben. Keine pauschalen privaten Netze freigeben.
 
 Ohne Docker (Node 24.22.1 oder neuer in der 24er-Reihe): im Ordner `web/` zuerst `npm ci`, `npm run build:standalone`, dann `npm run start:standalone`. Die Konfiguration wird aus `standalone/.env` geladen. Daten liegen standardmäßig in `web/data/`; `DATA_DIR` kann ein anderes privates Verzeichnis festlegen.
 

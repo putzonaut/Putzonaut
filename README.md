@@ -34,13 +34,13 @@ Eine installierbare Web-App für Android und iPhone – mit eigenem Symbol auf d
 
 ## Selbst hosten
 
-Die aktuelle Anwendung liegt in **`web/`**. Für den eigenen Betrieb sind Docker Compose, HTTPS und ein Mailzugang für Bestätigungs- und Passwort-Mails vorgesehen.
+Die aktuelle Anwendung liegt in **`web/`**. Für den eigenen Betrieb gibt es fertige Docker-Images für amd64 und arm64. Benötigt werden Docker Compose, HTTPS und ein Mailzugang für Bestätigungs- und Passwort-Mails.
 
 **[Zur Installationsanleitung →](web/standalone/README.md)**
 
 <details>
 <summary>Hinweis zum Repository</summary>
 
-Die Dateien im Hauptverzeichnis stammen aus der früheren Version 0.1.0. Für neue Installationen verwende `web/standalone/compose.yaml`. Die [frühere Dokumentation](docs/LEGACY-0.1.md) bleibt zum Nachschlagen erhalten.
+Die Dateien im Hauptverzeichnis stammen aus der früheren Version 0.1.0. Für neue Installationen mit fertigem Image verwende `web/standalone/compose.image.yaml`. Die [frühere Dokumentation](docs/LEGACY-0.1.md) bleibt zum Nachschlagen erhalten.
 
 </details>

@@ -5,12 +5,20 @@ on:
     paths: ['web/**', '.github/workflows/web.yml']
   pull_request:
     paths: ['web/**', '.github/workflows/web.yml']
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: false
+env:
+  IMAGE_NAME: ghcr.io/putzonaut/putzonaut
 jobs:
   web:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     defaults:
       run:
         working-directory: web
@@ -21,18 +29,27 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: web/package-lock.json
+      - id: version
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const v=JSON.parse(fs.readFileSync('package.json')).version; if(!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(v)) process.exit(1); console.log('version='+v)" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
       - run: npm run build:standalone
   standalone-docker:
+    needs: web
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
     strategy:
       fail-fast: false
       matrix:
         architecture: [amd64, arm64]
+    env:
+      TEST_IMAGE: ghcr.io/putzonaut/putzonaut:build-${{ github.sha }}-${{ matrix.architecture }}
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-qemu-action@v3
@@ -44,10 +61,22 @@ jobs:
           platforms: linux/${{ matrix.architecture }}
           push: false
           load: true
-          tags: putzonaut:ci
+          tags: ${{ env.TEST_IMAGE }}
+          labels: |
+            org.opencontainers.image.title=Putzonaut
+            org.opencontainers.image.source=https://github.com/putzonaut/putzonaut
+            org.opencontainers.image.version=${{ needs.web.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Validate the installation Compose files
+        run: |
+          mkdir -p "$RUNNER_TEMP/compose-check"
+          cp web/standalone/compose.image.yaml "$RUNNER_TEMP/compose-check/compose.yaml"
+          cp web/standalone/compose.tunnel.yaml "$RUNNER_TEMP/compose-check/compose.tunnel.yaml"
+          cp web/standalone/.env.image.example "$RUNNER_TEMP/compose-check/.env"
+          PUTZONAUT_IMAGE="$TEST_IMAGE" PUTZONAUT_TUNNEL_NETWORK=ci-tunnel docker compose -f "$RUNNER_TEMP/compose-check/compose.yaml" -f "$RUNNER_TEMP/compose-check/compose.tunnel.yaml" config --quiet
       - name: Start production container and check HTTP boundaries
         run: |
-          docker run -d --name putzonaut-ci --read-only --tmpfs /tmp:size=64m --mount type=volume,destination=/data --cap-drop ALL --security-opt no-new-privileges:true -e APP_ORIGIN=http://localhost:3080 -e BETTER_AUTH_SECRET=ci-only-not-for-production-8f71146293eb482c9cf97d4f -e SMTP_HOST=mail.example.test -e MAIL_FROM=test@example.test putzonaut:ci
+          docker run -d --name putzonaut-ci --read-only --tmpfs /tmp:size=64m --mount type=volume,destination=/data --cap-drop ALL --security-opt no-new-privileges:true -e APP_ORIGIN=http://localhost:3080 -e BETTER_AUTH_SECRET=ci-only-not-for-production-8f71146293eb482c9cf97d4f -e SMTP_HOST=mail.example.test -e MAIL_FROM=test@example.test "$TEST_IMAGE"
           ready=0
           for attempt in $(seq 1 30); do
             if docker exec putzonaut-ci node -e "fetch('http://localhost:3080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then ready=1; break; fi
@@ -55,6 +84,83 @@ jobs:
           done
           if [ "$ready" != 1 ]; then docker logs putzonaut-ci; exit 1; fi
           docker exec putzonaut-ci node --input-type=module -e "const page=await fetch('http://localhost:3080/konto/anmelden');if(!page.ok||!page.headers.get('content-security-policy')?.includes('frame-ancestors'))process.exit(1);const forged=await fetch('http://localhost:3080/api/state',{headers:{'oai-authenticated-user-id':'forged','oai-authenticated-user-email':'forged@example.test'}});if(forged.status!==401)process.exit(1);console.log('Production server and identity boundary passed');"
+      - name: Log in to the Container registry
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push the tested platform image
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          ARCH: ${{ matrix.architecture }}
+        run: |
+          docker push "$TEST_IMAGE"
+          docker image inspect "$TEST_IMAGE" --format '{{index .RepoDigests 0}}' > "$RUNNER_TEMP/digest-$ARCH.txt"
+          test -s "$RUNNER_TEMP/digest-$ARCH.txt"
+      - name: Keep the tested image digest
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: putzonaut-digest-${{ matrix.architecture }}
+          path: ${{ runner.temp }}/digest-${{ matrix.architecture }}.txt
+          retention-days: 3
+          if-no-files-found: error
       - name: Remove test container and temporary volume
         if: always()
         run: docker rm -fv putzonaut-ci || true
+  publish:
+    needs: [web, standalone-docker]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: putzonaut-digest-*
+          path: ${{ runner.temp }}/digests
+          merge-multiple: true
+      - name: Publish the tested amd64 and arm64 images together
+        env:
+          APP_VERSION: ${{ needs.web.outputs.version }}
+        run: |
+          mapfile -t images < <(cat "$RUNNER_TEMP/digests/"*.txt)
+          test "${#images[@]}" -eq 2
+          for image in "${images[@]}"; do
+            [[ "$image" =~ ^ghcr\.io/putzonaut/putzonaut@sha256:[a-f0-9]{64}$ ]]
+          done
+          revision="${GITHUB_SHA:0:12}"
+          docker buildx imagetools create \
+            --tag "$IMAGE_NAME:$APP_VERSION-$revision" \
+            --tag "$IMAGE_NAME:sha-$GITHUB_SHA" \
+            --tag "$IMAGE_NAME:latest" \
+            "${images[@]}"
+          docker buildx imagetools inspect --raw "$IMAGE_NAME:sha-$GITHUB_SHA" > "$RUNNER_TEMP/manifest.json"
+          jq -e '[.manifests[].platform | .os + "/" + .architecture] | sort == ["linux/amd64", "linux/arm64"]' "$RUNNER_TEMP/manifest.json"
+          digest="$(docker buildx imagetools inspect "$IMAGE_NAME:sha-$GITHUB_SHA" | awk '$1 == "Digest:" {print $2; exit}')"
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          mkdir -p "$RUNNER_TEMP/putzonaut-install"
+          cp web/standalone/compose.image.yaml "$RUNNER_TEMP/putzonaut-install/compose.yaml"
+          cp web/standalone/compose.tunnel.yaml "$RUNNER_TEMP/putzonaut-install/compose.tunnel.yaml"
+          sed "s|^PUTZONAUT_IMAGE=.*|PUTZONAUT_IMAGE=$IMAGE_NAME@$digest|" web/standalone/.env.image.example > "$RUNNER_TEMP/putzonaut-install/.env.example"
+          printf 'Geprüftes Image: %s@%s\nVersion: %s-%s\n\nAnleitung: https://github.com/putzonaut/putzonaut/blob/main/web/standalone/README.md\n' "$IMAGE_NAME" "$digest" "$APP_VERSION" "$revision" > "$RUNNER_TEMP/putzonaut-install/IMAGE.txt"
+          printf '## Docker-Image bereit\n\n%s@%s\n\nVersion: %s-%s\n\nGetestete Plattformen: linux/amd64, linux/arm64.\n\nDas Artefakt putzonaut-install enthält die Compose-Dateien und eine auf diesen Digest festgelegte Konfigurationsvorlage.\n' "$IMAGE_NAME" "$digest" "$APP_VERSION" "$revision" >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the ready-to-configure installation files
+        uses: actions/upload-artifact@v4
+        with:
+          name: putzonaut-install
+          path: ${{ runner.temp }}/putzonaut-install/
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: error
