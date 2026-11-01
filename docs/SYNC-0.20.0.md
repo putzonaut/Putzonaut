@@ -29,8 +29,14 @@ Die vollständige Suite enthält auch den letzten Symbol-Nachtrag. Sie prüft un
 
 ## GitHub und Grenzen
 
-Die vorhandenen GitHub-Workflows prüfen nach dem Push den aktuellen Commit: Web-App (Typen, Tests, Build), die frühere PostgreSQL-Anwendung und deren Docker-Build für amd64/arm64. Ihr jeweils tatsächlicher Status ist unter [GitHub Actions](https://github.com/dennysubke/putzonaut/actions) einsehbar.
+Die vorhandenen GitHub-Workflows prüfen nach dem Push den aktuellen Commit: Web-App (Typen, Tests, Build), die frühere PostgreSQL-Anwendung und deren Docker-Build für amd64/arm64. Ihr jeweils tatsächlicher Status ist unter [GitHub Actions](https://github.com/putzonaut/putzonaut/actions) einsehbar.
 
 Dieser Abgleich verändert die veröffentlichte Anwendung und produktive Crew-Daten nicht. Keine zusätzlichen Geräteanmeldungen, Versandaufträge oder Datenbankänderungen werden durch die Quellcodeübertragung ausgeführt. Ein erneuter physischer Android-/iPhone-Test, ein angemeldeter Produktionsdurchlauf und ein echter PWA-Versionswechsel über mehrere Geräte sind durch diesen Abgleich nicht belegt; die Grenzen der bisherigen Browserprüfungen stehen in `web/docs/QA-0.20.md`.
 
 Der Docker-Stand im Hauptverzeichnis bleibt ausdrücklich die frühere Version 0.1.0. Der Transfer nach GitHub macht daraus noch keine eigenständig gehostete Version 0.20.0.
+
+## Repository-Umzug · 1. November 2026
+
+Das Repository liegt nun privat unter [putzonaut/putzonaut](https://github.com/putzonaut/putzonaut). Es wurde als bestehendes Repository übertragen; seine ID `1438875766`, die 15 vorhandenen Commits und der Hauptzweig blieben erhalten. Unmittelbar nach dem Eigentümerwechsel stand `main` unverändert auf `e60f2bc8af7e1a7c5770cc149cd0a88d176556fc`; der vollständige Quellbaum entsprach weiterhin `7bf77ca4970508c64354e5f61ad291b5a2a6497a`. Insbesondere sind sämtliche 218 App-Dateien und die oben dokumentierte `web/`-Prüfsumme unverändert.
+
+Die alte Repository-Adresse leitet zum neuen Standort weiter. `dennysubke` bleibt als Mitarbeiter mit Schreibzugriff eingebunden. Der ChatGPT Codex Connector ist im Putzonaut-Konto ausschließlich für dieses Repository freigegeben. Die bestehende Workflow-Historie wurde übernommen. Die App-Version bleibt 0.20.0.
