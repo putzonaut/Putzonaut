@@ -5,7 +5,7 @@
 <h1 align="center">Putzonaut</h1>
 
 <p align="center">
-  <strong>Haushaltsaufgaben als Missionen. Sterne als Belohnung.</strong>
+  <strong>Haushalt mit Teamgeist.</strong>
 </p>
 
 <p align="center">
