@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.22.0
+# Putzonaut · Web-App 0.22.1
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -6,9 +6,9 @@ Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Pa
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
 
-## Website und App · Version 0.22.0
+## Website und App · Version 0.22.1
 
-Die öffentliche Website (`putzonaut.de`) und die Smartphone-App (`app.putzonaut.de`) laufen gemeinsam in einem Docker-Container. Website-Port 3081 und App-Port 3080 bleiben getrennt. Der bevorzugte Installationsweg ist der [Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store). Die Website nutzt lokale Schriften, vorhandenes Artwork und einen aus APP_ORIGIN erzeugten QR-Code.
+Die öffentliche Website (`putzonaut.de`) und die Smartphone-App (`app.putzonaut.de`) laufen gemeinsam in einem Docker-Container. Website-Port 3081 und App-Port 3080 bleiben getrennt. Der bevorzugte Installationsweg ist der [Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store). Die Website nutzt lokale Schriften, einen scharfen App-Einblick, die animierte Raketenfigur und einen aus APP_ORIGIN erzeugten QR-Code. Details zur freigegebenen Gestaltung und Auslieferung stehen in [Website](docs/WEBSITE.md).
 
 [Prüfstand 0.22](docs/QA-0.22.md) · [Installation](standalone/README.md)
 

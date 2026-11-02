@@ -30,7 +30,7 @@ Putzonaut macht aus Haushaltsaufgaben kleine Missionen. Erledige sie allein oder
 
 Eine installierbare Web-App für Android und iPhone – mit eigenem Symbol auf dem Startbildschirm, hellem und dunklem Design. Die eigenständige Version verwendet Putzonaut-Konten mit E-Mail und Passwort.
 
-**Version 0.22.0 · In Entwicklung.** Website und App werden gemeinsam als Umbrel-App ausgeliefert. Den geprüften Umfang und die noch offenen Praxistests findest du im [Prüfstand](web/docs/QA-0.22.md).
+**Version 0.22.1 · In Entwicklung.** Website und App laufen gemeinsam in einem Docker-Container. Den geprüften Umfang und die noch offenen Praxistests findest du im [Prüfstand](web/docs/QA-0.22.md).
 
 ## Selbst hosten
 
