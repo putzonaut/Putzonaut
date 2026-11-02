@@ -19,10 +19,6 @@
   <a href="web/CHANGELOG.md">Changelog</a>
 </p>
 
-<p align="center">
-  <sub>Android &amp; iOS · Installierbare Web-App · Docker · amd64 &amp; arm64</sub>
-</p>
-
 ---
 
 ## Haushalt mit Fortschritt
@@ -31,10 +27,10 @@ Für Familien, Paare, Wohngemeinschaften und Einpersonenhaushalte.
 
 | | Funktionen |
 | :--- | :--- |
-| 🧹 **Missionen** | Aufgabenvorlagen, Checklisten, Wiederholungen und Putzrunden für 5, 10 oder 20 Minuten. |
-| ⭐ **Belohnungen** | Sterne, Level, Abzeichen, Anzüge und persönliche oder gemeinsame Wünsche. |
-| 👥 **Zusammenarbeit** | Aufgaben verteilen, Zuständigkeiten tauschen und gemeinsame Wochenziele erreichen. Kinderprofile werden von Erwachsenen verwaltet. |
-| 📊 **Überblick** | Wochenplan, Rückblicke und Statistiken. Offline vorgemerkte Abschlüsse erhalten Sterne nach erfolgreichem Abgleich. |
+| **Missionen** | Aufgabenvorlagen, Checklisten, Wiederholungen und Putzrunden für 5, 10 oder 20 Minuten. |
+| **Belohnungen** | Sterne, Level, Abzeichen, Anzüge und persönliche oder gemeinsame Wünsche. |
+| **Zusammenarbeit** | Aufgaben verteilen, Zuständigkeiten tauschen und gemeinsame Wochenziele erreichen. Kinderprofile werden von Erwachsenen verwaltet. |
+| **Überblick** | Wochenplan, Rückblicke und Statistiken. Offline vorgemerkte Abschlüsse erhalten Sterne nach erfolgreichem Abgleich. |
 
 ## Selbst hosten
 
