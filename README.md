@@ -1,48 +1,67 @@
 <p align="center">
-  <img src="web/public/icons/icon-512.png" width="112" height="112" alt="Putzonaut – goldener Astronautenhelm mit türkisen Augen">
+  <img src="docs/assets/putzonaut-logo.png" width="160" height="160" alt="Putzonaut – goldener Astronautenhelm mit leuchtenden türkisen Augen">
 </p>
 
 <h1 align="center">Putzonaut</h1>
 
 <p align="center">
-  <strong>Dein Haushalt. Eure Mission.</strong><br>
-  Kleine Aufgaben. Gemeinsame Erfolge. Mehr Spaß im Alltag.
+  <strong>Haushaltsaufgaben als Missionen. Sterne als Belohnung.</strong>
 </p>
 
 <p align="center">
-  <a href="web/README.md">Funktionen</a> ·
-  <a href="web/standalone/README.md">Installation</a> ·
-  <a href="web/CHANGELOG.md">Änderungen</a>
+  Putzonaut verbindet Aufgabenplanung, gemeinsame Ziele und spielerische Belohnungen für den Haushalt.
+</p>
+
+<p align="center">
+  <a href="https://putzonaut.de">Website</a> &nbsp;·&nbsp;
+  <a href="https://app.putzonaut.de">App öffnen</a> &nbsp;·&nbsp;
+  <a href="docs/INSTALLATION.md">Selbst hosten</a> &nbsp;·&nbsp;
+  <a href="web/CHANGELOG.md">Changelog</a>
+</p>
+
+<p align="center">
+  <sub>Android &amp; iOS · Installierbare Web-App · Docker · amd64 &amp; arm64</sub>
 </p>
 
 ---
 
-Putzonaut macht aus Haushaltsaufgaben kleine Missionen. Erledige sie allein oder mit deiner Crew, sammle Sterne und erfülle persönliche oder gemeinsame Wünsche. Für Familien, Paare, WGs und alle, die ihren Haushalt allein organisieren.
+## Haushalt mit Fortschritt
 
-## Das steckt drin
+Für Familien, Paare, Wohngemeinschaften und Einpersonenhaushalte.
 
-- **Missionen für deinen Alltag:** Vorlagen, Checklisten, wiederkehrende Aufgaben und kurze Putzrunden für 5, 10 oder 20 Minuten.
-- **Erfolge, die motivieren:** Sterne, Level, Abzeichen, Anzüge und eigene Wünsche als Belohnung.
-- **Gemeinsam organisiert:** Aufgaben verteilen, tauschen und Wochenziele erreichen. Kinderprofile werden von Erwachsenen begleitet.
-- **Alles im Blick:** Wochenplan, Rückblick und persönliche Statistiken. Offline vorgemerkte Abschlüsse werden bei der nächsten Verbindung abgeglichen.
-
-## Auf deinem Smartphone
-
-Eine installierbare Web-App für Android und iPhone – mit eigenem Symbol auf dem Startbildschirm, hellem und dunklem Design. Die eigenständige Version verwendet Putzonaut-Konten mit E-Mail und Passwort.
-
-**Version 0.22.2 · In Entwicklung.** Website und App laufen gemeinsam in einem Docker-Container. Den geprüften Umfang und die noch offenen Praxistests findest du im [Prüfstand](web/docs/QA-0.22.md).
+| | Funktionen |
+| :--- | :--- |
+| 🧹 **Missionen** | Aufgabenvorlagen, Checklisten, Wiederholungen und Putzrunden für 5, 10 oder 20 Minuten. |
+| ⭐ **Belohnungen** | Sterne, Level, Abzeichen, Anzüge und persönliche oder gemeinsame Wünsche. |
+| 👥 **Zusammenarbeit** | Aufgaben verteilen, Zuständigkeiten tauschen und gemeinsame Wochenziele erreichen. Kinderprofile werden von Erwachsenen verwaltet. |
+| 📊 **Überblick** | Wochenplan, Rückblicke und Statistiken. Offline vorgemerkte Abschlüsse erhalten Sterne nach erfolgreichem Abgleich. |
 
 ## Selbst hosten
 
-Installiere **Putzonaut** über [Denny’s Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store). Website und App laufen gemeinsam in einem Docker-Container mit eigenem Datenspeicher. Für Bestätigungs- und Passwort-Mails wird ein SMTP-Zugang benötigt.
+Putzonaut läuft mit **Docker Compose auf einem eigenen Server**. Fertige Images stehen für **amd64 und arm64** bereit. Konten, Haushaltsdaten und Fotos liegen im eigenen Datenvolume; Bestätigungs- und Passwort-Mails werden über einen konfigurierbaren SMTP-Dienst versendet.
 
-Die aktuelle Anwendung liegt in **`web/`**. Fertige Images für amd64 und arm64 sind auch für einen eigenständigen Docker-Compose-Betrieb verfügbar.
+Benötigt werden Docker Compose, eine HTTPS-Adresse und ein SMTP-Zugang. Die Anmeldung erfolgt über eigene Putzonaut-Konten mit E-Mail und Passwort.
 
-**[Zur Installationsanleitung →](web/standalone/README.md)**
+**[Zur Docker-Installationsanleitung →](docs/INSTALLATION.md)**
+
+## Dokumentation & Hilfe
+
+[Funktionsübersicht](web/README.md) · [Versionshistorie](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.22.md)
+
+Fehlerberichte und Vorschläge: [GitHub Issues](https://github.com/putzonaut/putzonaut/issues)  
+Hilfe bei Problemen: [sos@putzonaut.de](mailto:sos@putzonaut.de)
 
 <details>
-<summary>Hinweis zum Repository</summary>
+<summary><strong>Quellcode & Entwicklung</strong></summary>
 
-Die Dateien im Hauptverzeichnis stammen aus der früheren Version 0.1.0. Für neue Installationen mit fertigem Image verwende `web/standalone/compose.image.yaml`. Die [frühere Dokumentation](docs/LEGACY-0.1.md) bleibt zum Nachschlagen erhalten.
+Die aktuelle Anwendung liegt in [`web/`](web/). Die [Entwicklungsdokumentation](web/README.md) beschreibt Funktionen, Prüfungen und die Projektstruktur.
+
+Die Dateien im Hauptverzeichnis enthalten außerdem die frühere Grundlage aus Version 0.1.0. Diese ist in der [Legacy-Dokumentation](docs/LEGACY-0.1.md) eingeordnet. Für aktuelle Installationen dient [`web/standalone/compose.image.yaml`](web/standalone/compose.image.yaml).
 
 </details>
+
+---
+
+<p align="center">
+  <sub>Version 0.22.2 · In Entwicklung</sub>
+</p>
