@@ -1,6 +1,6 @@
 {
   "name": "putzonaut",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -14,8 +14,9 @@
     "db:generate": "drizzle-kit generate",
     "test": "node --test --test-concurrency=1 test/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "build:standalone": "node scripts/build-standalone.mjs",
-    "start:standalone": "node --env-file-if-exists=standalone/.env standalone/index.ts"
+    "build:standalone": "node scripts/build-standalone.mjs && node scripts/build-website.mjs",
+    "start:standalone": "node --env-file-if-exists=standalone/.env standalone/index.ts",
+    "build:website": "node scripts/build-website.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -34,6 +35,7 @@
     "next": "16.3.4",
     "next-themes": "^0.4.6",
     "nodemailer": "10.3.1",
+    "qrcode": "1.5.4",
     "radix-ui": "^1.6.7",
     "react": "19.2.6",
     "react-day-picker": "^10.0.1",

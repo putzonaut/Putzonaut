@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.22.0 · 2. November 2026
+
+- Öffentliche Vorstellungsseite mit vorhandenem Artwork, echtem App-Einblick, lokal erzeugtem QR-Code und Anleitung für Android und iPhone.
+- Website auf Port 3081 und App auf Port 3080 im selben Docker-Image; die Website hat keine Kontorouten und keinen Zugriff auf Haushaltsdaten.
+- Konfigurierbare Website-Adresse, Weiterleitung von www und Links zu Impressum und Datenschutz im Anmeldebereich. Schriften und Bilder werden lokal ausgeliefert.
+- Umbrel Community Store als bevorzugter Installationsweg. Persistente Daten und vorhandene Konten bleiben im bisherigen App-Speicher.
+- 316 automatisierte Tests, zusätzliche Containerprüfung beider Oberflächen sowie Browserprüfung für Desktop und Smartphone.
+
 ## 0.21.0 · 1. November 2026
 
 - Eigene Putzonaut-Konten mit E-Mail und Passwort, verpflichtender E-Mail-Bestätigung, Passwort-Reset, sicherer Abmeldung und optionalem Angemeldetbleiben.
