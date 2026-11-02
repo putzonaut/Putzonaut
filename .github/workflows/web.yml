@@ -84,6 +84,9 @@ jobs:
           done
           if [ "$ready" != 1 ]; then docker logs putzonaut-ci; exit 1; fi
           docker exec putzonaut-ci node --input-type=module -e "const page=await fetch('http://localhost:3080/konto/anmelden');if(!page.ok||!page.headers.get('content-security-policy')?.includes('frame-ancestors'))process.exit(1);const forged=await fetch('http://localhost:3080/api/state',{headers:{'oai-authenticated-user-id':'forged','oai-authenticated-user-email':'forged@example.test'}});if(forged.status!==401)process.exit(1);console.log('Production server and identity boundary passed');"
+      - name: Check the separate public website
+        run: |
+          docker exec putzonaut-ci node --input-type=module -e "import assert from 'node:assert/strict';const base='http://localhost:3081';const page=await fetch(base);assert.equal(page.status,200);const html=await page.text();assert.ok(html.includes('Mehr Abheben'));assert.ok(html.includes('http://localhost:3080'));assert.ok(!html.includes('__APP_ORIGIN__'));for(const path of ['/website-assets/screens/home.jpg','/website-assets/fonts/nunito-900.woff2','/app-qr.svg','/impressum','/datenschutz'])assert.equal((await fetch(base+path)).status,200,path);for(const path of ['/api/state','/sw.js','/.env'])assert.equal((await fetch(base+path)).status,404,path);assert.equal((await fetch(base+'/api/auth/setup',{method:'POST'})).status,405);const legal=await fetch('http://localhost:3080/datenschutz',{redirect:'manual'});assert.equal(legal.status,302);assert.equal(legal.headers.get('location'),'https://putzonaut.de/datenschutz');console.log('Public website, assets, app links and account isolation passed');"
       - name: Log in to the Container registry
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: docker/login-action@v3

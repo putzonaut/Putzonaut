@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.21.0
+# Putzonaut · Web-App 0.22.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -6,7 +6,13 @@ Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Pa
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
 
-## Eigene Konten · Version 0.21.0
+## Website und App · Version 0.22.0
+
+Die öffentliche Website (`putzonaut.de`) und die Smartphone-App (`app.putzonaut.de`) laufen gemeinsam in einem Docker-Container. Website-Port 3081 und App-Port 3080 bleiben getrennt. Der bevorzugte Installationsweg ist der [Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store). Die Website nutzt lokale Schriften, vorhandenes Artwork und einen aus APP_ORIGIN erzeugten QR-Code.
+
+[Prüfstand 0.22](docs/QA-0.22.md) · [Installation](standalone/README.md)
+
+## Eigene Konten · seit Version 0.21.0
 
 Die aktuelle App kann mit eigenen Putzonaut-Konten betrieben werden: E-Mail und Passwort, Bestätigungslink, Passwort-Reset und widerrufbare Sitzungen. Nutzer benötigen im eigenständigen Betrieb kein ChatGPT. Docker-/Node-Server, SQLite, privater Fotospeicher und SMTP-Anbindung sind im Ordner `standalone/` enthalten.
 
@@ -312,7 +318,7 @@ Die additive Migration `0001_bent_manta.sql` legt nur die zwei Tabellen für den
 
 Die aktuelle Website bleibt eine private Entwicklungsveröffentlichung. Erwachsene melden sich dort über ChatGPT an und benötigen zusätzlich Website-Zugriff. Eine Crew-Einladung ändert diese Freigabe nicht. Einladungen werden nicht automatisch versandt.
 
-Die eigenständige Web-App mit eigener Anmeldung, E-Mail-Bestätigung und Passwort-Wiederherstellung ist seit 0.21.0 in `standalone/` enthalten. Kontolöschung, der tatsächliche Datenumzug, ein erprobter vollständiger Backup-/Restore-Ablauf, Serveranschluss und echte Mailzustellung bleiben vor dem öffentlichen Start zu erledigen. Die frühere Docker-/PostgreSQL-Grundlage im Hauptverzeichnis bleibt als Altstand erhalten. Ein öffentlicher Zugang wird durch dieses Update nicht eingerichtet.
+Die eigenständige Web-App mit eigener Anmeldung, E-Mail-Bestätigung und Passwort-Wiederherstellung ist seit 0.21.0 in `standalone/` enthalten. Kontolöschung, der tatsächliche Datenumzug, ein erprobter vollständiger Backup-/Restore-Ablauf, Serveranschluss und echte Mailzustellung bleiben vor dem öffentlichen Start zu erledigen. Die frühere Docker-/PostgreSQL-Grundlage im Hauptverzeichnis bleibt als Altstand erhalten. Die Bereitstellung auf dem tatsächlichen Umbrel und die SMTP-Konfiguration müssen separat abgeschlossen sein; das Image allein startet keinen öffentlichen Dienst.
 
 ## Daten und Berechtigungen
 

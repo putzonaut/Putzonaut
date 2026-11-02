@@ -16,6 +16,7 @@ WORKDIR /app
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/dist/standalone ./dist/standalone
+COPY --from=build /app/dist/website ./dist/website
 COPY --from=build /app/server ./server
 COPY --from=build /app/shared ./shared
 COPY --from=build /app/src/version.ts ./src/version.ts
@@ -23,6 +24,6 @@ COPY --from=build /app/standalone ./standalone
 COPY --from=build /app/drizzle ./drizzle
 RUN mkdir /data && chown node:node /data
 USER node
-EXPOSE 3080
+EXPOSE 3080 3081
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD node -e "fetch('http://127.0.0.1:3080/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
 CMD ["node", "standalone/index.ts"]

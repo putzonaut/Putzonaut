@@ -30,11 +30,13 @@ Putzonaut macht aus Haushaltsaufgaben kleine Missionen. Erledige sie allein oder
 
 Eine installierbare Web-App für Android und iPhone – mit eigenem Symbol auf dem Startbildschirm, hellem und dunklem Design. Die eigenständige Version verwendet Putzonaut-Konten mit E-Mail und Passwort.
 
-**Version 0.21.0 · In Entwicklung.** Der öffentliche Start ist in Vorbereitung. Den geprüften Umfang und die noch offenen Praxistests findest du im [Prüfstand](web/docs/QA-0.21.md).
+**Version 0.22.0 · In Entwicklung.** Website und App werden gemeinsam als Umbrel-App ausgeliefert. Den geprüften Umfang und die noch offenen Praxistests findest du im [Prüfstand](web/docs/QA-0.22.md).
 
 ## Selbst hosten
 
-Die aktuelle Anwendung liegt in **`web/`**. Für den eigenen Betrieb gibt es fertige Docker-Images für amd64 und arm64. Benötigt werden Docker Compose, HTTPS und ein Mailzugang für Bestätigungs- und Passwort-Mails.
+Installiere **Putzonaut** über [Denny’s Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store). Website und App laufen gemeinsam in einem Docker-Container mit eigenem Datenspeicher. Für Bestätigungs- und Passwort-Mails wird ein SMTP-Zugang benötigt.
+
+Die aktuelle Anwendung liegt in **`web/`**. Fertige Images für amd64 und arm64 sind auch für einen eigenständigen Docker-Compose-Betrieb verfügbar.
 
 **[Zur Installationsanleitung →](web/standalone/README.md)**
 

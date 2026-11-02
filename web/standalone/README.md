@@ -1,20 +1,20 @@
-# Putzonaut mit eigenen Konten · 0.21.0
+# Putzonaut mit eigenen Konten · 0.22.0
 
 Die aktuelle App aus `web/` läuft als eigenständiger Node-Server mit E-Mail und Passwort. Nutzer benötigen dafür weder ChatGPT noch GitHub. Oberfläche, Missionen, Crew, Kinderprofile, Punkte, Fotos und Offline-Funktionen verwenden denselben Anwendungscode wie die private Sites-Version.
+
+## Umbrel Community Store
+
+Auf Umbrel OS 2.0 oder neuer Putzonaut über [Denny’s Umbrel Community Store](https://github.com/dennysubke/dennys-umbrel-app-store) installieren. Die App führt beim ersten Start zu ihren nativen Umbrel-App-Einstellungen. Dort APP_ORIGIN, WEBSITE_ORIGIN, den Absender und die SMTP-Verbindung setzen; SMTP_PASSWORD als eigene Variable für den Dienst `web` eintragen. Zugangsdaten gehören nicht in GitHub oder in einen Chat.
+
+Website und App laufen im selben Container. Der öffentliche Tunnel zeigt auf `http://denny-putzonaut_web_1:3081` für `putzonaut.de` und `www.putzonaut.de`; die App auf `http://denny-putzonaut_web_1:3080` für `app.putzonaut.de`. Der lokale Umbrel-App-Proxy bleibt geschützt. Die Website ist bereits erreichbar, während die App noch auf vollständige SMTP-Einstellungen wartet.
 
 ## Installation mit fertigem Docker-Image
 
 Die geprüften Images für **amd64 und arm64** liegen unter `ghcr.io/putzonaut/putzonaut`. Auf dem Zielserver sind nur Docker mit Compose und die Konfiguration nötig. Quellcode, Git, Node.js und ein Build auf dem Server sind dafür nicht erforderlich.
 
-Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.21.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
+Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.22.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
 
-Solange das Container-Paket privat ist, vor dem Download mit einem GitHub-Token anmelden, der ausschließlich die erforderliche Leseberechtigung für Pakete besitzt:
-
-```sh
-docker login ghcr.io -u putzonaut
-```
-
-Den Token an der verdeckten Passwortabfrage eingeben. Ein öffentlich freigegebenes Image kann ohne Anmeldung heruntergeladen werden. Das Repository muss dafür nicht öffentlich werden; das Image selbst enthält jedoch die ausführbare Anwendung. Der Workflow verändert keine Sichtbarkeit.
+Das Container-Image ist öffentlich und lässt sich ohne GitHub-Anmeldung laden. Das Quellcode-Repository bleibt davon unabhängig.
 
 Die Installationsdateien in einem eigenen Putzonaut-Konfigurationsordner ablegen. Dort:
 
@@ -49,12 +49,13 @@ docker compose -f compose.yaml -f compose.tunnel.yaml up -d
 
 Die veröffentlichte Route im bestehenden Cloudflare-Tunnel lautet:
 
-| Feld | Wert |
+| Hostname | Service |
 | --- | --- |
-| Hostname | `app.putzonaut.de` |
-| Service | `http://putzonaut-origin:3080` |
+| `app.putzonaut.de` | `http://putzonaut-origin:3080` |
+| `putzonaut.de` | `http://putzonaut-origin:3081` |
+| `www.putzonaut.de` | `http://putzonaut-origin:3081` (Weiterleitung zur Hauptadresse) |
 
-Die Domain und das HTTPS-Zertifikat müssen bei Cloudflare aktiv sein. `APP_ORIGIN` bleibt die öffentliche HTTPS-Adresse. Beim Betrieb ohne Container-Connector leitet der lokale HTTPS-Proxy an `127.0.0.1:3080` weiter.
+Die Domain und das HTTPS-Zertifikat müssen bei Cloudflare aktiv sein. `APP_ORIGIN=https://app.putzonaut.de` und `WEBSITE_ORIGIN=https://putzonaut.de` bleiben die öffentlichen HTTPS-Adressen. Für eigene Installationen die Betreiberangaben in `website/impressum.html` und `website/datenschutz.html` an den tatsächlichen Betrieb anpassen. Beim Betrieb ohne Container-Connector leitet der lokale HTTPS-Proxy an `127.0.0.1:3080` weiter.
 
 ### Daten und Aktualisierungen
 

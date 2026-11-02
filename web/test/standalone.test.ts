@@ -181,6 +181,7 @@ test('HTTP boundary sanitizes identity/IP headers, limits bodies, and serves acc
   assert.equal(seen[0].headers.has('oai-authenticated-user-id'),false);assert.equal(seen[0].headers.has('x-forwarded-for'),false);assert.equal(seen[0].headers.get('x-putzonaut-client-ip'),'127.0.0.1');
   assert.equal((await fetch(root+'/api/account/sign-in/email',{method:'POST',body:'x'.repeat(17000)})).status,413);
   assert.equal((await fetch(root+'/.env')).status,404);
+  const legal=await fetch(root+'/datenschutz',{redirect:'manual'});assert.equal(legal.status,302);assert.equal(legal.headers.get('location'),'https://putzonaut.de/datenschutz');
  }finally{server.close();await once(server,'close');}
 });
 

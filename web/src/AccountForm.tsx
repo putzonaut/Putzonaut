@@ -82,6 +82,7 @@ export function AccountForm({mode='anmelden',heading='h2'}:{mode?:Mode;heading?:
      {mode==='anmelden'?<><a href={accountPath('passwort-vergessen')}>Passwort vergessen?</a><a href={accountPath('registrieren')}>Neu hier? Konto anlegen</a><button className="text-button" disabled={busy} onClick={resend}>Bestätigung erneut senden</button></>:
       <a href={accountPath('anmelden')}>Zur Anmeldung</a>}
     </nav>
+    <nav className="account-legal" aria-label="Rechtliche Informationen"><a href="/impressum" target="_blank" rel="noreferrer">Impressum</a><a href="/datenschutz" target="_blank" rel="noreferrer">Datenschutz</a></nav>
    </>}
  </section>;
 }

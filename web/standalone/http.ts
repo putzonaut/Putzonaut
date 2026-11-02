@@ -12,7 +12,7 @@ export function clientAddress(request:IncomingMessage,trustedProxies:string[]){
 }
 const mime:Record<string,string>={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',json:'application/json',webmanifest:'application/manifest+json',svg:'image/svg+xml',png:'image/png',webp:'image/webp',woff:'font/woff',woff2:'font/woff2'};
 const pages=new Set(['/','/konto/anmelden','/konto/registrieren','/konto/passwort-vergessen','/konto/passwort-neu','/konto/bestaetigt']);
-export function createHttpServer(app:{fetch(request:Request):Promise<Response>},options:{origin:string;publicDirectory:string;trustedProxies?:string[]}){
+export function createHttpServer(app:{fetch(request:Request):Promise<Response>},options:{origin:string;publicDirectory:string;trustedProxies?:string[];websiteOrigin?:string}){
  const root=resolve(options.publicDirectory);
  return createServer({requestTimeout:30_000,headersTimeout:15_000,maxHeaderSize:16_384},async(req,res)=>{
   try{
@@ -31,6 +31,7 @@ export function createHttpServer(app:{fetch(request:Request):Promise<Response>},
     const method=req.method??'GET';
     response=await app.fetch(new Request(url,{method,headers,...(!['GET','HEAD'].includes(method)&&length?{body:Buffer.concat(chunks)}:{})}));
    }else if(!['GET','HEAD'].includes(req.method??''))response=new Response(null,{status:405});
+   else if(['/impressum','/datenschutz'].includes(url.pathname))response=new Response(null,{status:302,headers:{Location:new URL(url.pathname,options.websiteOrigin??'https://putzonaut.de').href}});
    else{
     const path=decodeURIComponent(url.pathname),relative=pages.has(path)?'index.html':path.slice(1);
     const file=resolve(root,relative);
