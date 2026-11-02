@@ -1,10 +1,14 @@
-# Öffentliche Website · 0.22.1
+# Öffentliche Website · 0.22.2
 
 Die freigegebene Website liegt unter `website/`. `npm run build:standalone` kopiert sie nach `dist/website` und ergänzt Nunito-Schriften sowie das vorhandene App-Symbol. Das Docker-Image liefert diese Oberfläche auf Port 3081 aus; die App bleibt auf Port 3080.
 
 `__APP_ORIGIN__` und `__SITE_ORIGIN__` werden beim Serverstart durch die konfigurierten Adressen ersetzt. Der QR-Code entsteht aus `APP_ORIGIN`. Rechtstexte verwenden die Routen `/impressum` und `/datenschutz`. Die Startseite hat keine Vorschau-Suchmaschinen-Sperre; `robots.txt` und Sitemap erzeugt der Server.
 
 Die Gestaltung stammt aus der freigegebenen Website-Vorschau, Commit `4ba14f044ba0d0b2e811783386857bdc7b32eefd`: dunkle Glasflächen, Nunito, „Auf Hochglanzkurs“, Smartphone-Anleitung und Hilfe über `sos@putzonaut.de` sowie GitHub-Issues. Die bestehenden Rechtstexte wurden inhaltlich beibehalten.
+
+## Updates und Browser-Cache
+
+Der Website-Server ergänzt lokale CSS- und JavaScript-Links auf allen HTML-Seiten beim Start um einen SHA-256-Inhaltsstand (`?v=…`). Geänderte Dateien erhalten dadurch neue Cache-Adressen, ohne dass Besucher Browserdaten löschen müssen. Die HTML-Antworten sowie unversionierte oder veraltete CSS-/JavaScript-Adressen verwenden `no-cache`; aktuelle Inhaltsversionen dürfen eine Stunde zwischengespeichert werden.
 
 ## Bilder und Animation
 

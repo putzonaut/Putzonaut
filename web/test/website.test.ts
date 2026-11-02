@@ -58,10 +58,54 @@ test('approved production pages keep app links configurable and legal/support na
   for(const [,href] of page.body.matchAll(/href="(\/[^"#]*)(?:#[^"]*)?"/g))if(!href.startsWith('/website-assets/'))assert.equal((await raw(port,href)).status,200,href);
  }
  const home=(await raw(port,'/')).body;
+ for(const [,asset] of home.matchAll(/(?:href|src)="(\/website-assets\/[^"?]+\.(?:css|js)\?v=[a-f0-9]{16})"/g)){
+  const response=await raw(port,asset);assert.equal(response.status,200,asset);
+  assert.equal(response.headers['cache-control'],'public, max-age=3600');
+ }
+ assert.equal([...home.matchAll(/\.(?:css|js)\?v=[a-f0-9]{16}/g)].length,5);
  assert.ok(home.includes('href="https://crew.example.test"'));assert.ok(!home.includes('href="https://app.putzonaut.de"'));
  assert.ok(!/name="robots"[^>]*noindex/.test(home));
  const illustration=await readFile(resolve('website/website-assets/screens/home.svg'),'utf8');
  assert.ok(!/<script\b|\bon\w+=|(?:href|src)=["']https?:/i.test(illustration));
+});
+test('website updates bypass cached CSS and JS without clearing browser data',async t=>{
+ const publicDirectory=await mkdtemp(join(tmpdir(),'putzonaut-cache-update-'));
+ t.after(()=>rm(publicDirectory,{recursive:true,force:true}));
+ await mkdir(join(publicDirectory,'website-assets'));
+ for(const page of ['index.html','impressum.html','datenschutz.html'])await writeFile(join(publicDirectory,page),'<link rel="stylesheet" href="/website-assets/site.css"><script src="/website-assets/site.js" defer></script>');
+ const cssFile=join(publicDirectory,'website-assets/site.css');
+ const jsFile=join(publicDirectory,'website-assets/site.js');
+ await writeFile(cssFile,'body{color:#103e43}');await writeFile(jsFile,'/* old behavior */');
+ const start=async()=>{
+  const server=await createWebsiteServer({publicDirectory,appOrigin:'https://app.example.test'});
+  await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));
+  t.after(()=>new Promise<void>(r=>server.close(()=>r())));
+  return (server.address() as any).port;
+ };
+ const assetUrls=(html:string)=>[...html.matchAll(/(?:href|src)="([^"]+)"/g)].map(match=>match[1]);
+ const before=await start();
+ const oldAssets=assetUrls((await raw(before,'/')).body);
+ const browserCache=new Map(await Promise.all(oldAssets.map(async path=>[path,(await raw(before,path)).body] as const)));
+ // Simulate the browser cache left by 0.22.0/0.22.1 as well as a versioned release.
+ browserCache.set('/website-assets/site.css','body{color:#103e43}');
+ browserCache.set('/website-assets/site.js','/* old behavior */');
+ await writeFile(cssFile,'body{color:#f3f4fa}');await writeFile(jsFile,'/* new behavior */');
+ const after=await start();const page=await raw(after,'/');
+ assert.equal(page.headers['cache-control'],'no-cache');
+ const newAssets=assetUrls(page.body);assert.equal(newAssets.length,2);
+ assert.deepEqual(assetUrls((await raw(after,'/impressum')).body),newAssets);
+ assert.deepEqual(assetUrls((await raw(after,'/datenschutz')).body),newAssets);
+ for(const [index,path] of newAssets.entries()){
+  assert.match(path,/\?v=[a-f0-9]{16}$/);assert.notEqual(path,oldAssets[index]);
+  assert.ok(!browserCache.has(path),'The new page must not address an old cached asset.');
+  const response=await raw(after,path);assert.equal(response.status,200);
+  assert.equal(response.headers['cache-control'],'public, max-age=3600');
+  assert.equal((await raw(after,path,'HEAD')).body,'');
+  assert.match(response.body,index===0?/#f3f4fa/:/new behavior/);
+  assert.equal((await raw(after,oldAssets[index])).headers['cache-control'],'no-cache');
+  assert.equal((await raw(after,path.split('?')[0])).headers['cache-control'],'no-cache');
+ }
+ const unchanged=await start();assert.deepEqual(assetUrls((await raw(unchanged,'/')).body),newAssets);
 });
 test('public origin configuration accepts HTTPS and local development, rejects paths and credentials',()=>{
  assert.equal(websiteOrigin('https://app.example.test'),'https://app.example.test');

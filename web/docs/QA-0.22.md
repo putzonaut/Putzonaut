@@ -1,3 +1,9 @@
+# Ergänzung 0.22.2 · Website-Cache
+
+- Das Fehlerbild wurde mit neuer HTML-Seite und zwischengespeicherter CSS-Datei aus 0.22.0 nachgestellt: dunkelgrüne Schrift und eine schmale, gestreckte App-Vorschau am rechten Rand.
+- Mit aktuellen Dateien ist die Smartphone-Anordnung bei 360 und 393 Pixeln korrekt.
+- Ein Regressionstest simuliert alte unversionierte und versionierte CSS-/JavaScript-Antworten im Browser-Cache, startet die Website nach einer Dateiänderung neu und prüft neue Adressen, konsistente Rechtsseiten sowie Cache-Header.
+
 # Prüfstand 0.22.0 · 2. November 2026
 
 - 316 automatisierte Tests ohne Fehler oder übersprungene Fälle; nach Ergänzung der Rechtslinks erneut alle 18 betroffenen Server- und Website-Tests erfolgreich.
