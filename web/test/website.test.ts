@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,mkdir,writeFile,rm,symlink} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {request} from 'node:http';
@@ -17,23 +17,51 @@ test('public website renders configured origins while isolating account, storage
  await writeFile(join(root,'secret.png'),'private');
  await symlink(join(root,'secret.png'),join(publicDirectory,'website-assets','escape.png'));
  await writeFile(join(publicDirectory,'website-assets','site.css'),'body{color:red}');
+ await mkdir(join(publicDirectory,'website-assets','screens'));
+ await writeFile(join(publicDirectory,'website-assets','screens','home.svg'),'<svg xmlns="http://www.w3.org/2000/svg"/>');
  const server=await createWebsiteServer({publicDirectory,appOrigin:'https://crew.example.test',siteOrigin:'https://example.test'});
  await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise<void>(r=>server.close(()=>r())));
  const port=(server.address() as any).port;
  const page=await raw(port,'/');assert.equal(page.status,200);assert.match(page.body,/https:\/\/crew.example.test/);assert.ok(!page.body.includes('__APP_ORIGIN__'));assert.ok(!page.headers['set-cookie']);
  assert.match(page.headers['content-security-policy'],/frame-ancestors 'none'/);
+ assert.ok(!page.headers['content-security-policy'].includes('unsafe-inline'));
+ assert.ok(!page.headers['content-security-policy'].includes('data:'));
  assert.equal((await raw(port,'/', 'HEAD')).body,'');
  for(const path of ['/api/state','/api/account/get-session','/sw.js','/.env','/website-assets/escape.png','/website-assets/%2e%2e/secret.png'])assert.equal((await raw(port,path)).status,404,path);
  assert.equal((await raw(port,'/api/account/sign-up/email','POST')).status,405);
  assert.equal((await raw(port,'//attacker.test')).status,400);
  assert.equal((await raw(port,'/website-assets/%E0%A4')).status,400);
  assert.equal((await raw(port,'/website-assets/site.css')).status,200);
+ const illustration=await raw(port,'/website-assets/screens/home.svg');
+ assert.equal(illustration.status,200);assert.equal(illustration.headers['content-type'],'image/svg+xml');
+ assert.match(illustration.headers['content-security-policy'],/font-src data:/);
+ assert.match(illustration.headers['content-security-policy'],/style-src 'unsafe-inline'/);
+ assert.match(illustration.headers['content-security-policy'],/default-src 'none'/);
+ assert.match(illustration.headers['content-security-policy'],/sandbox/);
+ assert.ok(!(await raw(port,'/website-assets/site.css')).headers['content-security-policy'].includes('unsafe-inline'));
  assert.match((await raw(port,'/app-qr.svg')).body,/<svg/);
  assert.equal((await raw(port,'/datenschutz/')).status,200);
  const redirect=await raw(port,'/impressum?source=nav','GET',{host:'www.example.test','x-forwarded-host':'attacker.test'});
  assert.equal(redirect.status,308);assert.equal(redirect.headers.location,'https://example.test/impressum?source=nav');
  assert.equal((await raw(port,'/','GET',{'x-forwarded-host':'www.example.test'})).status,200);
  assert.ok((await raw(port,'/sitemap.xml')).body.includes('https://example.test/'));
+});
+test('approved production pages keep app links configurable and legal/support navigation reachable',async t=>{
+ const server=await createWebsiteServer({publicDirectory:resolve('website'),appOrigin:'https://crew.example.test',siteOrigin:'https://example.test'});
+ await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise<void>(r=>server.close(()=>r())));
+ const port=(server.address() as any).port;
+ for(const path of ['/','/impressum','/datenschutz']){
+  const page=await raw(port,path);assert.equal(page.status,200,path);
+  assert.ok(!page.body.includes('__APP_ORIGIN__'));assert.ok(!page.body.includes('__SITE_ORIGIN__'));
+  assert.ok(page.body.includes(`rel="canonical" href="https://example.test${path}"`));
+  assert.ok(page.body.includes('href="mailto:sos@putzonaut.de"'));assert.ok(page.body.includes('https://github.com/putzonaut/putzonaut/issues'));
+  for(const [,href] of page.body.matchAll(/href="(\/[^"#]*)(?:#[^"]*)?"/g))if(!href.startsWith('/website-assets/'))assert.equal((await raw(port,href)).status,200,href);
+ }
+ const home=(await raw(port,'/')).body;
+ assert.ok(home.includes('href="https://crew.example.test"'));assert.ok(!home.includes('href="https://app.putzonaut.de"'));
+ assert.ok(!/name="robots"[^>]*noindex/.test(home));
+ const illustration=await readFile(resolve('website/website-assets/screens/home.svg'),'utf8');
+ assert.ok(!/<script\b|\bon\w+=|(?:href|src)=["']https?:/i.test(illustration));
 });
 test('public origin configuration accepts HTTPS and local development, rejects paths and credentials',()=>{
  assert.equal(websiteOrigin('https://app.example.test'),'https://app.example.test');

@@ -48,6 +48,9 @@ export async function createWebsiteServer({publicDirectory,appOrigin,siteOrigin=
       const file=await realpath(resolve(root,path.slice(1)));
       const extension=file.slice(file.lastIndexOf('.'));
       if(!file.startsWith(root+sep)||!mime[extension]){send(404,'text/plain','Not found');return;}
+      // The self-contained app illustration embeds its fonts and artwork.
+      // This image-only policy never applies to HTML pages or JavaScript.
+      if(path==='/website-assets/screens/home.svg')res.setHeader('Content-Security-Policy',"default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; sandbox");
       const bytes=await readFile(file);res.setHeader('Cache-Control','public, max-age=3600');send(200,mime[extension],bytes);
     }catch(error){send(error instanceof URIError?400:404,'text/plain; charset=utf-8','Diese Seite gibt es nicht.');}
   });

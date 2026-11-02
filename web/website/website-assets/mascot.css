@@ -1,0 +1,92 @@
+/* The mascot rides across the open space beside “Auf”. */
+.hero-copy { position: relative; padding-top: 32px; }
+.hero-mascot {
+  position: absolute;
+  left: 40%;
+  top: -90px;
+  width: min(60%, 375px);
+  aspect-ratio: 2;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 30px;
+  background: transparent;
+  color: inherit;
+  line-height: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.hero-mascot .putzo-rocket { display: block; width: 100%; height: 100%; overflow: visible; fill: none; stroke: none; }
+.rocket-flight { transform-origin: 1030px 650px; }
+.rocket-arm { transform-origin: 982px 383px; }
+.engine-flame { transform-origin: 0 0; }
+.hero h1 > span { position: relative; display: inline-block; }
+.hero .word-glint { display: none; }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .hero h1 > span > .word-glint {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    background: linear-gradient(110deg, transparent 40%, rgba(237, 255, 250, .15) 46%, #fff 49%, #fff6d5 51%, rgba(237, 255, 250, .15) 54%, transparent 60%);
+    background-size: 300% 100%;
+    background-position: 120% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rocket-ready .rocket-flight { animation: putzo-flight 6.4s ease-in-out infinite paused; }
+  .rocket-ready .rocket-arm { animation: putzo-scrubber-salute 8s ease-in-out infinite paused; }
+  .rocket-ready .flame-outer { animation: putzo-flame 1.05s ease-in-out infinite alternate paused; }
+  .rocket-ready .flame-inner { animation: putzo-flame .7s -.2s ease-in-out infinite alternate-reverse paused; }
+  .rocket-ready .flame-core { animation: putzo-flame .48s -.15s ease-in-out infinite alternate paused; }
+  .rocket-ready h1 > span > .word-glint { animation: putzo-word-shine 8s ease-in-out infinite paused; }
+  .rocket-active .rocket-flight,
+  .rocket-active .rocket-arm,
+  .rocket-active .engine-flame,
+  .rocket-active h1 > span > .word-glint { animation-play-state: running; }
+}
+@keyframes putzo-flight {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-15px) rotate(-.7deg); }
+}
+@keyframes putzo-scrubber-salute {
+  0%, 5%, 35%, 100% { transform: rotate(0); }
+  12%, 26% { transform: rotate(-4deg); }
+  19% { transform: rotate(2.5deg); }
+}
+@keyframes putzo-flame {
+  0% { transform: scale(.87, .94); }
+  40% { transform: scale(1.04, 1.03); }
+  70% { transform: scale(.95, .98); }
+  100% { transform: scale(1.08, 1.04); }
+}
+@keyframes putzo-word-shine {
+  0%, 20% { opacity: 0; background-position: 120% 0; }
+  24%, 31% { opacity: .65; }
+  38%, 100% { opacity: 0; background-position: -20% 0; }
+}
+@media (max-width:1100px) {
+  .hero-mascot { width: 62%; left: 37%; top: -70px; }
+}
+@media (max-width:800px) {
+  .hero { padding-top: 73px; }
+  .hero-copy { padding-top: 18px; }
+  .hero-mascot { width: 64%; left: 35%; top: -65px; }
+}
+@media (min-width:621px) and (max-width:700px) {
+  .hero { padding-top: 93px; }
+}
+@media (max-width:620px) {
+  .hero { padding-top: 29px; }
+  .hero-copy { padding-top: 0; }
+  .hero-mascot { position: relative; left: auto; top: auto; width: min(76%, 250px); margin: 0 auto 16px; }
+}
+@media (forced-colors: active) {
+  .hero h1 > span > .word-glint { display: none; }
+}

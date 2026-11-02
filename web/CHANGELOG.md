@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.22.1 · 2. November 2026
+
+- Freigegebene dunkle Website mit Glasoptik, lokalem Nunito-Schriftbild und „Auf Hochglanzkurs“.
+- Scharfer App-Einblick, animierte Funktionskarten und kompakte Raketenfigur mit Schrubber; reduzierte Bewegung und unsichtbare Tabs pausieren die Animation.
+- Smartphone-Anleitung, acht häufige Fragen und Hilfe über sos@putzonaut.de oder GitHub-Issues auf allen Seiten.
+- Produktionslinks und QR-Code folgen weiterhin der konfigurierten App-Adresse. Website und App bleiben auf getrennten Ports im selben Docker-Image.
+
 ## 0.22.0 · 2. November 2026
 
 - Öffentliche Vorstellungsseite mit vorhandenem Artwork, echtem App-Einblick, lokal erzeugtem QR-Code und Anleitung für Android und iPhone.
