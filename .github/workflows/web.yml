@@ -87,6 +87,28 @@ jobs:
       - name: Check the separate public website
         run: |
           docker exec putzonaut-ci node --input-type=module -e "import assert from 'node:assert/strict';const base='http://localhost:3081';const page=await fetch(base);assert.equal(page.status,200);const html=await page.text();assert.ok(html.includes('Hochglanzkurs.'));assert.ok(html.includes('http://localhost:3080'));assert.ok(!html.includes('__APP_ORIGIN__'));assert.ok(!html.includes('noindex'));for(const path of ['/website-assets/screens/home.svg','/website-assets/putzonaut-rocket.webp','/website-assets/site.js','/website-assets/glass.css','/website-assets/features.css','/website-assets/mascot.css','/website-assets/fonts/nunito-900.woff2','/app-qr.svg','/impressum','/datenschutz'])assert.equal((await fetch(base+path)).status,200,path);for(const path of ['/api/state','/sw.js','/.env'])assert.equal((await fetch(base+path)).status,404,path);assert.equal((await fetch(base+'/api/auth/setup',{method:'POST'})).status,405);const legal=await fetch('http://localhost:3080/datenschutz',{redirect:'manual'});assert.equal(legal.status,302);assert.equal(legal.headers.get('location'),'https://putzonaut.de/datenschutz');console.log('Public website, assets, app links and account isolation passed');"
+      - name: Check website asset revisions in the built image
+        run: |
+          docker exec -i putzonaut-ci node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {createHash} from 'node:crypto';
+          const base='http://localhost:3081';
+          for(const page of ['/','/impressum','/datenschutz']){
+            const response=await fetch(base+page);
+            assert.equal(response.headers.get('cache-control'),'no-cache');
+            const html=await response.text();
+            const assets=[...html.matchAll(/(?:href|src)="(\/website-assets\/[^"?]+\.(?:css|js)\?v=([a-f0-9]{16}))"/g)];
+            assert.equal(assets.length,page==='/'?5:2);
+            for(const [,path,revision] of assets){
+              const asset=await fetch(base+path);assert.equal(asset.status,200);
+              assert.equal(asset.headers.get('cache-control'),'public, max-age=3600');
+              assert.equal(createHash('sha256').update(Buffer.from(await asset.arrayBuffer())).digest('hex').slice(0,16),revision);
+              const unversioned=await fetch(base+path.split('?')[0]);
+              assert.equal(unversioned.headers.get('cache-control'),'no-cache');
+            }
+          }
+          console.log('Built website uses current content revisions on all pages');
+          NODE
       - name: Log in to the Container registry
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: docker/login-action@v3

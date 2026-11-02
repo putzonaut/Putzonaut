@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.22.2 · 2. November 2026
+
+- Website-CSS und -JavaScript erhalten automatisch Inhaltsversionen. Nach einem Update werden die passenden Dateien geladen, auch wenn der Browser noch das alte Design gespeichert hat.
+- Unversionierte oder veraltete CSS-/JavaScript-Adressen werden erneut geprüft. Anmeldung, Daten und bestehende Website-Gestaltung bleiben unverändert.
+- Regressionstest für den Wechsel von bereits zwischengespeicherten Layout-Dateien; mobile Darstellung bei 360 und 393 Pixeln geprüft.
+
 ## 0.22.1 · 2. November 2026
 
 - Freigegebene dunkle Website mit Glasoptik, lokalem Nunito-Schriftbild und „Auf Hochglanzkurs“.

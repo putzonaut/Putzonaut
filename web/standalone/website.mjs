@@ -1,4 +1,5 @@
 import {createServer} from 'node:http';
+import {createHash} from 'node:crypto';
 import {readFile,realpath} from 'node:fs/promises';
 import {resolve,sep} from 'node:path';
 import QRCode from 'qrcode';
@@ -20,6 +21,16 @@ export async function createWebsiteServer({publicDirectory,appOrigin,siteOrigin=
   const qr=await QRCode.toString(appOrigin,{type:'svg',errorCorrectionLevel:'M',margin:4,width:208,color:{dark:'#103e43ff',light:'#ffffffff'}});
   const pages=new Map([['/','index.html'],['/impressum','impressum.html'],['/datenschutz','datenschutz.html']]);
   const documents=new Map(await Promise.all([...pages].map(async([path,file])=>[path,(await readFile(resolve(root,file),'utf8')).replaceAll('__APP_ORIGIN__',escape(appOrigin)).replaceAll('__SITE_ORIGIN__',escape(siteOrigin))])));
+  // A new document must not reuse CSS or JS cached before an app update.
+  // Content revisions also cover releases that forget to bump the app version.
+  const assetReference=/((?:href|src)=")((?:\/website-assets\/)[^"?#]+\.(?:css|js))"/g;
+  const assetPaths=new Set([...documents.values()].flatMap(html=>[...html.matchAll(assetReference)].map(match=>match[2])));
+  const assetRevisions=new Map(await Promise.all([...assetPaths].map(async path=>{
+    const file=await realpath(resolve(root,path.slice(1)));
+    if(!file.startsWith(root+sep))throw new Error('Website assets must stay inside the public directory.');
+    return [path,createHash('sha256').update(await readFile(file)).digest('hex').slice(0,16)];
+  })));
+  for(const [path,html] of documents)documents.set(path,html.replace(assetReference,(_,attribute,asset)=>`${attribute}${asset}?v=${assetRevisions.get(asset)}"`));
   return createServer({requestTimeout:15000,headersTimeout:10000,maxHeaderSize:16384},async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');
     res.setHeader('Referrer-Policy','no-referrer');
@@ -51,7 +62,11 @@ export async function createWebsiteServer({publicDirectory,appOrigin,siteOrigin=
       // The self-contained app illustration embeds its fonts and artwork.
       // This image-only policy never applies to HTML pages or JavaScript.
       if(path==='/website-assets/screens/home.svg')res.setHeader('Content-Security-Policy',"default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; base-uri 'none'; frame-ancestors 'none'; form-action 'none'; sandbox");
-      const bytes=await readFile(file);res.setHeader('Cache-Control','public, max-age=3600');send(200,mime[extension],bytes);
+      const bytes=await readFile(file);
+      // Old/unversioned entry points revalidate instead of storing another stale layout.
+      const currentRevision=assetRevisions.get(path);
+      if(!['.css','.js'].includes(extension)||(currentRevision&&url.searchParams.get('v')===currentRevision))res.setHeader('Cache-Control','public, max-age=3600');
+      send(200,mime[extension],bytes);
     }catch(error){send(error instanceof URIError?400:404,'text/plain; charset=utf-8','Diese Seite gibt es nicht.');}
   });
 }
