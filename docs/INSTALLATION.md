@@ -42,10 +42,10 @@ Die mitgelieferten Domain- und Mailwerte sind Beispiele und werden durch die Ang
 | `SMTP_PORT` | `587` für STARTTLS oder `465` für TLS ab Verbindungsbeginn. |
 | `SMTP_USER` / `SMTP_PASSWORD` | SMTP-Zugangsdaten des gewählten Anbieters. |
 
-Geprüftes Image für **0.24.0**:
+Geprüftes Image für **0.25.0**:
 
 ```dotenv
-PUTZONAUT_IMAGE=ghcr.io/putzonaut/putzonaut:0.24.0-ca964bf69a05@sha256:5c1de351c5fa2d570f3de925e78a06e7efabb679cd1b9077bdce39e50a9b1217
+PUTZONAUT_IMAGE=ghcr.io/putzonaut/putzonaut:0.25.0-d055df3e41c5@sha256:289f64495c0de55a1a6a6c769e8a5cd938d6826485e9daef7aa7a5efa3b5b5b7
 ```
 
 Das Image ist öffentlich abrufbar. Zugangsdaten verbleiben in der privaten `.env`-Datei.
