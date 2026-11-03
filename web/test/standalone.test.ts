@@ -17,7 +17,7 @@ import {newHousehold} from '../server/domain.ts';
 const origin='https://app.putzonaut.de',password='Eine lange sichere Passphrase 2026!';
 let directory:string,app:Awaited<ReturnType<typeof createStandaloneApp>>;
 const mail:Mail[]=[];let counter=0;
-before(async()=>{directory=await mkdtemp(join(tmpdir(),'putzonaut-accounts-'));app=await createStandaloneApp({directory,origin,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});});
+before(async()=>{directory=await mkdtemp(join(tmpdir(),'putzonaut-accounts-'));app=await createStandaloneApp({directory,origin,scheduleReminders:false,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});});
 after(async()=>{await app?.close();await rm(directory,{recursive:true,force:true});});
 async function call(path:string,body?:unknown,cookie='',headers:Record<string,string>={},method=body===undefined?'GET':'POST'){
  const response=await app.fetch(new Request(origin+path,{method,headers:{origin,'content-type':'application/json','x-putzonaut-client-ip':`192.0.2.${counter%250+1}`,cookie,...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}));
@@ -139,7 +139,7 @@ test('SQLite adapter rolls back all effects of a failed crew batch and persists 
   app.repo.db.prepare('INSERT INTO memberships(account_id,household_id,member_id) VALUES(?,?,?)').bind(user.id,state.household.id,state.user.id),
  ]));
  assert.equal((await app.repo.forAccount(user.id))!.revision,before!.revision);
- await app.close();app=await createStandaloneApp({directory,origin,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});
+ await app.close();app=await createStandaloneApp({directory,origin,scheduleReminders:false,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});
  assert.equal((await call('/api/state',undefined,user.cookie)).data.household.id,state.household.id);
 });
 

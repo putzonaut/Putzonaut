@@ -10,7 +10,7 @@ import {mailQueue} from './mail.ts';
 import type {MailTransport} from './mail.ts';
 import {photoStore} from './photos.ts';
 import {APIError} from 'better-auth/api';
-import {standalonePushConfig} from './push.ts';
+import {standalonePushConfig,startPushScheduler} from './push.ts';
 import {sendPush} from '../server/push.ts';
 import type {Household} from '../server/domain.ts';
 
@@ -21,7 +21,7 @@ const routes=new Map([
  ['/change-email','POST'],['/delete-user','POST'],
 ]);
 const json=(error:string,status:number)=>Response.json({error},{status});
-export async function createStandaloneApp(options:{directory:string;origin:string;secret:string;sendMail:MailTransport}){
+export async function createStandaloneApp(options:{directory:string;origin:string;secret:string;sendMail:MailTransport;scheduleReminders?:boolean}){
  mkdirSync(options.directory,{recursive:true,mode:0o700});
  const {sqlite,db}=openDatabase(join(options.directory,'crew.sqlite'));
  const authDb=new DatabaseSync(join(options.directory,'accounts.sqlite'));
@@ -79,8 +79,10 @@ export async function createStandaloneApp(options:{directory:string;origin:strin
   for(const cookie of sessionResponse.headers.getSetCookie())result.headers.append('Set-Cookie',cookie);
   return result;
  }
- return {auth,repo,sqlite,authDb,flushMail:mail.flush,
-  dispatchReminders:(now=new Date(),transport:typeof fetch=fetch)=>sendPush(repo,push,now,transport),
+ const dispatchReminders=(now=new Date(),transport:typeof fetch=fetch)=>sendPush(repo,push,now,transport);
+ // The factory is also used by embedding launchers (including the Store wrapper).
+ const stopPush=options.scheduleReminders===false?async()=>{}:startPushScheduler(()=>dispatchReminders());
+ return {auth,repo,sqlite,authDb,flushMail:mail.flush,dispatchReminders,
   async fetch(request:Request){
    let result:Response;
    try{result=await serialized(request);}catch{console.error('Putzonaut: Anfrage fehlgeschlagen.');result=json('Das hat gerade nicht geklappt. Bitte versuche es erneut.',500);}
@@ -89,6 +91,6 @@ export async function createStandaloneApp(options:{directory:string;origin:strin
    headers.set('X-Content-Type-Options','nosniff');headers.set('Referrer-Policy','no-referrer');
    return new Response(result.body,{status:result.status,headers});
   },
-  async close(){await mail.flush();sqlite.close();authDb.close();},
+  async close(){await stopPush();await mail.flush();sqlite.close();authDb.close();},
  };
 }

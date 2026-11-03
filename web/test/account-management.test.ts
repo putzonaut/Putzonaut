@@ -9,7 +9,7 @@ import type {Mail} from '../standalone/mail.ts';
 
 const origin='https://app.example.test',password='Eine eigene lange Passphrase 2026!';
 let directory:string,app:Awaited<ReturnType<typeof createStandaloneApp>>,mail:Mail[],counter=0;
-const open=()=>createStandaloneApp({directory,origin,secret:'isolated-account-test-secret-'.repeat(3),sendMail:async m=>{mail.push(m);}});
+const open=(scheduleReminders=false)=>createStandaloneApp({directory,origin,secret:'isolated-account-test-secret-'.repeat(3),sendMail:async m=>{mail.push(m);},scheduleReminders});
 beforeEach(async()=>{mail=[];directory=await mkdtemp(join(tmpdir(),'putzonaut-management-'));app=await open();});
 afterEach(async()=>{await app.close();await rm(directory,{recursive:true,force:true});});
 async function call(path:string,body?:unknown,cookie='',extra:Record<string,string>={}){
@@ -169,4 +169,11 @@ test('push scheduler starts without a browser, does not overlap and waits for it
  t.mock.timers.tick(120_000);assert.equal(calls,1);
  let stopped=false;const closing=stop().then(()=>{stopped=true;});await Promise.resolve();assert.equal(stopped,false);
  finish();await closing;assert.equal(stopped,true);t.mock.timers.tick(120_000);assert.equal(calls,1);
+});
+
+test('the server factory starts reminders for embedding launchers without running standalone/index.ts',async()=>{
+ await app.close();app=await open(true);
+ await new Promise<void>(resolve=>setImmediate(resolve));
+ const heartbeat=app.sqlite.prepare("SELECT value FROM push_state WHERE key='heartbeat'").get();
+ assert.ok(heartbeat);const result=JSON.parse(String(heartbeat.value));assert.equal(result.ok,true);assert.equal(result.checked,0);assert.equal(result.dryRun,false);
 });
