@@ -1,10 +1,18 @@
-# Putzonaut · Web-App 0.25.1
+# Putzonaut · Web-App 0.26.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Persönliche Nachrichten · Version 0.26.0
+
+Unter **Crew → Nachrichten** schreiben Mitglieder mit eigenem Konto einander innerhalb derselben Crew. Die vier Hauptbereiche bleiben erhalten. Ein kleiner Zähler zeigt ungelesene Nachrichten; offene Gespräche aktualisieren sich bei sichtbarer App alle drei Sekunden. Textnachrichten haben maximal 2.000 Zeichen, längere Verläufe werden in Seiten geladen. Bestätigte Wiederholungen derselben Sendeanfrage erzeugen keine zweite Nachricht; bei Verbindungsfehlern bleibt der Text im geöffneten Gespräch zum erneuten Senden erhalten. Das Schließen des Gesprächs verwirft ungesendete Texte.
+
+Die Berechtigung wird für beide Beteiligten serverseitig geprüft. Der Captain erhält keinen Zugriff auf fremde Gespräche. Kinderprofile und andere Crews sind keine Nachrichtenkontakte. Nachrichteninhalte liegen ausschließlich in der gesonderten Tabelle `messages`, nicht im Crewstand, Logbuch, Offline-Cache oder in der JSON-Crew-Sicherung. Die Lesebestätigung dient nur dem persönlichen Ungelesen-Zähler; andere Mitglieder sehen keinen Lesestatus. Nachrichten werden nicht als Push-Mitteilung versendet.
+
+Beim Austritt, Entfernen eines Mitglieds oder Schließen der Crew werden die betroffenen Gespräche für beide Seiten gelöscht. Wiederbeitritt und Crew-Wiederherstellung bringen sie nicht zurück. Vollständige Betreiber-Backups enthalten die Datenbank einschließlich Nachrichten; der Betreiber hat technischen Datenbankzugriff. Es gibt keine Ende-zu-Ende-Verschlüsselung. Die additive SQL-Migration wird beim eigenständigen Serverstart automatisch angewendet. 20 neue Nachrichten pro Minute und Absender begrenzen versehentliche Sendeschleifen.
 
 ## Saison und Alltag · Version 0.25.0
 

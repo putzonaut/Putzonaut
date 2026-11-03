@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.26.0
+
+- Persönliche Textnachrichten zwischen Crew-Mitgliedern mit eigenem Konto unter „Crew → Nachrichten“, mit Ungelesen-Zähler und automatisch aktualisiertem Gespräch.
+- Separate Speicherung, Zugriff nur für die beiden Beteiligten, begrenzte Nachrichtenlänge und Senderate, idempotentes Senden und seitenweises Nachladen.
+- Gespräche werden beim Ende einer Crew-Mitgliedschaft für beide Seiten gelöscht. Crew-Exporte und Offline-Stände enthalten keine Nachrichten.
+- Additive Datenbankmigration für bestehende Installationen; vorhandene Crew-Daten bleiben erhalten.
+
 ## 0.25.1 · 3. November 2026
 
 - „Meine Aufgaben“ und „Bereiche“ stehen als gleich breite Filter direkt nebeneinander. Die große Lücke zwischen den Schaltflächen entfällt; längere Bereichsnamen können innerhalb der Schaltfläche umbrechen.

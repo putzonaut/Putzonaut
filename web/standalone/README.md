@@ -1,4 +1,4 @@
-# Putzonaut mit eigenen Konten · 0.25.1
+# Putzonaut mit eigenen Konten · 0.26.0
 
 Die aktuelle App aus `web/` läuft als eigenständiger Node-Server mit E-Mail und Passwort. Nutzer benötigen dafür weder ChatGPT noch GitHub. Oberfläche, Missionen, Crew, Kinderprofile, Punkte, Fotos und Offline-Funktionen verwenden denselben Anwendungscode wie die private Sites-Version.
 
@@ -12,7 +12,7 @@ Website und App laufen im selben Container. Der öffentliche Tunnel zeigt auf `h
 
 Die geprüften Images für **amd64 und arm64** liegen unter `ghcr.io/putzonaut/putzonaut`. Auf dem Zielserver sind nur Docker mit Compose und die Konfiguration nötig. Quellcode, Git, Node.js und ein Build auf dem Server sind dafür nicht erforderlich.
 
-Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.25.1-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
+Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.26.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
 
 Das Container-Image ist öffentlich und lässt sich ohne GitHub-Anmeldung laden. Das Quellcode-Repository bleibt davon unabhängig.
 
@@ -114,6 +114,10 @@ Nach diesem Datentransfer werden neue Putzonaut-Konten registriert und verifizie
 Der Server wird angehalten und eine vollständige Sicherung angelegt. Im Ordner `web/` zeigt `node standalone/map-accounts.ts /sicherer/pfad/zuordnung.json` zunächst nur die Vorschau. Erst der zusätzliche Parameter `--apply` schreibt die Zuordnung atomar. Bei Docker kann der Befehl in einem einmaligen Container mit demselben Datenvolume ausgeführt werden. `DATA_DIR` muss auf das übernommene Datenverzeichnis zeigen.
 
 Das Werkzeug verlangt bestätigte, noch nicht einer Crew zugeordnete Zielkonten sowie aktive erwachsene Altprofile. Bei einem Fehler wird nichts übertragen. Crew- und Profil-IDs, Punkte und Logbuch bleiben erhalten; vorhandene Rücksprungpunkte erhalten dieselbe Konto-Zuordnung. Ein neuer Wiederherstellungsstand verhindert, dass alte Offline-Aktionen ungeprüft angewendet werden. Zuordnungsdateien gehören nicht ins Repository.
+
+## Persönliche Nachrichten
+
+Seit 0.26.0 können Crew-Mitglieder mit eigenem Konto miteinander schreiben. Die Tabelle `messages` in `crew.sqlite` ist Teil einer vollständigen Betreiber-Sicherung. Die JSON-Crew-Sicherung in der App und ihr Offline-Cache enthalten keine Nachrichten. Gespräche sind innerhalb der App nur für die beiden Beteiligten zugänglich, jedoch nicht Ende-zu-Ende-verschlüsselt; der Betreiber kann die Datenbank technisch einsehen. Beim Ende einer Crew-Mitgliedschaft werden ihre Gespräche für beide Seiten gelöscht. Vor dem ersten Start einer neuen Version das vollständige Datenvolume sichern; die neue Tabelle wird beim Start automatisch angelegt.
 
 ## Vollständige Sicherung und Wiederherstellung
 

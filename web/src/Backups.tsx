@@ -26,7 +26,7 @@ export default function Backups({crewName,busy,request,onRun,onRestored}:{crewNa
   return <><div className="sheet-illustration"><ShieldCheck size={45}/></div><h2>Sichern & wiederherstellen</h2><p>Missionen, Profile, Punkte, Wünsche, Raumstation und das vollständige Logbuch – zusammen in einer Datei.</p>
     <button className="button primary" disabled={busy} onClick={()=>download()}><Download size={19}/>Sicherung herunterladen</button>
     {message&&<p className="backup-status" role="status"><FileCheck2 size={19}/>{message}</p>}
-    <p className="game-note">Ohne Anmeldedaten oder Einladungslinks. Die Datei enthält die Namen und Aktivitäten eurer Crew.</p>
+    <p className="game-note">Ohne Anmeldedaten, Einladungslinks oder persönliche Nachrichten. Die Datei enthält die Namen und Aktivitäten eurer Crew.</p>
     <section className="backup-import"><h3><Upload size={19}/>Einen Stand wiederherstellen</h3><p>Für diese Crew bei unveränderten Mitgliedern, Rollen und Kinderbegleitungen. Ältere Crew-Exporte bis Version 0.6 haben keine Wiederherstellungsfunktion.</p>
       <label className="backup-file">Sicherungsdatei auswählen<input type="file" accept=".json,application/json" disabled={busy} onChange={e=>{const file=e.target.files?.[0];if(file)void selectFile(file);e.target.value='';}}/></label>
       {fileName&&<p className="backup-filename">{fileName}</p>}
@@ -39,6 +39,6 @@ export default function Backups({crewName,busy,request,onRun,onRestored}:{crewNa
     </section>
     {recoveryAt&&<section className="backup-recovery"><h3><History size={19}/>Vor der letzten Wiederherstellung</h3><p>Stand vom {date(recoveryAt)}. Lade ihn herunter und wähle ihn oben aus, um zurückzukehren.</p><button className="button secondary" disabled={busy} onClick={()=>download(true)}>Rücksprungpunkt herunterladen</button></section>}
     {statusError&&<p className="game-note">{statusError}</p>}
-    <details className="backup-details"><summary>Umfang der Sicherung</summary><p>Eine vollständige Sicherung eurer Crew-Daten, einschließlich ausgeschiedener Profile und Logbuch. Sie stellt keine Anmeldung oder gelöschte Crew wieder her und ersetzt kein Betreiber-Backup der gesamten Datenbank. Bis zu 8 MB und 10.000 Logbucheinträge; größere Sicherungen werden mit einer Meldung abgebrochen und niemals gekürzt. Der automatische Rücksprungpunkt wird bei der nächsten Wiederherstellung ersetzt.</p></details>
+    <details className="backup-details"><summary>Umfang der Sicherung</summary><p>Eine vollständige Sicherung eurer Crew-Daten, einschließlich ausgeschiedener Profile und Logbuch. Persönliche Nachrichten sind nicht enthalten und werden beim Wiederherstellen nicht verändert. Sie stellt keine Anmeldung oder gelöschte Crew wieder her und ersetzt kein Betreiber-Backup der gesamten Datenbank. Bis zu 8 MB und 10.000 Logbucheinträge; größere Sicherungen werden mit einer Meldung abgebrochen und niemals gekürzt. Der automatische Rücksprungpunkt wird bei der nächsten Wiederherstellung ersetzt.</p></details>
   </>;
 }

@@ -1,4 +1,5 @@
 import {pushRoute} from './push.ts';
+import {messageRoute} from './messages.ts';
 import type {PushConfig} from './push.ts';
 import {photoRoute} from './photos.ts';
 import type {PhotoBucket} from './photos.ts';
@@ -65,6 +66,7 @@ export async function handleApi(request:Request,identity:Identity|null,repo:Repo
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Viewer')&&request.headers.get('X-Putzonaut-Viewer')!==viewer.id)throw new AppError(409,'Dein angemeldetes Profil hat sich geändert. Bitte lade den aktuellen Stand.');
   if(!['GET','HEAD'].includes(method)&&request.headers.has('X-Putzonaut-Household')&&request.headers.get('X-Putzonaut-Household')!==h.id)throw new AppError(409,'Deine Crew hat sich geändert. Bitte lade die Seite neu.');
   if(!['GET','HEAD'].includes(method)&&(request.headers.get('X-Putzonaut-Epoch')??'')!==(h.restoreEpoch??''))throw new AppError(409,'Eure Crew wurde wiederhergestellt. Bitte lade den aktuellen Stand, bevor du etwas änderst.');
+  const messages=await messageRoute(url,method,body,repo,accountId,h,viewer,actor,now);if(messages)return messages;
   const backupResponse=await backupRoute(route,method,body,repo,accountId,profileId,row,now);if(backupResponse)return backupResponse;
   const push=await pushRoute(route,method,body,h,viewer,repo,options.push??{},now);if(push)return push;
   const photo=await photoRoute(route,method,body,h,accountId,profileId,repo,options.bucket,now);if(photo)return photo;
