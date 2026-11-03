@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.24.0 · 3. November 2026
+
+- Genauere Wiederholungen im bestehenden Aufgabenformular unter „Weitere Wiederholungen“: alle zwei, drei oder sechs Monate, jährlich sowie ein bestimmter Wochentag an erster, zweiter, dritter, vierter oder letzter Position im Monat.
+- Kurze Monate und Schaltjahre behalten den ursprünglichen Kalenderrhythmus. Der 29. Februar wird in normalen Jahren am 28. Februar fällig.
+- Eine kompakte Vorschau nennt den Rhythmus, den nächsten Termin und gegebenenfalls eine noch offene ältere Runde.
+- Neue Regeln bleiben beim Bearbeiten, Fortsetzen von Entwürfen, Duplizieren und Sichern/Wiederherstellen erhalten. Pausen, Verschiebungen, Offline-Abschlüsse und die vorhandenen Punkteprüfungen gelten weiterhin.
+
 ## 0.23.0 · 3. November 2026
 
 - Selbst gehostete Installationen verschicken Geräteerinnerungen auch bei geschlossener App. Eigene dauerhafte Push-Schlüssel werden automatisch angelegt; ein interner Zeitgeber prüft die gewählten Zeitfenster. Tageslimits, Auszeiten und offene Aufgaben bleiben maßgeblich.

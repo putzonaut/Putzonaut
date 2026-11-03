@@ -1,6 +1,7 @@
 /** Calendar arithmetic uses Berlin dates and UTC noon; DST never changes a day count. */
-export type Cadence = 'once'|'daily'|'weekly'|'weekdays'|'interval'|'monthly'|'after';
-export type Schedule = {startDate?:string;weekdays?:number[];intervalWeeks?:number;monthDay?:number;intervalDays?:number};
+export const CADENCES=['once','daily','weekly','weekdays','interval','monthly','after','monthly-interval','monthly-weekday','yearly'] as const;
+export type Cadence = typeof CADENCES[number];
+export type Schedule = {startDate?:string;weekdays?:number[];intervalWeeks?:number;monthDay?:number;intervalDays?:number;intervalMonths?:number;monthWeek?:number;monthWeekday?:number};
 export type Pause = {from:string;until:string|null};
 export type Postponement = {occurrenceKey:string;from:string;until:string};
 export type PlannedTask = {postponement?:Postponement;reopenedDue?:string;breaks?:Pause[];roundAssignment?:{occurrenceKey:string;memberId:string};cadence:string;dueDate?:string|null;schedule?:Schedule;createdOn?:string;pause?:Pause|null;skipThrough?:string|null;rotationIds?:string[];rotationStart?:string;assignedTo?:string|null;completion?:{occurrenceKey:string;status?:string;created_at?:string}|null};
@@ -15,6 +16,27 @@ export const monday=(day:string)=>addDays(day,1-weekday(day));
 export const weekKey=(date:Date)=>monday(localDay(date));
 export const isPaused=(task:PlannedTask,day:string)=>!!task.pause&&task.pause.from<=day&&(!task.pause.until||task.pause.until>=day);
 function monthly(day:string,date:number,offset=0){const d=dayDate(day);const first=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+offset,1,12));const last=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0,12)).getUTCDate();first.setUTCDate(Math.min(date,last));return iso(first);}
+const monthIndex=(day:string)=>Number(day.slice(0,4))*12+Number(day.slice(5,7))-1;
+function anchoredMonth(t:PlannedTask,reference:string,start:string){
+ const period=t.cadence==='yearly'?12:t.schedule!.intervalMonths!;
+ const offset=Math.floor((monthIndex(reference)-monthIndex(start))/period)*period;
+ const date=Number(start.slice(8)),due=monthly(start,date,offset);
+ return due>reference?monthly(start,date,offset-period):due;
+}
+function ordinalMonth(t:PlannedTask,reference:string,offset=0){
+ const first=monthly(reference,1,offset),wanted=t.schedule!.monthWeekday!,ordinal=t.schedule!.monthWeek!;
+ if(ordinal===-1){const last=monthly(reference,31,offset);return addDays(last,-((weekday(last)-wanted+7)%7));}
+ return addDays(first,(wanted-weekday(first)+7)%7+(ordinal-1)*7);
+}
+/** Shared by API writes, backup validation and the form preview. */
+export function calendarScheduleError(t:Pick<PlannedTask,'cadence'|'schedule'>):string|null{
+ if(!['monthly-interval','monthly-weekday','yearly'].includes(t.cadence))return null;
+ const s=t.schedule;
+ if(!s?.startDate||!validDay(s.startDate))return 'Wähle ein gültiges Startdatum zwischen 2000 und 2099.';
+ if(t.cadence==='monthly-interval'&&![2,3,6].includes(s.intervalMonths!))return 'Wähle einen Abstand von zwei, drei oder sechs Monaten.';
+ if(t.cadence==='monthly-weekday'&&(![-1,1,2,3,4].includes(s.monthWeek!)||![1,2,3,4,5,6,7].includes(s.monthWeekday!)))return 'Wähle die Position im Monat und einen Wochentag.';
+ return null;
+}
 /** Latest scheduled date at/before reference; no unbounded day-by-day loops. */
 function candidate(t:PlannedTask,reference:string,start:string){
  switch(t.cadence){
@@ -23,12 +45,19 @@ function candidate(t:PlannedTask,reference:string,start:string){
   case 'weekdays':{const days=t.schedule?.weekdays??[];for(let i=0;i<7;i++){const d=addDays(reference,-i);if(days.includes(weekday(d)))return d;}return start;}
   case 'interval':{const period=7*(t.schedule?.intervalWeeks??2);return addDays(start,Math.floor(dayDiff(reference,start)/period)*period);}
   case 'monthly':{const date=t.schedule?.monthDay??Number(start.slice(8));const d=monthly(reference,date);return d>reference?monthly(reference,date,-1):d;}
+  case 'monthly-interval':case 'yearly':return anchoredMonth(t,reference,start);
+  case 'monthly-weekday':{const d=ordinalMonth(t,reference);return d>reference?ordinalMonth(t,reference,-1):d;}
   default:return reference;
  }
 }
 function next(t:PlannedTask,after:string,start:string):string|null{
  if(t.cadence==='once')return (t.dueDate||start)>after?(t.dueDate||start):null;
  if(t.cadence==='monthly'){const d=monthly(after,t.schedule?.monthDay??Number(start.slice(8)));return d>after?d:monthly(after,t.schedule?.monthDay??Number(start.slice(8)),1);}
+ if(t.cadence==='monthly-interval'||t.cadence==='yearly'){
+  const current=anchoredMonth(t,after,start),period=t.cadence==='yearly'?12:t.schedule!.intervalMonths!;
+  return monthly(start,Number(start.slice(8)),monthIndex(current)-monthIndex(start)+period);
+ }
+ if(t.cadence==='monthly-weekday'){const d=ordinalMonth(t,after);return d>after?d:ordinalMonth(t,after,1);}
  if(t.cadence==='interval'){const n=7*(t.schedule?.intervalWeeks??2);return addDays(start,(Math.floor(dayDiff(after,start)/n)+1)*n);}
  if(t.cadence==='weekly')return addDays(monday(after),7);
  if(t.cadence==='weekdays'){for(let i=1;i<=7;i++){const d=addDays(after,i);if(t.schedule?.weekdays?.includes(weekday(d)))return d;}return null;}
@@ -83,4 +112,8 @@ export function plan(t:PlannedTask,today:string,fallback:string){
  const status=paused?'paused':completion?(completion.status==='pending'?'pending':'done'):today<move.until?'upcoming':today>move.until?'overdue':'today';
  return {occurrenceKey:move.occurrenceKey,status,effectiveDueDate:move.until,nextDueDate:today<move.until?move.until:resume,overdue:status==='overdue'};
 }
-export function scheduleLabel(t:PlannedTask){const days=['Mo','Di','Mi','Do','Fr','Sa','So'];switch(t.cadence){case 'after':return `${t.schedule?.intervalDays??14} Tage nach Erledigung`;case 'once':return 'Einmalig';case 'daily':return 'Täglich';case 'weekly':return 'Jede Woche';case 'weekdays':return (t.schedule?.weekdays??[]).map(d=>days[d-1]).join(', ');case 'interval':return `Alle ${t.schedule?.intervalWeeks??2} Wochen`;case 'monthly':return `Monatlich am ${t.schedule?.monthDay??1}.`;default:return '';}}
+export function scheduleLabel(t:PlannedTask){const days=['Mo','Di','Mi','Do','Fr','Sa','So'];switch(t.cadence){case 'after':return `${t.schedule?.intervalDays??14} Tage nach Erledigung`;case 'once':return 'Einmalig';case 'daily':return 'Täglich';case 'weekly':return 'Jede Woche';case 'weekdays':return (t.schedule?.weekdays??[]).map(d=>days[d-1]).join(', ');case 'interval':return `Alle ${t.schedule?.intervalWeeks??2} Wochen`;case 'monthly':return `Monatlich am ${t.schedule?.monthDay??1}.`;
+ case 'monthly-interval':return `Alle ${t.schedule?.intervalMonths??3} Monate am ${Number(t.schedule?.startDate?.slice(8)??1)}.`;
+ case 'monthly-weekday':{const ordinal:Record<number,string>={1:'ersten',2:'zweiten',3:'dritten',4:'vierten',[-1]:'letzten'};const weekdayNames=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];return `Jeden ${ordinal[t.schedule?.monthWeek??1]} ${weekdayNames[(t.schedule?.monthWeekday??1)-1]} im Monat`;}
+ case 'yearly':return t.schedule?.startDate&&validDay(t.schedule.startDate)?`Jährlich am ${dayDate(t.schedule.startDate).toLocaleDateString('de-DE',{day:'numeric',month:'long',timeZone:'UTC'})}`:'Jährlich';
+ default:return '';}}

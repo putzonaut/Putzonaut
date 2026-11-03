@@ -6,7 +6,7 @@ import {z} from 'zod';
 import {suggestedPoints} from '../shared/game.ts';
 import {activeMembers,admin,AppError,canManageChild,canUndo,reopenTask,taskSchema} from './domain.ts';
 import type {Household,Member,HistoryEvent,PendingCompletion,Task} from './domain.ts';
-import {addDays,assignment,localDay,monday,plan,validDay,weekKey} from '../shared/planning.ts';
+import {addDays,assignment,localDay,monday,plan,validDay,weekKey,calendarScheduleError} from '../shared/planning.ts';
 import type {Repository} from './repository.ts';
 
 export async function missionChange(route:string,method:string,body:unknown,h:Household,user:Member,viewer:Member,now:Date,repo:Repository):Promise<{result:unknown;event?:HistoryEvent}|null>{
@@ -30,6 +30,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   if(v.cadence==='interval'&&(!s?.startDate||!s.intervalWeeks))throw new AppError(400,'Wähle Startdatum und Wochenabstand.');
   if(v.cadence==='after'&&!s?.intervalDays)throw new AppError(400,'Wähle den Abstand nach Erledigung.');
   if(v.cadence==='monthly'&&!s?.monthDay)throw new AppError(400,'Wähle einen Monatstag.');
+  const calendarError=calendarScheduleError(v);if(calendarError)throw new AppError(400,calendarError);
   return {...v,category:v.category??evidenceCategory(v)??'tidy',areaId:area.id,room:area.name,steps,schedule:v.schedule,rotationIds:v.rotationIds??[],approvalForChildren:v.approvalForChildren??false};
  };
  if(route==='/tasks/record'&&method==='POST'){

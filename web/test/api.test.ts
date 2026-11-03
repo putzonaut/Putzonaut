@@ -16,6 +16,34 @@ async function setup(starterTasks=true,taskTemplates?:string[]){const user=crypt
 async function state(user:string,date=now){const r=await call(user,'/state','GET',undefined,date);assert.equal(r.status,200);return r.body;}
 async function complete(user:string,task:any,date=now){return call(user,`/tasks/${task.id}/complete`,'POST',{occurrenceKey:task.occurrenceKey,checklistVersion:task.checklist?.version},date);}
 async function addTask(user:string,values:Record<string,unknown>={}){const result=await call(user,'/tasks','POST',{title:'Spezialmission',room:'Haushalt',icon:'sparkles',minutes:10,xp:100,stars:200,cadence:'daily',...values});assert.equal(result.status,200);return (await state(user)).tasks.find((t:any)=>t.id===result.body.id);}
+test('calendar recurrence API stores the exact rule, rejects incomplete rules and only counts a confirmed round once',async()=>{
+ const u=await setup(false);
+ const t=await addTask(u,{cadence:'monthly-interval',schedule:{startDate:'2026-10-31',intervalMonths:3}});
+ assert.equal(t.status,'upcoming');assert.equal(t.nextDueDate,'2026-10-31');
+ assert.equal((await complete(u,t)).status,409);
+ const due=new Date('2026-10-31T12:00:00Z'),opened=(await state(u,due)).tasks.find((x:any)=>x.id===t.id);
+ const request={occurrenceKey:opened.occurrenceKey,taskVersion:opened.revision??0,checklistVersion:opened.checklist.version,requestKey:crypto.randomUUID()};
+ assert.equal((await call(u,`/tasks/${t.id}/complete`,'POST',request,due)).status,200);
+ assert.equal((await call(u,`/tasks/${t.id}/complete`,'POST',request,due)).status,200);
+ const finished=await state(u,due);assert.equal(finished.user.stars,200);assert.equal(finished.tasks[0].nextDueDate,'2027-01-31');
+ const later=new Date('2027-01-31T12:00:00Z'),next=(await state(u,later)).tasks[0];
+ assert.equal(next.occurrenceKey,'2027-01-31');assert.equal((await complete(u,opened,later)).status,409);
+ assert.equal((await complete(u,next,later)).status,200);assert.equal((await state(u,later)).user.stars,400);
+ const invalid=[{cadence:'monthly-interval',schedule:{startDate:'2026-10-31'}},{cadence:'monthly-interval',schedule:{startDate:'2026-10-31',intervalMonths:4}},{cadence:'yearly',schedule:{startDate:'2027-02-29'}},{cadence:'monthly-weekday',schedule:{startDate:'2026-10-31',monthWeek:5,monthWeekday:1}},{cadence:'monthly-weekday',schedule:{monthWeek:1,monthWeekday:6}}];
+ for(const value of invalid)assert.equal((await call(u,'/tasks','POST',{title:'Ungültig',room:'Haushalt',icon:'sparkles',minutes:10,xp:10,stars:5,...value},later)).status,400);
+ assert.equal((await state(u,later)).tasks.length,1);
+});
+test('ordinal and annual rules appear on their due dates and keep their schedule when edited or duplicated',async()=>{
+ const u=await setup(false),t=await addTask(u,{cadence:'monthly-weekday',schedule:{startDate:'2026-11-01',monthWeek:-1,monthWeekday:7}});
+ const due=new Date('2026-11-29T12:00:00Z');let s=await state(u,due);assert.equal(s.tasks[0].status,'today');
+ assert.equal((await complete(u,s.tasks[0],due)).status,200);
+ s=await state(u,due);assert.equal((await call(u,`/tasks/${t.id}`,'PATCH',{...s.tasks[0],title:'Neuer Titel'},due)).status,200);
+ s=await state(u,due);assert.equal(s.tasks[0].status,'done');assert.equal(s.tasks[0].nextDueDate,'2026-12-27');
+ const annual=await addTask(u,{cadence:'yearly',schedule:{startDate:'2028-02-29'}});
+ const copy=await addTask(u,{cadence:annual.cadence,schedule:annual.schedule,title:'Kopie'});
+ assert.deepEqual(copy.schedule,annual.schedule);assert.equal(copy.nextDueDate,'2028-02-29');
+ const leap=await state(u,new Date('2028-02-29T12:00:00Z'));assert.equal(leap.tasks.find((x:any)=>x.id===annual.id).nextDueDate,'2029-02-28');
+});
 test('real onboarding starts empty, persists across repository instances and hides account IDs',async()=>{const u=await setup();const s=await state(u);assert.equal(s.user.xp,0);assert.equal(s.user.stars,0);assert.equal(s.members.length,1);assert.equal(s.tasks.length,2);assert.deepEqual(s.tasks.map((t:any)=>t.title),['Spülmaschine einräumen','Müll rausbringen']);assert.equal(s.rewards.length,0);assert.equal(s.household.weekCount,0);assert.equal(JSON.stringify(s).includes(u),false);const another=new Repository(repo.db);assert.ok(await another.forAccount(u));const response=await call(u,'/state');assert.match(response.headers.get('Cache-Control')!,/no-store/);});
 test('parallel setup produces a single household without orphaned rows',async()=>{const u=crypto.randomUUID();const before=await repo.db.prepare('SELECT count(*) AS n FROM households').first<{n:number}>();const results=await Promise.all([call(u,'/auth/setup','POST',{name:'Alex',householdName:'Crew A'}),call(u,'/auth/setup','POST',{name:'Alex',householdName:'Crew B'})]);assert.deepEqual(results.map(r=>r.status).sort(),[201,409]);const after=await repo.db.prepare('SELECT count(*) AS n FROM households').first<{n:number}>();assert.equal(after!.n,before!.n+1);});
 test('setup persists a reachable partial-week goal and rolls over to the displayed following-week goal',async()=>{

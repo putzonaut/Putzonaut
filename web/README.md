@@ -1,10 +1,22 @@
-# Putzonaut · Web-App 0.23.0
+# Putzonaut · Web-App 0.24.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Genauere Wiederholungen · Version 0.24.0
+
+Im bestehenden Missionsformular führt **Euer Rhythmus → Wie oft? → Weitere Wiederholungen** zu drei zusätzlichen Möglichkeiten:
+
+- Alle zwei, drei oder sechs Monate, ausgehend vom ersten Termin und dessen Monatstag. Kurze Monate verwenden ihren letzten Tag, danach gilt wieder der ursprüngliche Monatstag.
+- Jährlich an Tag und Monat des ersten Termins. Für den 29. Februar gilt ohne Schalttag der 28. Februar; in Schaltjahren wieder der 29.
+- Jeden ersten, zweiten, dritten, vierten oder letzten gewählten Wochentag im Monat, ab dem Startdatum.
+
+Die Vorschau zeigt den Rhythmus und den nächsten Termin. Noch offene ältere Runden werden ausdrücklich genannt. Bestehende Wochen- und Monatsrhythmen behalten ihre Bedeutung; neue Regeln gelten nach dem Kalender, unabhängig davon, wann die vorherige Runde erledigt wurde. Die bisherige Option „Nach der letzten Erledigung“ bleibt verfügbar. Pausen, verschobene Runden, Vormerkungen und Sterne verwenden weiterhin dieselben Regeln. Entwürfe, Duplikate und Crew-Sicherungen erhalten die neuen Angaben; Sicherungen mit neuen Rhythmen benötigen mindestens 0.24.0 zur Wiederherstellung.
+
+[Prüfstand 0.24](docs/QA-0.24.md)
 
 ## Kontoverwaltung und Geräteerinnerungen · Version 0.23.0
 

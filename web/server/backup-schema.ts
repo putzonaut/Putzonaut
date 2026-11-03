@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {CATEGORY_IDS} from '../shared/categories.ts';
 import {AREA_ICONS} from '../shared/workspace.ts';
-import {validDay} from '../shared/planning.ts';
+import {validDay,calendarScheduleError} from '../shared/planning.ts';
 import {AppError,taskSchema,rewardSchema,digest} from './domain.ts';
 import type {Household,HistoryEvent} from './domain.ts';
 
@@ -58,6 +58,7 @@ const task=taskSchema.extend({postponement:z.object({occurrenceKey:occurrence,fr
  if(t.cadence==='interval'&&(!t.schedule?.startDate||!t.schedule.intervalWeeks))bad('Fehlender Rhythmus');
  if(t.cadence==='after'&&!t.schedule?.intervalDays)bad('Fehlender Abstand nach Erledigung');
  if(t.cadence==='monthly'&&!t.schedule?.monthDay)bad('Fehlender Monatstag');
+ const calendarError=calendarScheduleError(t);if(calendarError)bad(calendarError);
  if(t.pause?.until&&t.pause.until<t.pause.from)bad('Ungültige Pause');
  if(t.postponement&&((t.cadence==='once')!==(t.postponement.occurrenceKey==='once')))bad('Ungültige verschobene Runde');
  if(t.checklist?.doneIds.some(i=>!t.steps?.some(s=>s.id===i)))bad('Unbekannter Teilschritt');
