@@ -1,6 +1,6 @@
 import {CADENCES} from './planning.ts';
 import type {Difficulty} from './game.ts';
-export const DRAFT_FIELDS=['sentence','sentenceOpen','title','areaId','intervalWeeks','intervalDays','monthDay','intervalMonths','monthWeek','monthWeekday','dueDate','startDate','assignedTo','icon','category','knowledge','approvalForChildren'] as const;
+export const DRAFT_FIELDS=['sentence','sentenceOpen','title','areaId','intervalWeeks','intervalDays','monthDay','intervalMonths','monthWeek','monthWeekday','seasonEnabled','activeMonths','dueDate','startDate','assignedTo','icon','category','knowledge','approvalForChildren'] as const;
 export type TaskFormSnapshot={fields:Partial<Record<typeof DRAFT_FIELDS[number],string>>;steps:{id?:string;title:string}[];cadence:string;rotating:boolean;rotation:string[];rotationMode:'weekly'|'balanced';minutes:string;xp:string;stars:string;difficulty:Difficulty;autoPoints:boolean;days:number[];detailsOpen:boolean};
 export type SavedTaskDraft={version:1;updatedAt:number;revision:number|null;snapshot:TaskFormSnapshot};
 export const DRAFT_TTL=7*24*60*60*1000;

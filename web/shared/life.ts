@@ -1,3 +1,4 @@
+import {roomOrder} from './room-order.ts';
 import {availableMissions} from './quick-start.ts';
 import type {Task,User} from '../src/types.ts';
 import type {Pause} from './planning.ts';
@@ -19,7 +20,7 @@ export function lifeMissions(tasks:Task[],user:Pick<User,'id'>,minutes:number,mo
  if(mode==='visitors')choices=choices.filter(t=>visitorPriority(t)<9).sort((a,b)=>visitorPriority(a)-visitorPriority(b)||a.minutes-b.minutes||a.id.localeCompare(b.id));
  const selected:Task[]=[];let remaining=mode==='gentle'?Math.min(minutes,10):minutes;
  for(const t of choices){if(t.minutes<=remaining){selected.push(t);remaining-=t.minutes;}if(selected.length===3)break;}
- return selected;
+ return roomOrder(selected);
 }
 export const DECORATIONS=[
  {id:'plant',slot:'plant',name:'Sternenpflanze',requirement:'Von Anfang an dabei',achievement:null},

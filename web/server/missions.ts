@@ -6,7 +6,7 @@ import {z} from 'zod';
 import {suggestedPoints} from '../shared/game.ts';
 import {activeMembers,admin,AppError,canManageChild,canUndo,reopenTask,taskSchema} from './domain.ts';
 import type {Household,Member,HistoryEvent,PendingCompletion,Task} from './domain.ts';
-import {addDays,assignment,localDay,monday,plan,validDay,weekKey,calendarScheduleError} from '../shared/planning.ts';
+import {addDays,assignment,localDay,monday,plan,validDay,weekKey,calendarScheduleError,isSeasonDay} from '../shared/planning.ts';
 import type {Repository} from './repository.ts';
 
 export async function missionChange(route:string,method:string,body:unknown,h:Household,user:Member,viewer:Member,now:Date,repo:Repository):Promise<{result:unknown;event?:HistoryEvent}|null>{
@@ -58,7 +58,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
  if(/^\/tasks\/[^/]+$/.test(route)&&method==='PATCH'){
   admin(user);const t=task(),old=planning(t),v=values(t);if(t.team)throw new AppError(409,'Beende zuerst die gemeinsame Mission oder löse die gemeinsame Runde auf.');
   const scheduleChanged=JSON.stringify([t.cadence,t.schedule,t.dueDate])!==JSON.stringify([v.cadence,v.schedule,v.dueDate]);
-  if(scheduleChanged){delete t.reopenedDue;delete t.postponement;}
+  if(scheduleChanged){delete t.reopenedDue;delete t.postponement;delete t.omission;}
   if(scheduleChanged||JSON.stringify(t.steps??[])!==JSON.stringify(v.steps))t.checklistVersion=(t.checklistVersion??0)+1;
   if(t.checklist){if(scheduleChanged)t.checklist=null;else t.checklist.doneIds=t.checklist.doneIds.filter(id=>v.steps.some(s=>s.id===id&&s.title===t.steps?.find(old=>old.id===id)?.title));}
   if(JSON.stringify(v.rotationIds??[])!==JSON.stringify(t.rotationIds??[]))t.rotationStart=monday(today);
@@ -67,6 +67,22 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   return {result:{ok:true}};
  }
  if(/^\/tasks\/[^/]+$/.test(route)&&method==='DELETE'){admin(user);clearTeam(h,task());clearHandovers(h,id);h.tasks=h.tasks.filter(t=>t.id!==id);return {result:{ok:true}};}
+ if(/^\/tasks\/[^/]+\/omit$/.test(route)&&method==='POST'){
+  const v=z.object({occurrenceKey:z.string().max(20),taskVersion:z.number().int().min(0),requestKey:z.string().uuid()}).strict().parse(body);
+  const operation=JSON.stringify(['omit',id,v.occurrenceKey,v.taskVersion]);
+  const old=await repo.existingRequest(user.id,v.requestKey);
+  if(old){if(old.operation!==operation)throw new AppError(409,'Diese Anfrage gehört zu einer anderen Runde.');return {result:{ok:true,replayed:true}};}
+  const t=task(),p=planning(t),owner=taskOwner(h,t,today);
+  if(owner&&owner!==user.id&&user.role!=='admin')throw new AppError(403,'Diese Mission ist einem anderen Crewmitglied zugeteilt.');
+  if(awayOn(user.away,today)||awayOn(h.away,today))throw new AppError(409,'Beende zuerst deine Auszeit.');
+  if(t.cadence==='once')throw new AppError(400,'Nur wiederkehrende Missionen haben eine nächste Runde.');
+  if(t.team)throw new AppError(409,'Löse zuerst die gemeinsame Runde auf.');
+  if(v.taskVersion!==(t.revision??0)||v.occurrenceKey!==p.occurrenceKey||!p.occurrenceKey||!['today','overdue'].includes(p.status)||t.completion?.occurrenceKey===p.occurrenceKey)throw new AppError(409,'Nur eine unveränderte offene Runde lässt sich auslassen.');
+  t.omission={occurrenceKey:p.occurrenceKey,on:today};t.skipThrough=[t.skipThrough??'',today].sort().at(-1)!;
+  delete t.postponement;delete t.reopenedDue;delete t.roundAssignment;delete t.balancedAssignment;
+  t.checklist=null;t.checklistVersion=(t.checklistVersion??0)+1;t.revision=(t.revision??0)+1;clearHandovers(h,t.id);
+  return {result:{ok:true,nextDueDate:planning(t).nextDueDate},event:event('omitted',`${t.title}: heute nicht nötig`,{taskId:t.id,occurrenceKey:p.occurrenceKey,requestKey:v.requestKey,operation})};
+ }
  if(/^\/tasks\/[^/]+\/postpone$/.test(route)&&method==='POST'){
   const v=z.object({occurrenceKey:z.string().max(20),taskVersion:z.number().int().min(0),until:z.string().refine(validDay)}).strict().parse(body);
   const t=task(),p=planning(t),owner=taskOwner(h,t,today);
@@ -76,6 +92,7 @@ export async function missionChange(route:string,method:string,body:unknown,h:Ho
   if(v.taskVersion!==(t.revision??0)||v.occurrenceKey!==p.occurrenceKey)throw new AppError(409,'Die Aufgabenrunde hat sich geändert. Bitte öffne sie erneut.');
   if(!p.occurrenceKey||!['today','overdue'].includes(p.status)||t.completion?.occurrenceKey===p.occurrenceKey)throw new AppError(409,'Nur eine offene Aufgabenrunde lässt sich verschieben.');
   if(v.until<=today||v.until>addDays(today,365))throw new AppError(400,'Wähle einen Termin ab morgen innerhalb eines Jahres.');
+  if(!isSeasonDay(t,v.until))throw new AppError(400,'Dieser Termin liegt außerhalb der Saison. Wähle einen aktiven Monat.');
   if(awayOn(t.pause,v.until)||awayOn(h.away,v.until)||owner&&awayOn(members.find(m=>m.id===owner)?.away,v.until))throw new AppError(409,'Der gewählte Termin liegt in einer Pause. Wähle einen anderen Tag.');
   t.postponement={occurrenceKey:p.occurrenceKey,from:p.effectiveDueDate??today,until:v.until};
   if(owner)t.roundAssignment={occurrenceKey:p.occurrenceKey,memberId:owner};

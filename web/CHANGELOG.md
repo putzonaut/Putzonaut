@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.25.0 · 3. November 2026
+
+- Saisonale Missionen mit optionalen aktiven Monaten direkt bei der Wiederholung. Außerhalb der Saison entsteht kein Rückstau; Kalenderanker bleiben erhalten.
+- „Heute nicht nötig“ lässt eine offene Runde ohne Punkte aus. Feste Rhythmen laufen am nächsten regulären Termin weiter; bei abschlussabhängigen Aufgaben beginnt der Abstand ab heute.
+- Automatische Putzrunden bündeln die gewählten Aufgaben nach Räumen. Persönliche Routinen behalten ihre Reihenfolge.
+- Kurze Gießkannen-, Socken- und Glanzreaktionen begleiten bestätigte Erfolge beim vorhandenen Maskottchen. Sie beachten deaktivierte Animationen und reduzierte Bewegung.
+
 ## 0.24.0 · 3. November 2026
 
 - Genauere Wiederholungen im bestehenden Aufgabenformular unter „Weitere Wiederholungen“: alle zwei, drei oder sechs Monate, jährlich sowie ein bestimmter Wochentag an erster, zweiter, dritter, vierter oder letzter Position im Monat.

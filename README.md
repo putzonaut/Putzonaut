@@ -42,7 +42,7 @@ Benötigt werden Docker Compose, eine HTTPS-Adresse und ein SMTP-Zugang. Die Anm
 
 ## Dokumentation & Hilfe
 
-[Funktionsübersicht](web/README.md) · [Versionshistorie](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.24.md)
+[Funktionsübersicht](web/README.md) · [Versionshistorie](web/CHANGELOG.md) · [Prüfstand](web/docs/QA-0.25.md)
 
 Fehlerberichte und Vorschläge: [GitHub Issues](https://github.com/putzonaut/putzonaut/issues)  
 Hilfe bei Problemen: [sos@putzonaut.de](mailto:sos@putzonaut.de)
@@ -59,5 +59,5 @@ Die Dateien im Hauptverzeichnis enthalten außerdem die frühere Grundlage aus V
 ---
 
 <p align="center">
-  <sub>Version 0.24.0 · In Entwicklung</sub>
+  <sub>Version 0.25.0 · In Entwicklung</sub>
 </p>

@@ -1,6 +1,7 @@
 import {Clock3} from 'lucide-react';
 import {formSchedule,MORE_CADENCES,recurrencePreview} from '../shared/recurrence-form';
 import type {RecurrenceValues} from '../shared/recurrence-form';
+import {calendarScheduleError,MONTH_NAMES,seasonLabel} from '../shared/planning';
 import type {PlannedTask} from '../shared/planning';
 
 const basic={once:'Einmalig',daily:'Täglich',weekly:'Jede Woche (Mo–So)',weekdays:'Bestimmte Wochentage',interval:'Alle … Wochen',monthly:'Monatlich',after:'Nach der letzten Erledigung'};
@@ -8,7 +9,8 @@ const more={'monthly-interval':'Alle … Monate','monthly-weekday':'Wochentag im
 const days=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
 const displayDate=(day:string)=>new Date(day+'T12:00:00Z').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
 export default function RecurrenceFields({task,cadence,onCadence,values,onChange,weekdays,onWeekdays,today}:{task?:PlannedTask;cadence:string;onCadence:(v:string)=>void;values:RecurrenceValues;onChange:(key:keyof RecurrenceValues,value:string)=>void;weekdays:number[];onWeekdays:(v:number[])=>void;today:string}){
- const advanced=MORE_CADENCES.includes(cadence),preview=recurrencePreview(task,cadence,formSchedule(cadence,values,weekdays),today);
+ const schedule=formSchedule(cadence,values,weekdays),season=values.seasonEnabled==='on',months=values.activeMonths.split(',').filter(Boolean).map(Number),error=calendarScheduleError({cadence,schedule});
+ const advanced=MORE_CADENCES.includes(cadence),preview=recurrencePreview(task,cadence,schedule,today);
  return <fieldset className="planning-fieldset recurrence-fields"><legend><Clock3 size={16}/> Euer Rhythmus</legend>
   <label>Wie oft?<select value={advanced?'more':cadence} onChange={e=>onCadence(e.target.value==='more'?'monthly-interval':e.target.value)}>{Object.entries(basic).map(([id,label])=><option key={id} value={id}>{label}</option>)}<option value="more">Weitere Wiederholungen …</option></select></label>
   {advanced&&<label>Weitere Wiederholungen<select value={cadence} onChange={e=>onCadence(e.target.value)}>{Object.entries(more).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
@@ -20,6 +22,8 @@ export default function RecurrenceFields({task,cadence,onCadence,values,onChange
   {cadence==='monthly-weekday'&&<div className="form-grid"><label>Im Monat<select name="monthWeek" value={values.monthWeek} onChange={e=>onChange('monthWeek',e.target.value)}>{[[1,'Erster'],[2,'Zweiter'],[3,'Dritter'],[4,'Vierter'],[-1,'Letzter']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label><label>Wochentag<select name="monthWeekday" value={values.monthWeekday} onChange={e=>onChange('monthWeekday',e.target.value)}>{days.map((d,i)=><option key={d} value={i+1}>{d}</option>)}</select></label></div>}
   {cadence==='yearly'&&<p>Tag und Monat des ersten Termins gelten jedes Jahr. Für den 29. Februar gilt in Jahren ohne Schalttag der 28. Februar.</p>}
   {cadence==='once'?<label>Fällig am (optional)<input name="dueDate" type="date" min="2000-01-01" max="2099-12-31" value={values.dueDate} onChange={e=>onChange('dueDate',e.target.value)}/></label>:<label>{cadence==='monthly-interval'||cadence==='yearly'?'Erster Termin':'Startdatum'}<input name="startDate" type="date" required min="2000-01-01" max="2099-12-31" value={values.startDate} onChange={e=>onChange('startDate',e.target.value)}/></label>}
-  {preview&&<div className="recurrence-preview" role="status"><strong>{preview.label}</strong>{preview.paused&&<span>Diese Mission pausiert gerade.</span>}{preview.overdueDate&&<span>Aktuelle Runde seit {displayDate(preview.overdueDate)} fällig.</span>}<span>{preview.nextDate?`Nächster Termin: ${displayDate(preview.nextDate)}`:'Während der Pause ist kein nächster Termin geplant.'}</span></div>}
+  {cadence!=='once'&&<details className="season-options" open={season||undefined}><summary>Saison {season?'· '+(seasonLabel(months)||'Alle Monate'):'(optional)'}</summary><label className="checkbox-label"><input name="seasonEnabled" type="checkbox" checked={season} onChange={e=>onChange('seasonEnabled',e.target.checked?'on':'')}/><span>Nur in ausgewählten Monaten</span></label><input type="hidden" name="activeMonths" value={values.activeMonths}/>{season&&<><div className="season-months" role="group" aria-label="Aktive Monate">{MONTH_NAMES.map((name,i)=><button key={name} type="button" aria-pressed={months.includes(i+1)} onClick={()=>onChange('activeMonths',(months.includes(i+1)?months.filter(m=>m!==i+1):[...months,i+1]).sort((a,b)=>a-b).join(','))}>{name}</button>)}</div><p>Neue Runden nur in diesen Monaten. Außerhalb der Saison entsteht kein Rückstand.</p></>}</details>}
+  {error&&<p className="season-error" role="alert">{error}</p>}
+  {preview&&<div className="recurrence-preview" role="status"><strong>{preview.label}</strong>{preview.paused&&<span>Diese Mission pausiert gerade.</span>}{preview.overdueDate&&<span>Aktuelle Runde seit {displayDate(preview.overdueDate)} fällig.</span>}<span>{preview.nextDate?`Nächster Termin: ${displayDate(preview.nextDate)}`:cadence==='after'?'Der nächste Termin entsteht nach der Erledigung.':'Während der Pause ist kein nächster Termin geplant.'}</span></div>}
  </fieldset>;
 }
