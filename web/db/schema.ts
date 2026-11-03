@@ -26,3 +26,13 @@ export const pushDevices=sqliteTable('push_devices',{
  endpoint:text('endpoint').notNull(),hour:integer('hour').notNull(),lastDay:text('last_day'),lastStatus:text('last_status'),updatedAt:text('updated_at').notNull(),
 },t=>[index('push_member').on(t.memberId)]);
 export const pushState=sqliteTable('push_state',{key:text('key').primaryKey(),value:text('value').notNull()});
+
+// Private conversations never enter the household document or shared backups.
+// Leaving a crew removes both sides of its conversations in the same transaction.
+export const messages=sqliteTable('messages',{
+ id:integer('id').primaryKey({autoIncrement:true}),
+ householdId:text('household_id').notNull().references(()=>households.id),
+ senderId:text('sender_id').notNull().references(()=>memberships.memberId,{onDelete:'cascade'}),
+ recipientId:text('recipient_id').notNull().references(()=>memberships.memberId,{onDelete:'cascade'}),
+ text:text('text').notNull(),createdAt:text('created_at').notNull(),readAt:text('read_at'),requestKey:text('request_key').notNull(),
+},t=>[uniqueIndex('messages_request').on(t.senderId,t.requestKey),index('messages_pair').on(t.senderId,t.recipientId,t.id),index('messages_unread').on(t.recipientId,t.readAt,t.senderId)]);
