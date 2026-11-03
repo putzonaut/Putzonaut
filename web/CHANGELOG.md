@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.25.1 · 3. November 2026
+
+- „Meine Aufgaben“ und „Bereiche“ stehen als gleich breite Filter direkt nebeneinander. Die große Lücke zwischen den Schaltflächen entfällt; längere Bereichsnamen können innerhalb der Schaltfläche umbrechen.
+
 ## 0.25.0 · 3. November 2026
 
 - Saisonale Missionen mit optionalen aktiven Monaten direkt bei der Wiederholung. Außerhalb der Saison entsteht kein Rückstau; Kalenderanker bleiben erhalten.
