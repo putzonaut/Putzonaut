@@ -21,6 +21,20 @@ async function complete(user:string,task:any,headers:Record<string,string>={}){r
 async function backup(user:string){const r=await call(user,'/backups');assert.equal(r.status,200,JSON.stringify(r.body));return r.body;}
 async function restore(user:string,file:any,headers:Record<string,string>={}){const p=await call(user,'/backups/preview','POST',{backup:file},headers);assert.equal(p.status,200,JSON.stringify(p.body));return call(user,'/backups/restore','POST',{backup:file,expectedRevision:p.body.expectedRevision,confirmation:'Sternencrew'},headers);}
 async function rehash(file:any){const {checksum:_,...data}=file;return {...data,checksum:await digest(JSON.stringify(data))};}
+test('calendar recurrence rules survive backup and restoration while malformed new schedules are rejected',async()=>{
+ const u=await setup();
+ for(const [cadence,schedule] of [['monthly-interval',{startDate:'2026-11-30',intervalMonths:3}],['monthly-weekday',{startDate:'2026-11-01',monthWeek:-1,monthWeekday:7}],['yearly',{startDate:'2028-02-29'}]]){
+  assert.equal((await call(u,'/tasks','POST',{title:'Kalendermission',room:'Haushalt',icon:'sparkles',minutes:10,xp:20,stars:5,cadence,schedule})).status,200);
+ }
+ const before=await state(u),b=await backup(u),t=before.tasks.at(-1);
+ assert.equal((await call(u,`/tasks/${t.id}`,'DELETE')).status,200);
+ assert.equal((await restore(u,b)).status,200);
+ const after=await state(u);assert.deepEqual(after.tasks.map((t:any)=>[t.id,t.cadence,t.schedule,t.nextDueDate]),before.tasks.map((t:any)=>[t.id,t.cadence,t.schedule,t.nextDueDate]));
+ for(const [cadence,schedule] of [['yearly',{}],['yearly',{startDate:'2027-02-29'}],['monthly-interval',{startDate:'2026-11-30',intervalMonths:5}],['monthly-weekday',{startDate:'2026-11-01',monthWeek:5,monthWeekday:7}]]){
+  const altered=structuredClone(b),task=altered.payload.crew.tasks.at(-1);task.cadence=cadence;task.schedule=schedule;
+  assert.equal((await call(u,'/backups/preview','POST',{backup:await rehash(altered)},{'X-Putzonaut-Epoch':after.restoreEpoch})).status,400);
+ }
+});
 
 test('crew backups include the entire log beyond the 50-item page and exclude identities and invitation secrets',async()=>{
  const u=await setup(),s=await state(u),invite=(await call(u,'/invitations','POST',{})).body.token;

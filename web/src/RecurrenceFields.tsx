@@ -1,0 +1,25 @@
+import {Clock3} from 'lucide-react';
+import {formSchedule,MORE_CADENCES,recurrencePreview} from '../shared/recurrence-form';
+import type {RecurrenceValues} from '../shared/recurrence-form';
+import type {PlannedTask} from '../shared/planning';
+
+const basic={once:'Einmalig',daily:'Täglich',weekly:'Jede Woche (Mo–So)',weekdays:'Bestimmte Wochentage',interval:'Alle … Wochen',monthly:'Monatlich',after:'Nach der letzten Erledigung'};
+const more={'monthly-interval':'Alle … Monate','monthly-weekday':'Wochentag im Monat',yearly:'Jährlich'};
+const days=['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const displayDate=(day:string)=>new Date(day+'T12:00:00Z').toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
+export default function RecurrenceFields({task,cadence,onCadence,values,onChange,weekdays,onWeekdays,today}:{task?:PlannedTask;cadence:string;onCadence:(v:string)=>void;values:RecurrenceValues;onChange:(key:keyof RecurrenceValues,value:string)=>void;weekdays:number[];onWeekdays:(v:number[])=>void;today:string}){
+ const advanced=MORE_CADENCES.includes(cadence),preview=recurrencePreview(task,cadence,formSchedule(cadence,values,weekdays),today);
+ return <fieldset className="planning-fieldset recurrence-fields"><legend><Clock3 size={16}/> Euer Rhythmus</legend>
+  <label>Wie oft?<select value={advanced?'more':cadence} onChange={e=>onCadence(e.target.value==='more'?'monthly-interval':e.target.value)}>{Object.entries(basic).map(([id,label])=><option key={id} value={id}>{label}</option>)}<option value="more">Weitere Wiederholungen …</option></select></label>
+  {advanced&&<label>Weitere Wiederholungen<select value={cadence} onChange={e=>onCadence(e.target.value)}>{Object.entries(more).map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
+  {cadence==='weekdays'&&<div><span className="field-label">An welchen Tagen?</span><div className="weekday-buttons">{days.map((d,i)=><button key={d} type="button" aria-pressed={weekdays.includes(i+1)} className={weekdays.includes(i+1)?'active':''} onClick={()=>onWeekdays(weekdays.includes(i+1)?weekdays.filter(n=>n!==i+1):[...weekdays,i+1].sort())}>{d.slice(0,2)}</button>)}</div></div>}
+  {cadence==='interval'&&<label>Abstand in Wochen<input name="intervalWeeks" type="number" min={1} max={12} required value={values.intervalWeeks} onChange={e=>onChange('intervalWeeks',e.target.value)}/></label>}
+  {cadence==='after'&&<><label>Tage nach dem Abschluss<input name="intervalDays" type="number" min={1} max={365} required value={values.intervalDays} onChange={e=>onChange('intervalDays',e.target.value)}/></label><p>Der nächste Termin entsteht erst, wenn der Abschluss bestätigt ist. Eine offene Runde bleibt bis dahin bestehen.</p></>}
+  {cadence==='monthly'&&<><label>Tag im Monat<input name="monthDay" type="number" min={1} max={31} required value={values.monthDay} onChange={e=>onChange('monthDay',e.target.value)}/></label><p>Fehlt der Tag, gilt der letzte Tag des Monats.</p></>}
+  {cadence==='monthly-interval'&&<><label>Abstand in Monaten<select name="intervalMonths" value={values.intervalMonths} onChange={e=>onChange('intervalMonths',e.target.value)}>{[2,3,6].map(n=><option key={n} value={n}>Alle {n} Monate</option>)}</select></label><p>Der erste Termin legt den Monatstag fest. Fehlt dieser später, gilt der letzte Tag des Monats. Danach gilt wieder der ursprüngliche Tag.</p></>}
+  {cadence==='monthly-weekday'&&<div className="form-grid"><label>Im Monat<select name="monthWeek" value={values.monthWeek} onChange={e=>onChange('monthWeek',e.target.value)}>{[[1,'Erster'],[2,'Zweiter'],[3,'Dritter'],[4,'Vierter'],[-1,'Letzter']].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label><label>Wochentag<select name="monthWeekday" value={values.monthWeekday} onChange={e=>onChange('monthWeekday',e.target.value)}>{days.map((d,i)=><option key={d} value={i+1}>{d}</option>)}</select></label></div>}
+  {cadence==='yearly'&&<p>Tag und Monat des ersten Termins gelten jedes Jahr. Für den 29. Februar gilt in Jahren ohne Schalttag der 28. Februar.</p>}
+  {cadence==='once'?<label>Fällig am (optional)<input name="dueDate" type="date" min="2000-01-01" max="2099-12-31" value={values.dueDate} onChange={e=>onChange('dueDate',e.target.value)}/></label>:<label>{cadence==='monthly-interval'||cadence==='yearly'?'Erster Termin':'Startdatum'}<input name="startDate" type="date" required min="2000-01-01" max="2099-12-31" value={values.startDate} onChange={e=>onChange('startDate',e.target.value)}/></label>}
+  {preview&&<div className="recurrence-preview" role="status"><strong>{preview.label}</strong>{preview.paused&&<span>Diese Mission pausiert gerade.</span>}{preview.overdueDate&&<span>Aktuelle Runde seit {displayDate(preview.overdueDate)} fällig.</span>}<span>{preview.nextDate?`Nächster Termin: ${displayDate(preview.nextDate)}`:'Während der Pause ist kein nächster Termin geplant.'}</span></div>}
+ </fieldset>;
+}

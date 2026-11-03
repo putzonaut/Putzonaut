@@ -1,4 +1,4 @@
-# Putzonaut mit eigenen Konten · 0.23.0
+# Putzonaut mit eigenen Konten · 0.24.0
 
 Die aktuelle App aus `web/` läuft als eigenständiger Node-Server mit E-Mail und Passwort. Nutzer benötigen dafür weder ChatGPT noch GitHub. Oberfläche, Missionen, Crew, Kinderprofile, Punkte, Fotos und Offline-Funktionen verwenden denselben Anwendungscode wie die private Sites-Version.
 
@@ -12,7 +12,7 @@ Website und App laufen im selben Container. Der öffentliche Tunnel zeigt auf `h
 
 Die geprüften Images für **amd64 und arm64** liegen unter `ghcr.io/putzonaut/putzonaut`. Auf dem Zielserver sind nur Docker mit Compose und die Konfiguration nötig. Quellcode, Git, Node.js und ein Build auf dem Server sind dafür nicht erforderlich.
 
-Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.23.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
+Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.24.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
 
 Das Container-Image ist öffentlich und lässt sich ohne GitHub-Anmeldung laden. Das Quellcode-Repository bleibt davon unabhängig.
 
