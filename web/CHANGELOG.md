@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.23.0 · 3. November 2026
+
+- Selbst gehostete Installationen verschicken Geräteerinnerungen auch bei geschlossener App. Eigene dauerhafte Push-Schlüssel werden automatisch angelegt; ein interner Zeitgeber prüft die gewählten Zeitfenster. Tageslimits, Auszeiten und offene Aufgaben bleiben maßgeblich.
+- Unter „Konto & Anmeldung“ lässt sich die Login-E-Mail mit aktuellem Passwort und Bestätigung der neuen Adresse ändern. Crew, Sterne und Erfolge bleiben erhalten; bestehende Sitzungen und ältere Reset-Links werden danach ungültig.
+- Eigene Konten lassen sich nach Verlassen oder Schließen der Crew dauerhaft löschen. Passwort und ausdrückliche Bestätigung sind erforderlich. Kinderbetreuung und Captain-Rolle müssen vorher geklärt sein; gemeinsame Crew-Inhalte bleiben bestehen.
+- Bestätigungslinks für E-Mail-Änderungen sind an das konkrete Konto gebunden, laufen ab und werden durch neuere Links oder einen Passwort-Reset ungültig.
+- Der Offline-Start speichert auch die JavaScript- und CSS-Dateien des eigenständigen Builds vollständig vor.
+
 ## 0.22.2 · 2. November 2026
 
 - Website-CSS und -JavaScript erhalten automatisch Inhaltsversionen. Nach einem Update werden die passenden Dateien geladen, auch wenn der Browser noch das alte Design gespeichert hat.

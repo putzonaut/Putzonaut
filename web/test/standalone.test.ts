@@ -177,6 +177,7 @@ test('HTTP boundary sanitizes identity/IP headers, limits bodies, and serves acc
  try{
   const root=`http://127.0.0.1:${port}`;
   const page=await fetch(root+'/konto/anmelden');assert.equal(page.status,200);assert.equal(await page.text(),'Putzonaut');assert.match(page.headers.get('content-security-policy')!,/frame-ancestors 'none'/);assert.equal(page.headers.get('referrer-policy'),'no-referrer');
+  for(const path of ['/konto/verwalten','/konto/email-bestaetigt','/konto/geloescht']){const accountPage=await fetch(root+path);assert.equal(accountPage.status,200,path);assert.equal(accountPage.headers.get('cache-control'),'no-cache');}
   await fetch(root+'/api/bootstrap',{headers:{'oai-authenticated-user-id':'forged','x-putzonaut-client-ip':'192.0.2.250','x-forwarded-for':'192.0.2.250','x-real-ip':'192.0.2.250'}});
   assert.equal(seen[0].headers.has('oai-authenticated-user-id'),false);assert.equal(seen[0].headers.has('x-forwarded-for'),false);assert.equal(seen[0].headers.get('x-putzonaut-client-ip'),'127.0.0.1');
   assert.equal((await fetch(root+'/api/account/sign-in/email',{method:'POST',body:'x'.repeat(17000)})).status,413);

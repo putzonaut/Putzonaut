@@ -1,6 +1,12 @@
 # Betrieb der Putzonaut-Erinnerungen
 
-## Grenzen und Zugang
+## Eigenständiger Server ab 0.23.0
+
+Der App-Prozess startet den internen Zeitgeber automatisch und prüft jede Minute bis zu 30 Geräte. VAPID-Schlüssel und Tagesansprüche bleiben in `crew.sqlite`; die konfigurierte `APP_ORIGIN` ist der Absenderkontakt. Ein Datenbank-Lease und atomare Tagesansprüche verhindern doppelte Versuche auch nach Neustarts. Beim Herunterfahren wartet der Server auf einen laufenden Versand.
+
+Keine öffentliche Dispatch-Route und kein externer Cron-Aufruf sind vorgesehen. `GET /api/push` zeigt angemeldeten Mitgliedern nur den öffentlichen Schlüssel, eigene Geräte und den letzten Prüfzeitpunkt. Geräte müssen für die tatsächliche HTTPS-Origin ausdrücklich aktiviert werden. Den alten privaten Sites-Auftrag nicht auf die öffentliche App umleiten.
+
+## Private Sites-Version: Grenzen und Zugang
 
 Site: `appgprj_6ae3a46ecfb481919ed08a7764106ace`.
 Adresse: `https://putzonaut-test.denny-subke.chatgpt.site`.

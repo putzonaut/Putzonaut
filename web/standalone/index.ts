@@ -3,6 +3,7 @@ import {createStandaloneApp} from './app.ts';
 import {createHttpServer} from './http.ts';
 import {smtpTransport} from './mail.ts';
 import {createWebsiteServer} from './website.mjs';
+import {startPushScheduler} from './push.ts';
 
 process.umask(0o077);
 const origin=process.env.APP_ORIGIN,secret=process.env.BETTER_AUTH_SECRET;
@@ -18,8 +19,9 @@ for(const [listener,listenerPort] of [[server,port],[website,websitePort]] as co
 console.log(`Putzonaut App: ${port}; Website: ${websitePort}.`);
 const mailTimer=setInterval(()=>{void app.flushMail();},5000);mailTimer.unref();
 void app.flushMail();
+const stopPush=startPushScheduler(()=>app.dispatchReminders());
 let stopping=false;
 for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>{
  if(stopping)return;stopping=true;clearInterval(mailTimer);
- void Promise.all([server,website].map(listener=>new Promise<void>((resolve,reject)=>listener.close(error=>error?reject(error):resolve())))).then(()=>app.close()).then(()=>process.exit(0));
+ void Promise.all([stopPush(),...([server,website].map(listener=>new Promise<void>((resolve,reject)=>listener.close(error=>error?reject(error):resolve()))))]).then(()=>app.close()).then(()=>process.exit(0));
 });

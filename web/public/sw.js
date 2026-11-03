@@ -4,7 +4,7 @@ const CACHE='putzonaut-static-'+VERSION+'-__BUILD_ID__';
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const response=await fetch('/offline-assets.json',{cache:'no-store'});if(!response.ok||response.redirected)throw new Error('Offline manifest unavailable');
  const manifest=await response.json();if(manifest.version!=='__APP_VERSION__'||!Array.isArray(manifest.files))throw new Error('Offline version mismatch');
- const files=manifest.files.filter(p=>p==='/offline/index.html'||/^\/assets\/offline-[\w./-]+$/.test(p));
+ const files=manifest.files.filter(p=>p==='/offline/index.html'||/^\/assets\/(?:offline-|putzonaut-)[\w./-]+$/.test(p));
  if(!files.includes('/offline/index.html'))throw new Error('Offline shell missing');
  const responses=await Promise.all(files.map(async path=>{const asset=await fetch(path,{cache:'reload'});if(!asset.ok||asset.redirected||path!=='/offline/index.html'&&(asset.headers.get('content-type')??'').includes('text/html'))throw new Error('Offline asset unavailable');return asset;}));
  const cache=await caches.open(CACHE);await Promise.all(files.map((path,i)=>cache.put(path,responses[i])));

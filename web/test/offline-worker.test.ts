@@ -34,6 +34,13 @@ test('worker install rejects a mismatched release and activation removes only Pu
 
 test('payloadless push immediately displays a generic notification without fetching private data',async()=>{const h=await harness();h.network(async()=>{throw new Error('must not fetch');});await h.lifecycle('push');const notice=await h.stored.get('notification')!.json() as {title:string;options:{tag:string;data:{url:string}}};assert.equal(notice.title,'Putzonaut');assert.equal(notice.options.tag,'putzonaut-daily');assert.equal(notice.options.data.url,'/');});
 
+test('standalone install precaches its hashed JavaScript and CSS for a real offline start',async()=>{
+ const h=await harness();h.network(async path=>path==='/offline-assets.json'?Response.json({version:'__APP_VERSION__',files:['/offline/index.html','/assets/putzonaut-index-abc.js','/assets/putzonaut-index-abc.css']}):new Response('static',{headers:{'content-type':path==='/offline/index.html'?'text/html':String(path).endsWith('.css')?'text/css':'text/javascript'}}));
+ await h.lifecycle('install');h.network(async()=>{throw new Error('offline');});
+ assert.equal(await (await h.request('/assets/putzonaut-index-abc.js'))?.text(),'static');
+ assert.equal(await (await h.request('/assets/putzonaut-index-abc.css'))?.text(),'static');
+});
+
 test('worker updates activate only after an explicit same-origin request for that release',async()=>{
  const h=await harness();assert.equal(h.skipped,false);assert.deepEqual(JSON.parse(JSON.stringify(await h.message({type:'PUTZONAUT_VERSION'}))),{version:'__APP_VERSION__'});
  await h.message({type:'PUTZONAUT_ACTIVATE',version:'wrong'});assert.equal(h.skipped,false);

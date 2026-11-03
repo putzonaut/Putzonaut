@@ -6,7 +6,7 @@ import {localDay} from '../shared/planning.ts';
 import {awayOn} from '../shared/life.ts';
 import {taskOwner,taskPlan} from './life.ts';
 
-export type PushConfig={publicKey?:string;privateJwk?:string};
+export type PushConfig={publicKey?:string;privateJwk?:string;subject?:string};
 type Device={id:string;household_id:string;member_id:string;endpoint:string;hour:number;last_day:string|null;last_status:string|null;updated_at:string};
 const SITE='https://putzonaut-test.denny-subke.chatgpt.site';
 const base64url=(bytes:Uint8Array)=>btoa(String.fromCharCode(...bytes)).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
@@ -41,15 +41,15 @@ export async function pushRoute(route:string,method:string,body:unknown,h:Househ
  return reply({ok:true,id});
 }
 async function authorization(repo:Repository,endpoint:string,config:PushConfig,now:Date){
- const aud=new URL(endpoint).origin,key='vapid:'+aud;
+ const aud=new URL(endpoint).origin,key='vapid:'+aud,subject=config.subject??SITE;
  const cached=await repo.db.prepare('SELECT value FROM push_state WHERE key=?').bind(key).first<{value:string}>();
- if(cached){const token=JSON.parse(cached.value);if(token.exp>Math.floor(now.getTime()/1000)+3600&&token.publicKey===config.publicKey)return token.authorization as string;}
+ if(cached){const token=JSON.parse(cached.value);if(token.exp>Math.floor(now.getTime()/1000)+3600&&token.publicKey===config.publicKey&&token.subject===subject)return token.authorization as string;}
  const exp=Math.floor(now.getTime()/1000)+12*3600;
- const input=encoded({typ:'JWT',alg:'ES256'})+'.'+encoded({aud,exp,sub:SITE});
+ const input=encoded({typ:'JWT',alg:'ES256'})+'.'+encoded({aud,exp,sub:subject});
  const jwk=JSON.parse(config.privateJwk!);const cryptoKey=await crypto.subtle.importKey('jwk',jwk,{name:'ECDSA',namedCurve:'P-256'},false,['sign']);
  const signature=await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},cryptoKey,new TextEncoder().encode(input));
  const value=`vapid t=${input}.${base64url(new Uint8Array(signature))}, k=${config.publicKey}`;
- await repo.db.prepare('INSERT INTO push_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,JSON.stringify({authorization:value,publicKey:config.publicKey,exp})).run();return value;
+ await repo.db.prepare('INSERT INTO push_state(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value').bind(key,JSON.stringify({authorization:value,publicKey:config.publicKey,subject,exp})).run();return value;
 }
 /** Shared owner-private updater. Platform service access is consumed by Sites dispatch.
  * No caller-selected crew/member IDs, credentials or task contents are accepted/returned.
@@ -64,6 +64,11 @@ export async function dispatchPush(request:Request,repo:Repository,config:PushCo
  }
  if(request.method!=='POST')return reply({error:'POST oder GET erforderlich.'},405);
  let dryRun=false;try{const reader=request.body?.getReader();let text='';if(reader){const decoder=new TextDecoder();let size=0;while(true){const chunk=await reader.read();if(chunk.done)break;size+=chunk.value.length;if(size>80){await reader.cancel();return reply({error:'Ungültiger Auftrag.'},400);}text+=decoder.decode(chunk.value,{stream:true});}}dryRun=z.object({dryRun:z.boolean().optional()}).strict().parse(text?JSON.parse(text):{}).dryRun??false;}catch{return reply({error:'Ungültiger Auftrag.'},400);}
+ return sendPush(repo,config,now,transport,dryRun);
+}
+/** Trusted server entry point. The standalone scheduler never exposes an HTTP trigger. */
+export async function sendPush(repo:Repository,config:PushConfig,now=new Date(),transport:typeof fetch=fetch,dryRun=false){
+ if(!config.publicKey||!config.privateJwk)return reply({error:'Push ist noch nicht eingerichtet.'},503);
  // Short lease avoids overlapping dispatchers and duplicate JWT refreshes. Claims on
  // each device are permanent for the day, including ambiguous network failures.
  const lease=crypto.randomUUID(),at=now.getTime();
