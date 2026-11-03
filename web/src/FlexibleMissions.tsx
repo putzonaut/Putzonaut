@@ -24,7 +24,7 @@ export function RecordMissionForm({state,busy,onSubmit,onExisting}:{state:State;
  </form></>;
 }
 
-export function PostponeMissionForm({task,busy,today=localDay(new Date()),onSubmit}:{task:Task;busy:boolean;today?:string;onSubmit:(until:string)=>void}){
+export function PostponeMissionForm({task,busy,today=localDay(new Date()),onSubmit,onOmit}:{task:Task;busy:boolean;today?:string;onSubmit:(until:string)=>void;onOmit?:()=>void}){
  const dates=postponeDates(today),[choice,setChoice]=useState<'tomorrow'|'weekend'|'date'>('tomorrow'),[custom,setCustom]=useState(dates.tomorrow);
  const selected=choice==='date'?custom:dates[choice];
  const dateLabel=(day:string)=>new Date(day+'T12:00:00Z').toLocaleDateString('de-DE',{weekday:'short',day:'numeric',month:'short'});
@@ -32,6 +32,7 @@ export function PostponeMissionForm({task,busy,today=localDay(new Date()),onSubm
  <div className="postpone-options">{(['tomorrow','weekend','date'] as const).map(key=><button key={key} type="button" aria-pressed={choice===key} disabled={busy} onClick={()=>setChoice(key)}><span>{key==='tomorrow'?'Morgen':key==='weekend'?'Am Wochenende':'Datum wählen'}</span><small>{key==='date'?'Dein passender Tag':dateLabel(dates[key])}</small></button>)}</div>
  {choice==='date'&&<label>Neuer Termin<input type="date" required min={dates.tomorrow} max={dates.maximum} value={custom} onChange={e=>setCustom(e.target.value)} disabled={busy}/></label>}
  <p className="postpone-explanation"><Clock3 size={17}/><span>Nur diese Runde wird verschoben. {task.cadence==='once'?'Es entstehen keine zusätzlichen Punkte.':task.cadence==='after'?'Der nächste Abstand beginnt wie gewohnt nach der Erledigung.':'Wiederholungen bis zum gewählten Tag werden mit dieser Runde zusammengefasst. Danach gilt wieder der normale Rhythmus.'}</span></p>
+ {onOmit&&task.cadence!=='once'&&<div className="omit-round"><button type="button" className="button secondary" disabled={busy} onClick={onOmit}>Heute nicht nötig</button><p>Diese Runde auslassen · keine Punkte. {task.cadence==='after'?'Der Abstand beginnt ab heute neu.':'Der nächste reguläre Termin bleibt bestehen.'}</p></div>}
  <div className="sheet-primary-action"><button type="submit" className="button primary" disabled={busy}>{busy?'Wird gespeichert …':`Auf ${dateLabel(selected)} verschieben`}</button></div>
  </form></>;
 }

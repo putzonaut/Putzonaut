@@ -1,3 +1,4 @@
+import {roomOrder} from './room-order.ts';
 import {availableMissions} from './quick-start.ts';
 import type {Task,User} from '../src/types.ts';
 import type {Area} from './workspace.ts';
@@ -9,7 +10,7 @@ export type RoundView=Omit<CleaningRound,'entries'>&{entries:(RoundEntry&{availa
 export function roundMissions(tasks:Task[],user:Pick<User,'id'>,minutes:number){
  const selected:Task[]=[];let remaining=minutes;
  for(const t of availableMissions(tasks,user)){if(t.minutes<=remaining){selected.push(t);remaining-=t.minutes;}if(selected.length===3)break;}
- return selected;
+ return roomOrder(selected);
 }
 export function elapsedRound(r:Pick<CleaningRound,'elapsedMs'|'runningSince'>,now:number){return r.elapsedMs+(r.runningSince?Math.max(0,now-Date.parse(r.runningSince)):0);}
 export function roomSummaries(areas:Area[],tasks:Task[],user:Pick<User,'id'>){return areas.map(area=>{

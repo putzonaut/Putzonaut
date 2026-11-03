@@ -1,10 +1,21 @@
-# Putzonaut · Web-App 0.24.0
+# Putzonaut · Web-App 0.25.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Saison und Alltag · Version 0.25.0
+
+- **Euer Rhythmus → Saison (optional):** aktive Monate auswählen. Außerhalb dieser Monate erscheinen keine offenen Runden; die nächste Saison beginnt ohne alten Rückstand. Kalenderabstände behalten ihren ursprünglichen Anker. Wochenrunden gehören zum Monat ihres Montags.
+- **Heute passt nicht → Heute nicht nötig:** eine offene wiederkehrende Runde ohne Punkte auslassen. Der nächste reguläre Termin bleibt bestehen. Bei „Nach der letzten Erledigung“ beginnt der Abstand ab dem Auslassen neu. Diese Änderung benötigt eine Verbindung; bereits vorgemerkte veraltete Abschlüsse werden beim Abgleich abgewiesen.
+- Automatische Putzrunden bündeln die bereits ausgewählten Aufgaben nach Räumen. Zeitbudget, Auswahl und erste Priorität bleiben erhalten; selbst zusammengestellte Routinen behalten ihre Reihenfolge.
+- Nach bestätigten Pflanzen-, Wäsche-, Bad- und Küchenmissionen erscheint kurz ein passendes Detail beim vorhandenen Putzonauten. Die Einstellung für Animationen und die Geräteoption für reduzierte Bewegung gelten auch dafür.
+
+Die Saison bleibt in Entwürfen, Duplikaten und Sicherungen erhalten. Sicherungen bewahren auch ausgelassene Runden; Duplikate übernehmen keinen Erledigungs- oder Auslassstand. Sicherungen mit den neuen Feldern benötigen mindestens 0.25.0. Keine zusätzliche Datenbankmigration und kein neuer Hauptbereich.
+
+[Prüfstand 0.25](docs/QA-0.25.md)
 
 ## Genauere Wiederholungen · Version 0.24.0
 

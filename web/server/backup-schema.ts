@@ -44,7 +44,7 @@ const event=z.object({minutes:z.number().int().min(1).max(180).optional(),comple
  bonusChanges:z.array(z.object({userId:id,name:short,stars:signedCount,week:day}).strict()).max(1000).optional(),
 }).strict();
 const pending=event.extend({taskId:id,occurrenceKey:occurrence,xp:count,stars:count});
-const task=taskSchema.extend({postponement:z.object({occurrenceKey:occurrence,from:day,until:day}).strict().optional(),knowledgePhoto:id.optional(),reopenedDue:day.optional(),durationDismissed:z.string().max(500).optional(),durationSamples:z.array(z.object({eventId:id,roundId:id,userId:id,minutes:z.number().int().min(1).max(180),rating:z.union([z.literal(-1),z.literal(0),z.literal(1)]),at:stamp}).strict()).max(12).optional(),team:team.optional(),balancedAssignment:z.object({occurrenceKey:occurrence,memberId:id}).strict().optional(),
+const task=taskSchema.extend({omission:z.object({occurrenceKey:day,on:day}).strict().optional(),postponement:z.object({occurrenceKey:occurrence,from:day,until:day}).strict().optional(),knowledgePhoto:id.optional(),reopenedDue:day.optional(),durationDismissed:z.string().max(500).optional(),durationSamples:z.array(z.object({eventId:id,roundId:id,userId:id,minutes:z.number().int().min(1).max(180),rating:z.union([z.literal(-1),z.literal(0),z.literal(1)]),at:stamp}).strict()).max(12).optional(),team:team.optional(),balancedAssignment:z.object({occurrenceKey:occurrence,memberId:id}).strict().optional(),
  revision:count.optional(),roundAssignment:z.object({occurrenceKey:occurrence,memberId:id}).strict().optional(),handover:z.object({id,occurrenceKey:occurrence,fromId:id,createdAt:stamp,taskVersion:count,swapTaskId:id.optional(),swapOccurrenceKey:occurrence.optional(),swapVersion:count.optional(),toId:id.optional()}).strict().refine(r=>!r.swapTaskId?!r.swapOccurrenceKey&&r.swapVersion===undefined&&!r.toId:!!r.swapOccurrenceKey&&r.swapVersion!==undefined&&!!r.toId).optional(),
  id,steps:steps.optional(),checklistVersion:count.optional(),
  checklist:z.object({occurrenceKey:occurrence,doneIds:z.array(id).max(12)}).strict().nullable().optional(),
@@ -58,6 +58,7 @@ const task=taskSchema.extend({postponement:z.object({occurrenceKey:occurrence,fr
  if(t.cadence==='interval'&&(!t.schedule?.startDate||!t.schedule.intervalWeeks))bad('Fehlender Rhythmus');
  if(t.cadence==='after'&&!t.schedule?.intervalDays)bad('Fehlender Abstand nach Erledigung');
  if(t.cadence==='monthly'&&!t.schedule?.monthDay)bad('Fehlender Monatstag');
+ if(t.omission&&(t.cadence==='once'||t.omission.on<t.omission.occurrenceKey||!t.skipThrough||t.skipThrough<t.omission.on))bad('Ungültige ausgelassene Runde');
  const calendarError=calendarScheduleError(t);if(calendarError)bad(calendarError);
  if(t.pause?.until&&t.pause.until<t.pause.from)bad('Ungültige Pause');
  if(t.postponement&&((t.cadence==='once')!==(t.postponement.occurrenceKey==='once')))bad('Ungültige verschobene Runde');
