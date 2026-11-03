@@ -2,7 +2,7 @@ import {createCipheriv,createDecipheriv,createHash,randomBytes} from 'node:crypt
 import type {DatabaseSync} from 'node:sqlite';
 import nodemailer from 'nodemailer';
 
-export type Mail={to:string;subject:string;text:string};
+export type Mail={to:string;subject:string;text:string;accountId?:string};
 export type MailTransport=(mail:Mail)=>Promise<void>;
 export function smtpTransport(env:NodeJS.ProcessEnv):MailTransport{
  const host=env.SMTP_HOST,from=env.MAIL_FROM;
@@ -14,7 +14,7 @@ export function smtpTransport(env:NodeJS.ProcessEnv):MailTransport{
   auth:env.SMTP_USER?{user:env.SMTP_USER,pass:env.SMTP_PASSWORD}:undefined,
   connectionTimeout:10000,greetingTimeout:10000,socketTimeout:20000,
   disableFileAccess:true,disableUrlAccess:true});
- return async mail=>{await transport.sendMail({...mail,from});};
+ return async mail=>{await transport.sendMail({to:mail.to,subject:mail.subject,text:mail.text,from});};
 }
 
 /** Durable encrypted outbox keeps SMTP latency out of account-existence responses. */
@@ -22,6 +22,16 @@ export function mailQueue(db:DatabaseSync,secret:string,send:MailTransport){
  db.exec('CREATE TABLE IF NOT EXISTS putzonaut_mail (id TEXT PRIMARY KEY, payload TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, next_at INTEGER NOT NULL, expires_at INTEGER NOT NULL)');
  const key=createHash('sha256').update('putzonaut-mail-v1\0'+secret).digest();
  let draining:Promise<void>|null=null;
+ function decode(payload:string){
+  const bytes=Buffer.from(payload,'base64'),cipher=createDecipheriv('aes-256-gcm',key,bytes.subarray(0,12));cipher.setAuthTag(bytes.subarray(12,28));
+  return JSON.parse(Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]).toString('utf8')) as Mail;
+ }
+ function cancelAccount(accountId:string,email:string){
+  for(const item of db.prepare('SELECT id,payload FROM putzonaut_mail').all()){
+   let message:Mail;try{message=decode(String(item.payload));}catch{continue;}
+   if(message.accountId===accountId||!message.accountId&&message.to===email)db.prepare('DELETE FROM putzonaut_mail WHERE id=?').run(item.id);
+  }
+ }
  function enqueue(mail:Mail){
   const iv=randomBytes(12),cipher=createCipheriv('aes-256-gcm',key,iv);
   const content=Buffer.concat([cipher.update(JSON.stringify(mail),'utf8'),cipher.final()]);
@@ -33,9 +43,8 @@ export function mailQueue(db:DatabaseSync,secret:string,send:MailTransport){
   const items=db.prepare('SELECT id,payload,attempts FROM putzonaut_mail WHERE next_at<=? ORDER BY next_at LIMIT 10').all(Date.now());
   for(const item of items){
    try{
-    const payload=Buffer.from(String(item.payload),'base64');
-    const cipher=createDecipheriv('aes-256-gcm',key,payload.subarray(0,12));cipher.setAuthTag(payload.subarray(12,28));
-    const mail=JSON.parse(Buffer.concat([cipher.update(payload.subarray(28)),cipher.final()]).toString('utf8')) as Mail;
+    if(!db.prepare('SELECT id FROM putzonaut_mail WHERE id=?').get(item.id))continue;
+    const mail=decode(String(item.payload));
     await send(mail);db.prepare('DELETE FROM putzonaut_mail WHERE id=?').run(item.id);
    }catch{
     const attempts=Number(item.attempts)+1;
@@ -46,5 +55,5 @@ export function mailQueue(db:DatabaseSync,secret:string,send:MailTransport){
   }
  }
  function flush(){if(!draining)draining=drain().finally(()=>{draining=null;});return draining;}
- return {enqueue,flush};
+ return {enqueue,flush,cancelAccount};
 }

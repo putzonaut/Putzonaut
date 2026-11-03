@@ -1,4 +1,4 @@
-# Putzonaut mit eigenen Konten · 0.22.2
+# Putzonaut mit eigenen Konten · 0.23.0
 
 Die aktuelle App aus `web/` läuft als eigenständiger Node-Server mit E-Mail und Passwort. Nutzer benötigen dafür weder ChatGPT noch GitHub. Oberfläche, Missionen, Crew, Kinderprofile, Punkte, Fotos und Offline-Funktionen verwenden denselben Anwendungscode wie die private Sites-Version.
 
@@ -12,7 +12,7 @@ Website und App laufen im selben Container. Der öffentliche Tunnel zeigt auf `h
 
 Die geprüften Images für **amd64 und arm64** liegen unter `ghcr.io/putzonaut/putzonaut`. Auf dem Zielserver sind nur Docker mit Compose und die Konfiguration nötig. Quellcode, Git, Node.js und ein Build auf dem Server sind dafür nicht erforderlich.
 
-Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.22.2-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
+Der Workflow **Web-App** veröffentlicht erst nach erfolgreichen App-Tests und einem Starttest beider Container-Architekturen. Das Artefakt **putzonaut-install** enthält `compose.yaml`, `compose.tunnel.yaml`, `.env.example` und `IMAGE.txt`. Seine Konfigurationsvorlage ist bereits auf den geprüften Image-Digest festgelegt. Versionen heißen `0.23.0-<Commit-Kürzel>`; zusätzlich gibt es einen vollständigen Commit-Tag und `latest`.
 
 Das Container-Image ist öffentlich und lässt sich ohne GitHub-Anmeldung laden. Das Quellcode-Repository bleibt davon unabhängig.
 
@@ -95,7 +95,9 @@ Die App startet ohne Mailkonfiguration nicht. Sie verschickt Bestätigungs- und 
 - Sitzungen liegen auf dem Server. Cookies sind bei HTTPS Secure, HttpOnly und SameSite=Lax. „Angemeldet bleiben“ gilt bis zu 30 Tage und wird bei Nutzung täglich verlängert; ohne Auswahl wird ein Sitzungscookie verwendet.
 - Ein Passwort-Reset widerruft alle bisherigen Sitzungen. Abmeldung widerruft die aktuelle Sitzung. Persönliche API-Antworten werden nicht gecacht.
 - Mitgliedschaft und Rollen werden weiterhin bei jeder Aktion auf dem Server geprüft. ChatGPT-Header und vom Browser übermittelte Profil-IDs erzeugen keine Identität.
-- Selbstbedienung für Kontolöschung und Änderung der Login-E-Mail ist in dieser Version noch nicht angeboten. Crew verlassen/schließen und Profilnamen ändern bleiben verfügbar.
+- **Profil → Konto & Anmeldung** (auch ohne Crew erreichbar): Login-E-Mail mit aktuellem Passwort ändern. Die bisherige Adresse gilt bis zur Bestätigung der neuen Adresse. Der neueste Link gilt eine Stunde; danach werden alle Sitzungen und bisherigen Passwort-Reset-Links widerrufen. Crew-Zuordnung, Sterne und Erfolge bleiben erhalten. Die bisherige Adresse erhält eine Änderungsmitteilung.
+- **Konto löschen:** zuerst die Crew verlassen oder schließen; Captain-Rolle und Begleitung von Kinderprofilen gegebenenfalls übertragen. Anschließend mit aktuellem Passwort, „KONTO LÖSCHEN“ und Bestätigung löschen. Zugang, Passwort, Sitzungen, ausstehende E-Mail-Änderungen und Reset-Links werden entfernt. Gemeinsame Crew-Inhalte und Logbucheinträge bleiben bestehen. Die App bereinigt Offline-Daten auf dem aktuellen Gerät; andere Geräte verlieren ihren Serverzugriff sofort und erkennen dies beim nächsten Abgleich.
+- Gleichzeitige Konto- und Crew-Anfragen werden pro Konto nacheinander ausgeführt, damit während der Löschung keine neue verwaiste Mitgliedschaft entsteht. Eine Installation betreibt einen App-Prozess pro Datenvolume.
 
 ## Bestehende Testdaten übernehmen
 
@@ -123,4 +125,10 @@ Zur Wiederherstellung bei gestopptem Server das vollständige Volume und die zug
 
 `npm run build` erstellt weiterhin die Sites-Version mit der dortigen Zugangskontrolle. `npm run build:standalone` erstellt die unabhängige App; der Build schlägt fehl, wenn ChatGPT-Anmeldepfade im JavaScript verbleiben. Das Veröffentlichen der privaten Testseite schaltet `app.putzonaut.de` nicht frei.
 
-Der private Sites-Endpunkt für den Push-Versand ist auf dem eigenen Server ausdrücklich gesperrt. Die Erinnerungen in der geöffneten App bleiben verfügbar; Web Push benötigt noch einen eigenen geschützten Scheduler und eine Geräteprüfung für die neue Origin. Ohne diese Einrichtung wird Push als nicht konfiguriert angezeigt.
+## Geräteerinnerungen bei geschlossener App
+
+Ab 0.23.0 prüft der laufende Server jede Minute bis zu 30 Geräte im gewählten Stundenfenster. Installationseigene VAPID-Schlüssel werden automatisch in `crew.sqlite` erzeugt und bei Updates/Neustarts beibehalten. Weder zusätzliche Umgebungsvariablen noch Cron- oder ChatGPT-Aufträge sind erforderlich. Das vollständige Backup muss diese Datenbank enthalten. Der private Sites-Endpunkt `/api/push/dispatch` bleibt auf dem eigenen Server gesperrt.
+
+Unter **Profil → Deine Erinnerung → Auch wenn die App geschlossen ist** die Benachrichtigung auf jedem gewünschten Gerät ausdrücklich aktivieren. Bis zu drei Geräte pro Erwachsenenprofil, höchstens ein Versandversuch täglich je Gerät, Berliner Zeit. Es wird nur bei offenen eigenen, freien oder betreuten Kinderaufgaben erinnert; Auszeiten werden berücksichtigt. Ein allgemeiner Hinweis enthält keine Namen oder Aufgabeninhalte. Abgelaufene Geräteanmeldungen werden entfernt; bei unklaren Netzwerkfehlern erfolgt am selben Tag kein zweiter Versuch.
+
+HTTPS und ausgehende HTTPS-Verbindungen zu den Push-Diensten von Apple, Google oder Mozilla sind erforderlich. Auf unterstützten iPhones die App zuerst zum Home-Bildschirm hinzufügen. Auch bei geschlossener App muss der Server laufen; Systemberechtigungen, Energiesparregeln und Erreichbarkeit beeinflussen die tatsächliche Zustellung. Nach einem Domainwechsel Geräte neu aktivieren. Echte Zustellung auf Android und iPhone nach dem Update prüfen.

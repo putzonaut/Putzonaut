@@ -11,7 +11,7 @@ export function clientAddress(request:IncomingMessage,trustedProxies:string[]){
  return trustedProxies.includes(peer)&&typeof forwarded==='string'&&isIP(forwarded)?forwarded:peer;
 }
 const mime:Record<string,string>={html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8',json:'application/json',webmanifest:'application/manifest+json',svg:'image/svg+xml',png:'image/png',webp:'image/webp',woff:'font/woff',woff2:'font/woff2'};
-const pages=new Set(['/','/konto/anmelden','/konto/registrieren','/konto/passwort-vergessen','/konto/passwort-neu','/konto/bestaetigt']);
+const pages=new Set(['/','/konto/anmelden','/konto/registrieren','/konto/passwort-vergessen','/konto/passwort-neu','/konto/bestaetigt','/konto/verwalten','/konto/email-bestaetigt','/konto/geloescht']);
 export function createHttpServer(app:{fetch(request:Request):Promise<Response>},options:{origin:string;publicDirectory:string;trustedProxies?:string[];websiteOrigin?:string}){
  const root=resolve(options.publicDirectory);
  return createServer({requestTimeout:30_000,headersTimeout:15_000,maxHeaderSize:16_384},async(req,res)=>{

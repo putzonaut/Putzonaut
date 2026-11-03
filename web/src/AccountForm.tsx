@@ -3,9 +3,10 @@ import {useState} from 'react';
 import type {FormEvent} from 'react';
 import {ArrowRight,LoaderCircle,Mail,ShieldCheck,Sparkles} from 'lucide-react';
 import {accountPath,accountReturn} from './account';
+import AccountSettings from './AccountSettings';
 
-type Mode='anmelden'|'registrieren'|'passwort-vergessen'|'passwort-neu'|'bestaetigt';
-const labels:Record<Mode,string>={anmelden:'Willkommen zurück.',registrieren:'Dein Putzonaut-Konto', 'passwort-vergessen':'Passwort vergessen?','passwort-neu':'Ein neues Passwort','bestaetigt':'E-Mail bestätigt.'};
+type Mode='anmelden'|'registrieren'|'passwort-vergessen'|'passwort-neu'|'bestaetigt'|'email-bestaetigt'|'geloescht';
+const labels:Record<Mode,string>={anmelden:'Willkommen zurück.',registrieren:'Dein Putzonaut-Konto', 'passwort-vergessen':'Passwort vergessen?','passwort-neu':'Ein neues Passwort','bestaetigt':'E-Mail bestätigt.','email-bestaetigt':'Neue Adresse bestätigt.','geloescht':'Dein Konto ist gelöscht.'};
 const errors:Record<string,string>={
  INVALID_EMAIL_OR_PASSWORD:'E-Mail oder Passwort stimmt nicht.',
  EMAIL_NOT_VERIFIED:'Bitte bestätige zuerst deine E-Mail-Adresse. Unten kannst du den Link erneut anfordern.',
@@ -56,10 +57,10 @@ export function AccountForm({mode='anmelden',heading='h2'}:{mode?:Mode;heading?:
   try{await request('/send-verification-email',{email:email.trim(),callbackURL:location.origin+accountPath('bestaetigt')});setMessage('Wenn eine Bestätigung aussteht, bekommst du einen neuen Link. Schau auch im Spamordner nach.');}
   catch(error){setError((error as Error).message);}finally{setBusy(false);}
  }
- const done=mode==='bestaetigt'&&!tokenError;
+ const done=['bestaetigt','email-bestaetigt','geloescht'].includes(mode)&&!tokenError;
  return <section className="account-form" aria-labelledby="account-heading">
   <Heading id="account-heading">{tokenError?'Der Link ist nicht mehr gültig.':labels[mode]}</Heading>
-  {done?<><p>Deine Adresse ist bestätigt. Jetzt kannst du dich anmelden und mit deiner Crew starten.</p><a className="button primary" href={accountPath('anmelden')}>Zur Anmeldung<ArrowRight size={18}/></a></>:
+  {done?<><p>{mode==='geloescht'?'Dein Zugang wurde entfernt und alle Anmeldungen beendet.':mode==='email-bestaetigt'?'Melde dich jetzt mit deiner neuen E-Mail-Adresse und deinem bisherigen Passwort an. Deine Crew und Erfolge bleiben erhalten.':'Deine Adresse ist bestätigt. Jetzt kannst du dich anmelden und mit deiner Crew starten.'}</p><a className="button primary" href={accountPath('anmelden')}>Zur Anmeldung<ArrowRight size={18}/></a></>:
    tokenError?<><p>Fordere einen neuen Link an und öffne die neueste E-Mail von Putzonaut.</p><a className="button primary" href={accountPath(mode==='passwort-neu'?'passwort-vergessen':'anmelden')}>Weiter</a></>:
    <>
     {mode==='passwort-vergessen'&&<p>Wir schicken dir einen Link, mit dem du dein Passwort neu festlegen kannst.</p>}
@@ -87,6 +88,6 @@ export function AccountForm({mode='anmelden',heading='h2'}:{mode?:Mode;heading?:
  </section>;
 }
 export default function AccountPage(){
- const page=location.pathname.split('/').pop() as Mode;
- return <main className="auth-page"><div className="auth-art"><img src="/art/hero-home.webp" alt="Ein Putzonaut kümmert sich um sein Zuhause"/><a className="brand" href="/"><Sparkles fill="currentColor"/><span>Putzonaut</span></a></div><div className="auth-content"><span className="eyebrow gold">DEIN ZUHAUSE. EURE MISSION.</span><AccountForm mode={page in labels?page:'anmelden'} heading="h1"/><div className="auth-note"><ShieldCheck size={17}/>Euer Haushalt bleibt eure Sache.</div></div></main>;
+ const page=location.pathname.split('/').pop() as Mode|'verwalten';
+ return <main className="auth-page"><div className="auth-art"><img src="/art/hero-home.webp" alt="Ein Putzonaut kümmert sich um sein Zuhause"/><a className="brand" href="/"><Sparkles fill="currentColor"/><span>Putzonaut</span></a></div><div className="auth-content"><span className="eyebrow gold">DEIN ZUHAUSE. EURE MISSION.</span>{page==='verwalten'?<AccountSettings/>:<AccountForm mode={page in labels?page:'anmelden'} heading="h1"/>}<div className="auth-note"><ShieldCheck size={17}/>Euer Haushalt bleibt eure Sache.</div></div></main>;
 }

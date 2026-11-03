@@ -17,7 +17,7 @@ import {newHousehold} from '../server/domain.ts';
 const origin='https://app.putzonaut.de',password='Eine lange sichere Passphrase 2026!';
 let directory:string,app:Awaited<ReturnType<typeof createStandaloneApp>>;
 const mail:Mail[]=[];let counter=0;
-before(async()=>{directory=await mkdtemp(join(tmpdir(),'putzonaut-accounts-'));app=await createStandaloneApp({directory,origin,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});});
+before(async()=>{directory=await mkdtemp(join(tmpdir(),'putzonaut-accounts-'));app=await createStandaloneApp({directory,origin,scheduleReminders:false,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});});
 after(async()=>{await app?.close();await rm(directory,{recursive:true,force:true});});
 async function call(path:string,body?:unknown,cookie='',headers:Record<string,string>={},method=body===undefined?'GET':'POST'){
  const response=await app.fetch(new Request(origin+path,{method,headers:{origin,'content-type':'application/json','x-putzonaut-client-ip':`192.0.2.${counter%250+1}`,cookie,...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}));
@@ -139,7 +139,7 @@ test('SQLite adapter rolls back all effects of a failed crew batch and persists 
   app.repo.db.prepare('INSERT INTO memberships(account_id,household_id,member_id) VALUES(?,?,?)').bind(user.id,state.household.id,state.user.id),
  ]));
  assert.equal((await app.repo.forAccount(user.id))!.revision,before!.revision);
- await app.close();app=await createStandaloneApp({directory,origin,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});
+ await app.close();app=await createStandaloneApp({directory,origin,scheduleReminders:false,secret:'local-test-secret-'.repeat(4),sendMail:async message=>{mail.push(message);}});
  assert.equal((await call('/api/state',undefined,user.cookie)).data.household.id,state.household.id);
 });
 
@@ -177,6 +177,7 @@ test('HTTP boundary sanitizes identity/IP headers, limits bodies, and serves acc
  try{
   const root=`http://127.0.0.1:${port}`;
   const page=await fetch(root+'/konto/anmelden');assert.equal(page.status,200);assert.equal(await page.text(),'Putzonaut');assert.match(page.headers.get('content-security-policy')!,/frame-ancestors 'none'/);assert.equal(page.headers.get('referrer-policy'),'no-referrer');
+  for(const path of ['/konto/verwalten','/konto/email-bestaetigt','/konto/geloescht']){const accountPage=await fetch(root+path);assert.equal(accountPage.status,200,path);assert.equal(accountPage.headers.get('cache-control'),'no-cache');}
   await fetch(root+'/api/bootstrap',{headers:{'oai-authenticated-user-id':'forged','x-putzonaut-client-ip':'192.0.2.250','x-forwarded-for':'192.0.2.250','x-real-ip':'192.0.2.250'}});
   assert.equal(seen[0].headers.has('oai-authenticated-user-id'),false);assert.equal(seen[0].headers.has('x-forwarded-for'),false);assert.equal(seen[0].headers.get('x-putzonaut-client-ip'),'127.0.0.1');
   assert.equal((await fetch(root+'/api/account/sign-in/email',{method:'POST',body:'x'.repeat(17000)})).status,413);

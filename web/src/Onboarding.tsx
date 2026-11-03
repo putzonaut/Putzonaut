@@ -48,6 +48,6 @@ export default function Onboarding({signedIn,suggestedName,onSuccess}:{signedIn:
  {error&&<p className="form-error" role="alert">{error}</p>}
  <button className="button primary" type="submit" disabled={busy||!!(mode==='join'&&preview?.full)}>{busy?<LoaderCircle className="spin" size={20}/>:<>{mode==='setup'?(step===3?'Crew starten':'Weiter'):(preview?'Dieser Crew beitreten':'Einladung prüfen')}<ArrowRight size={18}/></>}</button>
  {mode==='setup'&&step>1&&<button className="text-button centered" type="button" disabled={busy} onClick={()=>{setStep(step-1);setError('');}}><ArrowLeft size={16}/>Zurück</button>}
- </form><button className="text-button centered" disabled={busy} onClick={()=>{setBusy(true);void signOut().catch(e=>{setError(e.message);setBusy(false);});}}>Mit einem anderen Konto anmelden</button></>}
+ </form>{ownAccounts&&<a className="text-button centered" href="/konto/verwalten">Konto & Anmeldung</a>}<button className="text-button centered" disabled={busy} onClick={()=>{setBusy(true);void signOut().catch(e=>{setError(e.message);setBusy(false);});}}>Mit einem anderen Konto anmelden</button></>}
  <div className="auth-note"><ShieldCheck size={17}/>Euer Haushalt bleibt eure Sache.</div></div></main>;
 }

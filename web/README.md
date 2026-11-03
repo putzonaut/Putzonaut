@@ -1,10 +1,16 @@
-# Putzonaut · Web-App 0.22.2
+# Putzonaut · Web-App 0.23.0
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Kontoverwaltung und Geräteerinnerungen · Version 0.23.0
+
+Die selbst gehostete App versendet Geräteerinnerungen über einen internen Zeitgeber. Unter **Profil → Konto & Anmeldung** sind die bestätigte Änderung der Login-E-Mail und das dauerhafte Löschen des eigenen Kontos verfügbar. Vor der Löschung wird die Crew verlassen oder geschlossen; Captain-Rolle und Kinderbetreuung bleiben geschützt. Der Kontobereich ist auch ohne Crew erreichbar.
+
+[Prüfstand 0.23](docs/QA-0.23.md) · [Installation und Kontoverwaltung](standalone/README.md) · [Geräteerinnerungen](docs/PUSH-OPERATIONS.md)
 
 ## Website und App · Version 0.22.2
 
@@ -90,7 +96,7 @@ Kinder verwenden die App **nicht selbst**. Ein angemeldetes Elternteil erfasst i
 - **Mission → So geht’s:** kurze Hinweise und ein optionales Referenzfoto. Der Captain pflegt diese Angaben. Bilder werden vor dem Upload verkleinert und ohne Originalmetadaten gespeichert; Abruf nur innerhalb der angemeldeten Crew. Fotos benötigen eine Verbindung.
 - **Crew / Logbuch → Danke sagen:** einmal pro Person und bestätigtem fremden Abschluss. Kein zusätzlicher Punktestand; beim verwalteten Kinderprofil stammt der Dank weiterhin vom angemeldeten Elternteil.
 - **Nach ausgewählten Abschlüssen → Passte die Zeit?:** freiwillig „Ging schneller“, „Passte“ oder „Dauerte länger“. Erst nach mindestens drei unterschiedlichen Runden erscheint ein konkreter Vorschlag; der Captain bestätigt oder behält die bisherige Dauer. XP und Sterne ändern sich dadurch nicht. Rücknahmen entfernen die betreffende Rückmeldung.
-- **Profil → Deine Erinnerung → Auch wenn die App geschlossen ist:** optional pro Gerät aktivieren und ein tägliches Stundenfenster wählen. Ein stündlicher Cloud-Auftrag prüft offene eigene, freie und betreute Kinderaufgaben. Höchstens ein Versandversuch täglich je Gerät, in Berliner Zeit; Auszeiten werden berücksichtigt. Der Sperrbildschirm zeigt einen allgemeinen Hinweis ohne Namen oder Missionsdetails. Bis zu drei Geräte pro Erwachsenenprofil. Zum Ausschalten dieselbe Einstellung verwenden; explizites Abmelden widerruft die Geräteanmeldung. Unterstützte iPhones benötigen die zum Home-Bildschirm hinzugefügte App. Eine erfolgreiche Annahme durch den Push-Dienst beweist noch keine Zustellung am Endgerät.
+- **Profil → Deine Erinnerung → Auch wenn die App geschlossen ist:** optional pro Gerät aktivieren und ein tägliches Stundenfenster wählen. Im eigenständigen Betrieb prüft ein interner Zeitgeber jede Minute offene eigene, freie und betreute Kinderaufgaben; die private Sites-Version verwendet ihren getrennten Cloud-Auftrag. Höchstens ein Versandversuch täglich je Gerät, in Berliner Zeit; Auszeiten werden berücksichtigt. Der Sperrbildschirm zeigt einen allgemeinen Hinweis ohne Namen oder Missionsdetails. Bis zu drei Geräte pro Erwachsenenprofil. Zum Ausschalten dieselbe Einstellung verwenden; explizites Abmelden widerruft die Geräteanmeldung. Unterstützte iPhones benötigen die zum Home-Bildschirm hinzugefügte App. Eine erfolgreiche Annahme durch den Push-Dienst beweist noch keine Zustellung am Endgerät.
 - **Basis → Ausbau ansehen → Trophäenregal:** bis zu drei bereits verdiente besondere Abzeichen aus der Crew ausstellen. Der Captain wählt sie aus, ohne Sternenkosten.
 
 Notizen, Rückmeldungen, Dank und Trophäen sind in Crew-Sicherungen enthalten. Fotoverweise bleiben für eine Wiederherstellung derselben Crew erhalten; die Bilddateien liegen getrennt im privaten Objektspeicher und sind nicht in der JSON-Sicherung enthalten. Geräteendpunkte und Versandgeheimnisse gehören nicht in Crew-Sicherungen. Die neue SQL-Migration ergänzt ausschließlich die Tabellen für Geräteanmeldungen und Versandstatus.
@@ -318,7 +324,7 @@ Die additive Migration `0001_bent_manta.sql` legt nur die zwei Tabellen für den
 
 Die aktuelle Website bleibt eine private Entwicklungsveröffentlichung. Erwachsene melden sich dort über ChatGPT an und benötigen zusätzlich Website-Zugriff. Eine Crew-Einladung ändert diese Freigabe nicht. Einladungen werden nicht automatisch versandt.
 
-Die eigenständige Web-App mit eigener Anmeldung, E-Mail-Bestätigung und Passwort-Wiederherstellung ist seit 0.21.0 in `standalone/` enthalten. Kontolöschung, der tatsächliche Datenumzug, ein erprobter vollständiger Backup-/Restore-Ablauf, Serveranschluss und echte Mailzustellung bleiben vor dem öffentlichen Start zu erledigen. Die frühere Docker-/PostgreSQL-Grundlage im Hauptverzeichnis bleibt als Altstand erhalten. Die Bereitstellung auf dem tatsächlichen Umbrel und die SMTP-Konfiguration müssen separat abgeschlossen sein; das Image allein startet keinen öffentlichen Dienst.
+Die eigenständige Web-App mit eigener Anmeldung, E-Mail-Bestätigung und Passwort-Wiederherstellung ist seit 0.21.0 in `standalone/` enthalten. Kontolöschung, bestätigte E-Mail-Änderung und der eigenständige Push-Versand sind seit 0.23.0 enthalten. Datenumzug, vollständige Sicherung/Wiederherstellung, Serveranschluss und echte Mail- sowie Push-Zustellung sind bei jeder Installation praktisch zu prüfen. Die frühere Docker-/PostgreSQL-Grundlage im Hauptverzeichnis bleibt als Altstand erhalten. Die Bereitstellung auf dem tatsächlichen Umbrel und die SMTP-Konfiguration müssen separat abgeschlossen sein; das Image allein startet keinen öffentlichen Dienst.
 
 ## Daten und Berechtigungen
 
