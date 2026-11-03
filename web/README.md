@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.25.0
+# Putzonaut · Web-App 0.25.1
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 

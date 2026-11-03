@@ -59,5 +59,5 @@ Die Dateien im Hauptverzeichnis enthalten außerdem die frühere Grundlage aus V
 ---
 
 <p align="center">
-  <sub>Version 0.25.0 · In Entwicklung</sub>
+  <sub>Version 0.25.1 · In Entwicklung</sub>
 </p>
