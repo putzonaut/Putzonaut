@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.2 · 9. November 2026
+
+- Footer-Anordnung korrigiert: Links und Copyright stehen in derselben Abschlusszeile, die Jahreszahl ist am rechten Rand ausgerichtet. Auf Smartphones bleibt das Logo darüber.
+
 ## 0.26.1 · 9. November 2026
 
 - Die Copyright-Jahreszahl steht auf der Website in einer eigenen, zentrierten Abschlusszeile unter den Footer-Links – auch auf schmalen Smartphones sowie im Impressum und Datenschutz.

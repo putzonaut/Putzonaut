@@ -276,11 +276,27 @@ body::before {
 
 /* Compact help row shared by the website and its legal pages. */
 .footer-with-support { flex-wrap: wrap; row-gap: 22px; }
-.footer > .footer-copyright {
-  order: 4;
-  flex: 0 0 100%;
+.footer-bottom {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+.footer-bottom > nav {
+  order: 0;
+  flex: 0 1 auto;
+  min-width: 0;
   margin: 0;
-  text-align: center;
+  gap: clamp(10px, 3vw, 25px);
+}
+.footer .footer-bottom > .footer-copyright {
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
+  text-align: right;
+}
+@media (max-width:620px) {
+  .footer-bottom { flex: 0 0 100%; }
 }
 .footer-support {
   flex: 0 0 100%;

@@ -1,4 +1,4 @@
-# Putzonaut · Web-App 0.26.1
+# Putzonaut · Web-App 0.26.2
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
@@ -6,9 +6,9 @@ Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Pa
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
 
-## Website-Footer · Version 0.26.1
+## Website-Footer · Version 0.26.2
 
-Die Copyright-Jahreszahl steht auf der öffentlichen Website und ihren Rechtstextseiten in einer eigenen, zentrierten Zeile unter den Footer-Links. Die Anordnung gilt auf Smartphones, Tablets und Desktop-Bildschirmen.
+Die Copyright-Jahreszahl steht auf der öffentlichen Website und ihren Rechtstextseiten rechts neben den Footer-Links in derselben Zeile. Auf Smartphones steht das Logo darüber. Die Anordnung gilt auf Smartphones, Tablets und Desktop-Bildschirmen.
 
 ## Persönliche Nachrichten · Version 0.26.0
 
