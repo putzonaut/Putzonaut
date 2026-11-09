@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.3 · 9. November 2026
+
+- Hilfe-Bereich im Website-Footer gekürzt: Über den Kontaktlinks steht nur noch „Probleme mit Putzonaut?“. Der zusätzliche Erklärungssatz entfällt auf der Startseite sowie im Impressum und Datenschutz.
+
 ## 0.26.2 · 9. November 2026
 
 - Footer-Anordnung korrigiert: Links und Copyright stehen in derselben Abschlusszeile, die Jahreszahl ist am rechten Rand ausgerichtet. Auf Smartphones bleibt das Logo darüber.
