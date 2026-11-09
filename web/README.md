@@ -1,10 +1,14 @@
-# Putzonaut · Web-App 0.26.0
+# Putzonaut · Web-App 0.26.1
 
 Putzonaut macht Haushaltsaufgaben zu gemeinsamen Missionen – für Familien, Paare, WGs und Einzelhaushalte. Jede Crew hat eigene Mitglieder, Aufgaben, Belohnungen und Fortschritte.
 
 **Web-App:** https://putzonaut-test.denny-subke.chatgpt.site
 
 Die Versionsnummer steht unten im Profil. Der Kopfbereich bleibt ohne Versionszeile; die Korrektur des runden Profilbilds aus 0.6.1 bleibt erhalten.
+
+## Website-Footer · Version 0.26.1
+
+Die Copyright-Jahreszahl steht auf der öffentlichen Website und ihren Rechtstextseiten in einer eigenen, zentrierten Zeile unter den Footer-Links. Die Anordnung gilt auf Smartphones, Tablets und Desktop-Bildschirmen.
 
 ## Persönliche Nachrichten · Version 0.26.0
 
