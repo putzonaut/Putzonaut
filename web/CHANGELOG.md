@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.1 · 9. November 2026
+
+- Die Copyright-Jahreszahl steht auf der Website in einer eigenen, zentrierten Abschlusszeile unter den Footer-Links – auch auf schmalen Smartphones sowie im Impressum und Datenschutz.
+
 ## 0.26.0
 
 - Persönliche Textnachrichten zwischen Crew-Mitgliedern mit eigenem Konto unter „Crew → Nachrichten“, mit Ungelesen-Zähler und automatisch aktualisiertem Gespräch.

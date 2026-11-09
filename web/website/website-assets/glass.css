@@ -276,6 +276,12 @@ body::before {
 
 /* Compact help row shared by the website and its legal pages. */
 .footer-with-support { flex-wrap: wrap; row-gap: 22px; }
+.footer > .footer-copyright {
+  order: 4;
+  flex: 0 0 100%;
+  margin: 0;
+  text-align: center;
+}
 .footer-support {
   flex: 0 0 100%;
   display: flex;
